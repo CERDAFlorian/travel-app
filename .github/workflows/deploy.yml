@@ -17,12 +17,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
@@ -36,6 +36,16 @@ jobs:
 
       - name: Trigger Coolify deployment
         run: |
+          if [ -z "${COOLIFY_DEPLOY_WEBHOOK}" ]; then
+            echo "COOLIFY_DEPLOY_WEBHOOK is missing in GitHub Actions secrets."
+            exit 1
+          fi
+
+          if [ -z "${COOLIFY_TOKEN}" ]; then
+            echo "COOLIFY_TOKEN is missing in GitHub Actions secrets."
+            exit 1
+          fi
+
           curl --fail --request GET "${COOLIFY_DEPLOY_WEBHOOK}" \
             --header "Authorization: Bearer ${COOLIFY_TOKEN}"
         env:
