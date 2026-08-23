@@ -1,31 +1,13 @@
 # Travel App
 
-Application React/Vite pour creer et gerer des itineraires de voyage personnels.
-
-## Stack
-
-- React + Vite pour le front
-- Supabase pour la base PostgreSQL, l'authentification et le stockage des images
-- Deploiement prevu sur VPS Infomaniak avec un build statique servi par Nginx
+Application React/Vite minimale pour valider le deploiement Coolify.
 
 ## Installation locale
 
 ```sh
 npm install
-cp .env.example .env.local
 npm run dev
 ```
-
-Renseigner ensuite `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY` dans `.env.local`.
-
-## Supabase
-
-1. Creer un projet Supabase.
-2. Ouvrir le SQL Editor.
-3. Executer le fichier `supabase/schema.sql`.
-4. Copier l'URL du projet et la cle `anon public` dans `.env.local`.
-
-Tant que Supabase n'est pas configure, l'app actuelle continue de fonctionner avec `localStorage`.
 
 ## Build production
 
@@ -33,18 +15,38 @@ Tant que Supabase n'est pas configure, l'app actuelle continue de fonctionner av
 npm run build
 ```
 
-Voir `docs/deploiement-infomaniak.md` pour le deploiement VPS.
-
 ## Branches et CI/CD
 
 - `dev` : branche de travail. Chaque push lance un build de verification.
 - `main` : branche de production. Chaque push build l'app puis declenche un deploiement Coolify.
 
-Secrets GitHub a configurer dans `Settings > Secrets and variables > Actions` :
+## Secrets GitHub
+
+Dans `Settings > Secrets and variables > Actions`, ajouter :
 
 ```txt
-VITE_SUPABASE_URL
-VITE_SUPABASE_ANON_KEY
 COOLIFY_DEPLOY_WEBHOOK
 COOLIFY_TOKEN
 ```
+
+## Configuration Coolify
+
+1. Dans Coolify, creer un nouveau projet.
+2. Ajouter une nouvelle application.
+3. Choisir GitHub comme source.
+4. Selectionner le depot `CERDAFlorian/travel-app`.
+5. Choisir la branche `main` pour la production.
+6. Selectionner un build pack compatible Vite, idealement `Nixpacks` ou `Static`.
+7. Renseigner les commandes :
+
+```txt
+Install Command: npm ci
+Build Command: npm run build
+Publish Directory: dist
+```
+
+8. Ajouter ton domaine dans Coolify.
+9. Garder HTTPS active.
+10. Deployer une premiere fois depuis Coolify.
+11. Copier le `Deploy Webhook (auth required)` dans le secret GitHub `COOLIFY_DEPLOY_WEBHOOK`.
+12. Creer un token API Coolify avec la permission `deploy`, puis le mettre dans `COOLIFY_TOKEN`.
