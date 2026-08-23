@@ -1,10 +1,10 @@
-# Deploiement sur VPS Infomaniak
+# Deploiement sur VPS Infomaniak avec Coolify
 
-Cette app est une SPA Vite/React. Le deploiement le plus simple consiste a builder le dossier `dist`, puis a le servir avec Nginx.
+Cette app est une SPA Vite/React. Comme Coolify est deja installe sur le VPS, il vaut mieux le laisser gerer le build, le conteneur, le domaine et HTTPS.
 
 ## Variables d'environnement
 
-Creer un fichier `.env.production` sur la machine de build :
+Dans Coolify, ajouter ces variables a l'application :
 
 ```sh
 VITE_SUPABASE_URL=https://your-project-ref.supabase.co
@@ -13,54 +13,38 @@ VITE_SUPABASE_ANON_KEY=your-public-anon-key
 
 Les variables `VITE_*` sont integrees au build front. La cle `anon` Supabase est publique par design, mais la securite repose sur les policies RLS du schema SQL.
 
-## Build
+## Configuration Coolify
 
-```sh
-npm ci
-npm run build
-```
+- Creer une nouvelle Application dans Coolify depuis le repo GitHub `CERDAFlorian/travel-app`.
+- Branch de production : `main`.
+- Build pack : `Nixpacks` ou `Static` pour une SPA.
+- Install command : `npm ci`.
+- Build command : `npm run build`.
+- Public directory : `dist`.
+- Activer `Is it a static site?` si l'option est disponible.
+- Ajouter le domaine dans Coolify et laisser `Force HTTPS` active.
 
-Copier ensuite le contenu de `dist/` sur le VPS, par exemple dans :
-
-```txt
-/var/www/travel-app
-```
-
-## Exemple Nginx
-
-```nginx
-server {
-  listen 80;
-  server_name travel.example.com;
-
-  root /var/www/travel-app;
-  index index.html;
-
-  location / {
-    try_files $uri $uri/ /index.html;
-  }
-}
-```
-
-Pour HTTPS, ajouter un certificat Let's Encrypt avec Certbot apres pointage DNS.
+Coolify deploie les applications dans des conteneurs Docker et peut utiliser les build packs pour transformer automatiquement le code source en application deployable.
 
 ## CI/CD GitHub Actions
 
 Le projet contient deux workflows :
 
 - `.github/workflows/check.yml` : verifie que l'app build correctement sur `dev` et sur les pull requests vers `main`.
-- `.github/workflows/deploy.yml` : deploie automatiquement `main` sur le VPS.
+- `.github/workflows/deploy.yml` : verifie le build sur `main`, puis declenche le deploiement Coolify via webhook.
 
 Secrets GitHub requis :
 
 ```txt
 VITE_SUPABASE_URL=https://your-project-ref.supabase.co
 VITE_SUPABASE_ANON_KEY=your-public-anon-key
-VPS_HOST=ip-ou-domaine-du-vps
-VPS_USER=deploy
-VPS_PORT=22
-VPS_DEPLOY_PATH=/var/www/travel-app
-VPS_SSH_PRIVATE_KEY=cle-privee-ssh-du-user-deploy
+COOLIFY_DEPLOY_WEBHOOK=https://coolify.example.com/api/v1/deploy?uuid=resource-uuid&force=false
+COOLIFY_TOKEN=token-api-coolify-avec-permission-deploy
 ```
 
-Sur le VPS, le dossier `VPS_DEPLOY_PATH` doit exister et appartenir a `VPS_USER`.
+Dans Coolify :
+
+1. Activer l'acces API si necessaire dans `Settings > Advanced`.
+2. Creer un token dans `Keys & Tokens > API Tokens` avec la permission `deploy`.
+3. Copier le `Deploy Webhook (auth required)` depuis `Application > Configuration > Webhooks`.
+4. Mettre le token et l'URL dans les secrets GitHub ci-dessus.

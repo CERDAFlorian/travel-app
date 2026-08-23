@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   deploy:
-    name: Build and deploy to VPS
+    name: Build and trigger Coolify
     runs-on: ubuntu-latest
 
     steps:
@@ -34,21 +34,10 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
-      - name: Prepare SSH
+      - name: Trigger Coolify deployment
         run: |
-          mkdir -p ~/.ssh
-          printf '%s\n' "${{ secrets.VPS_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
-
-      - name: Deploy files
-        run: |
-          rsync -az --delete \
-            -e "ssh -i ~/.ssh/deploy_key -p ${VPS_PORT}" \
-            dist/ "${VPS_USER}@${VPS_HOST}:${VPS_DEPLOY_PATH}/"
+          curl --fail --request GET "${COOLIFY_DEPLOY_WEBHOOK}" \
+            --header "Authorization: Bearer ${COOLIFY_TOKEN}"
         env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_PORT: ${{ secrets.VPS_PORT }}
-          VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
-
+          COOLIFY_DEPLOY_WEBHOOK: ${{ secrets.COOLIFY_DEPLOY_WEBHOOK }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
