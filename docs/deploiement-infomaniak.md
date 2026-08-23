@@ -44,3 +44,23 @@ server {
 
 Pour HTTPS, ajouter un certificat Let's Encrypt avec Certbot apres pointage DNS.
 
+## CI/CD GitHub Actions
+
+Le projet contient deux workflows :
+
+- `.github/workflows/check.yml` : verifie que l'app build correctement sur `dev` et sur les pull requests vers `main`.
+- `.github/workflows/deploy.yml` : deploie automatiquement `main` sur le VPS.
+
+Secrets GitHub requis :
+
+```txt
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_ANON_KEY=your-public-anon-key
+VPS_HOST=ip-ou-domaine-du-vps
+VPS_USER=deploy
+VPS_PORT=22
+VPS_DEPLOY_PATH=/var/www/travel-app
+VPS_SSH_PRIVATE_KEY=cle-privee-ssh-du-user-deploy
+```
+
+Sur le VPS, le dossier `VPS_DEPLOY_PATH` doit exister et appartenir a `VPS_USER`.

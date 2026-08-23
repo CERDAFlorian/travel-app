@@ -34,3 +34,20 @@ npm run build
 ```
 
 Voir `docs/deploiement-infomaniak.md` pour le deploiement VPS.
+
+## Branches et CI/CD
+
+- `dev` : branche de travail. Chaque push lance un build de verification.
+- `main` : branche de production. Chaque push build l'app et deploie `dist/` sur le VPS.
+
+Secrets GitHub a configurer dans `Settings > Secrets and variables > Actions` :
+
+```txt
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
+VPS_HOST
+VPS_USER
+VPS_PORT
+VPS_DEPLOY_PATH
+VPS_SSH_PRIVATE_KEY
+```
