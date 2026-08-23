@@ -6,8 +6,11 @@ Application React/Vite minimale pour valider le deploiement Coolify.
 
 ```sh
 npm install
+cp .env.example .env.local
 npm run dev
 ```
+
+Pour le moment, Supabase est installe mais vide. Les variables peuvent rester vides tant que l'app Hello World ne lit pas encore la base.
 
 ## Build production
 
@@ -25,6 +28,8 @@ npm run build
 Dans `Settings > Secrets and variables > Actions`, ajouter :
 
 ```txt
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
 COOLIFY_DEPLOY_WEBHOOK
 COOLIFY_TOKEN
 ```
@@ -45,8 +50,9 @@ Build Command: npm run build
 Publish Directory: dist
 ```
 
-8. Ajouter ton domaine dans Coolify.
-9. Garder HTTPS active.
-10. Deployer une premiere fois depuis Coolify.
-11. Copier le `Deploy Webhook (auth required)` dans le secret GitHub `COOLIFY_DEPLOY_WEBHOOK`.
-12. Creer un token API Coolify avec la permission `deploy`, puis le mettre dans `COOLIFY_TOKEN`.
+8. Ajouter les variables d'environnement `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY` quand ton projet Supabase sera cree.
+9. Ajouter ton domaine dans Coolify.
+10. Garder HTTPS active.
+11. Deployer une premiere fois depuis Coolify.
+12. Copier le `Deploy Webhook (auth required)` dans le secret GitHub `COOLIFY_DEPLOY_WEBHOOK`.
+13. Creer un token API Coolify avec la permission `deploy`, puis le mettre dans `COOLIFY_TOKEN`.
