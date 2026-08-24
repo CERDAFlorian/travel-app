@@ -1,0 +1,59 @@
+// Thème « neutral » — repli et GABARIT.
+// Pour un nouveau voyage : copie ce fichier sous themes/_pays.scss, remplace
+// la couche 1, enregistre-le dans src/theme/_emit.scss et src/theme/themes.js.
+// Aucune autre ligne de l'app n'est à toucher.
+@use '../contract';
+
+$ink:        #1f2328;
+$ink-strong: #0d1117;
+$paper:      #f6f7f8;
+$paper-1:    #fbfcfc;
+$paper-2:    #ffffff;
+$line:       #dfe3e6;
+$line-dark:  #c6ccd2;
+$line-light: #eceff1;
+$grey:       #6a737d;
+$blue:       #2f5d8c;
+$blue-dark:  #234869;
+$teal:       #3d6b66;
+
+$theme: contract.validate('neutral', (
+  bg:              $paper,
+  surface:         $paper-1,
+  surface-raised:  $paper-2,
+  overlay:         rgba($ink, 0.55),
+
+  text:            $ink,
+  text-heading:    $ink-strong,
+  muted:           $grey,
+  text-invert:     $paper-2,
+
+  accent:          $blue,
+  accent-hover:    $blue-dark,
+  accent-contrast: $paper-2,
+  accent-soft:     rgba($blue, 0.10),
+
+  accent-2:        $teal,
+  accent-2-soft:   rgba($teal, 0.12),
+
+  border:          $line,
+  border-strong:   $line-dark,
+  border-soft:     $line-light,
+
+  ok:              #2f6f4f,
+  warn:            #9a6a1b,
+  danger:          #a32b2b,
+  info:            $blue,
+
+  font-display:    (system-ui, -apple-system, 'Segoe UI', sans-serif),
+  font-body:       (system-ui, -apple-system, 'Segoe UI', sans-serif),
+
+  radius-sm:       4px,
+  radius-md:       8px,
+  radius-lg:       16px,
+  radius-pill:     999px,
+
+  shadow-sm:       (0 1px 2px rgba($ink, 0.06)),
+  shadow-md:       (0 4px 14px rgba($ink, 0.10)),
+  shadow-lg:       (0 18px 45px rgba($ink, 0.14))
+));

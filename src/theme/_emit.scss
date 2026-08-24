@@ -1,0 +1,26 @@
+// Registre des thèmes et émission des custom properties.
+//
+// Enregistrer un nouveau thème = une ligne dans $themes (+ son fichier dans
+// themes/ et son entrée dans themes.js pour le sélecteur des pages « voyages »).
+@use 'sass:map';
+@use 'contract';
+@use 'themes/neutral';
+@use 'themes/japan';
+
+$themes: (
+  'neutral': neutral.$theme,
+  'japan':   japan.$theme
+);
+
+// Thème appliqué quand <html> ne porte pas de data-theme.
+$default: 'japan';
+
+:root {
+  @include contract.emit(map.get($themes, $default));
+}
+
+@each $name, $theme in $themes {
+  [data-theme='#{$name}'] {
+    @include contract.emit($theme);
+  }
+}

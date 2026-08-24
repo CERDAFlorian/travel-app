@@ -1,0 +1,55 @@
+@use './theme/mixins';
+
+.app-shell {
+  display: grid;
+  place-items: center;
+  min-height: 100svh;
+  padding: var(--sp-5) var(--page-pad);
+
+  &__card {
+    width: min(100%, 520px);
+    padding: var(--sp-6);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-md);
+  }
+
+  &__intro {
+    margin-top: var(--sp-3);
+    color: var(--muted);
+  }
+
+  &__cats {
+    display: grid;
+    gap: var(--sp-2);
+    margin: var(--sp-5) 0 0;
+    padding: 0;
+    list-style: none;
+
+    @include mixins.from('sm') {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  &__cat {
+    display: flex;
+    gap: var(--sp-2);
+    align-items: center;
+    font-size: var(--fs-sm);
+  }
+
+  &__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: var(--radius-pill);
+    background: var(--cat-note);
+
+    &[data-cat='hotel']      { background: var(--cat-hotel); }
+    &[data-cat='activite']   { background: var(--cat-activite); }
+    &[data-cat='restaurant'] { background: var(--cat-restaurant); }
+    &[data-cat='shopping']   { background: var(--cat-shopping); }
+    &[data-cat='lieu']       { background: var(--cat-lieu); }
+    &[data-cat='note']       { background: var(--cat-note); }
+  }
+}

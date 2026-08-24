@@ -1,0 +1,61 @@
+// Thème « japan » — palette extraite du design importé (voir design/README.md).
+@use '../contract';
+
+// Couche 1 : palette brute. Des noms de couleurs, jamais consommés par un
+// composant. Elle n'existe que pour nourrir la couche 2.
+$sumi:        #3d2f24; // encre
+$sumi-deep:   #5c1b1b; // titres
+$vermillon:   #8f1d24; // torii
+$vermillon-d: #6d1418;
+$creme:       #f8ecd9; // washi
+$creme-clair: #fdf6e9;
+$creme-pur:   #fffdf7;
+$paille:      #e0caa2;
+$paille-fonce:#d9bd8c;
+$paille-clair:#e6d2ab;
+$or-terni:    #a08050;
+$sauge:       #3f6b4a; // vert des Activités, seul « sage » du design
+$indigo:      #2c5271;
+$kaki:        #b4621f;
+
+// Couche 2 : rôles sémantiques. C'est ce que les composants utilisent.
+$theme: contract.validate('japan', (
+  bg:              $creme,
+  surface:         $creme-clair,
+  surface-raised:  $creme-pur,
+  overlay:         rgba($sumi, 0.55),
+
+  text:            $sumi,
+  text-heading:    $sumi-deep,
+  muted:           $or-terni,
+  text-invert:     $creme-clair,
+
+  accent:          $vermillon,
+  accent-hover:    $vermillon-d,
+  accent-contrast: $creme-clair,
+  accent-soft:     rgba($vermillon, 0.10),
+
+  accent-2:        $sauge,
+  accent-2-soft:   rgba($sauge, 0.12),
+
+  border:          $paille,
+  border-strong:   $paille-fonce,
+  border-soft:     $paille-clair,
+
+  ok:              $sauge,
+  warn:            $kaki,
+  danger:          $vermillon,
+  info:            $indigo,
+
+  font-display:    ('Playfair Display', Georgia, serif),
+  font-body:       ('EB Garamond', Georgia, serif),
+
+  radius-sm:       4px,
+  radius-md:       8px,
+  radius-lg:       16px,
+  radius-pill:     999px,
+
+  shadow-sm:       (0 1px 2px rgba($sumi, 0.06)),
+  shadow-md:       (0 4px 14px rgba($sumi, 0.10)),
+  shadow-lg:       (0 18px 45px rgba($sumi, 0.14))
+));

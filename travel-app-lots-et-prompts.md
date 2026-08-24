@@ -1,7 +1,7 @@
 # travel-app — Découpage en lots & prompts Claude Code
 
-Stack figée : React + Vite + Supabase + IndexedDB. Déploiement Coolify via image Docker
-(nginx, fallback SPA — le README décrivait un build pack static, c'était périmé).
+Stack figée : React + Vite + SCSS + Supabase + IndexedDB. Déploiement Coolify via image
+Docker (nginx, fallback SPA — le README décrivait un build pack static, c'était périmé).
 Offline en **lecture seule**. Carte SVG unique zoomable, ancres géographiques + labels déportés.
 
 > **Design importé.** Le MCP `claude_design` est configuré (scope user) et le projet
@@ -14,14 +14,15 @@ Offline en **lecture seule**. Carte SVG unique zoomable, ancres géographiques +
 ## État du projet — 24 août 2026
 
 Branche de travail : `dev`, synchronisée avec `origin/dev`. `main` est en retard,
-la fusion se fera par PR. **Aucun lot n'est commencé** : L0 est le prochain.
+la fusion se fera par PR. **L0 est terminé.** L1 est le prochain.
 
 ### Ce qui est en place
 
 | | |
 |---|---|
-| Stack | React 18 + Vite 8, `@supabase/supabase-js` déjà installé |
-| Build | `npm run build` → 51 ms, `dist` = 448 Ko |
+| Stack | React 18 + Vite 8 + SCSS (`sass`), `@supabase/supabase-js` |
+| Thème | `src/theme/`, multi-voyages, validé à la compilation (voir plus bas) |
+| Build | `npm run build` → ~150 ms, `dist` = 452 Ko, aucun warning |
 | Dev | `npm run dev` → http://localhost:5173 |
 | Images | 28 WebP dans `public/img/` (251 Ko), sources PNG dans `design/img/` |
 | CI | `check.yml` sur push `dev` et PR `main` : `img:check` + build |
@@ -38,12 +39,63 @@ npm run img:check    # vérifie sans compresser (tourne en CI)
 
 ### Décisions prises
 
+- **SCSS, pas CSS.** Décidé en L0. Le SCSS sert à une chose précise : valider à la
+  compilation qu'un thème remplit bien tout le contrat de tokens. Un `.css` ne peut pas.
+- **L'app est multi-voyages.** Chaque pays aura son thème ; une page de création de
+  voyage et une page listant les voyages sont envisagées. Rien de spécifique au Japon
+  ne doit exister hors de `themes/_japan.scss` et de la donnée.
+- **Les 6 couleurs de catégorie sont invariantes**, identiques pour tous les voyages :
+  c'est le fil conducteur visuel. Elles sont donc hors contrat de thème.
 - **Clé catégorie : `restaurant`**, pas `resto`. Le design utilise `resto`, la spec
   L1 tranche. C'est la seule des 6 clés qui diffère.
 - **Images servies en WebP.** Les PNG sources vivent dans `design/img/` et n'entrent
   pas dans l'image Docker. Toute nouvelle image : la déposer là, puis `npm run img`.
 - **Le `.dc.html` n'est jamais modifié.** C'est un import fidèle du canvas ; le
   corriger le ferait diverger de sa source.
+
+### Système de thème (posé en L0)
+
+```
+src/theme/
+├── index.scss              point d'entrée unique, importé par main.jsx
+├── _contract.scss          liste canonique des rôles + validation au build
+├── _emit.scss              registre $themes → :root + [data-theme="…"]
+├── _mixins.scss            from(), focus-ring(), truncate()
+├── base/_invariants.scss   catégories, espacement, typo, z-index, durées
+├── base/_reset.scss
+├── base/_typography.scss
+├── themes/_japan.scss      palette du design importé
+├── themes/_neutral.scss    repli + gabarit d'un nouveau pays
+└── themes.js               registre JS (id, libellé, aperçu) pour les pages voyages
+```
+
+**Trois couches.** (1) palette brute privée au thème, des noms de couleurs, jamais
+consommée par un composant ; (2) rôles sémantiques — c'est ce que les composants
+utilisent ; (3) invariants de structure, hors thème.
+
+**Le contrat est vérifié à la compilation.** `_contract.scss` liste les rôles que tout
+thème doit fournir. Une clé manquante ou inconnue casse le build :
+
+```
+Error: [sass] "Thème « japan » : token manquant « muted » (voir src/theme/_contract.scss)."
+```
+
+**Rôles disponibles** — fonds `--bg` `--surface` `--surface-raised` `--overlay` ;
+texte `--text` `--text-heading` `--muted` `--text-invert` ; accent `--accent`
+`--accent-hover` `--accent-contrast` `--accent-soft` ; secondaire `--accent-2`
+`--accent-2-soft` ; traits `--border` `--border-strong` `--border-soft` ; états
+`--ok` `--warn` `--danger` `--info` ; typo `--font-display` `--font-body` ;
+formes `--radius-sm|md|lg|pill` `--shadow-sm|md|lg`.
+
+**Invariants** — `--cat-*` et `--cat-*-soft` (les 6 catégories), `--sp-1..8`,
+`--fs-xs..3xl`, `--lh-tight` `--lh-base`, `--z-*`, `--dur-*` `--ease-out`,
+`--page-max` `--page-pad`.
+
+**Ajouter un pays** : copier `themes/_neutral.scss`, une ligne dans `$themes`
+(`_emit.scss`), une entrée dans `themes.js`. Aucun composant à toucher.
+
+**Bascule** : `<html data-theme="…">` via `applyTheme()`, alimenté par `trips.theme`
+une fois la donnée branchée en L2. Aujourd'hui figé sur `japan` dans `main.jsx`.
 
 ### Reste à faire hors lots
 
@@ -103,7 +155,7 @@ Colle un prompt, laisse la boucle tourner, vérifie, commit, passe au suivant. N
 
 | Lot | Contenu | Effort | Palier atteint |
 |---|---|---|---|
-| **L0** | Fondations : arbo, tokens CSS, config Vite, client Supabase | 0,5 j | Le projet build et déploie |
+| ~~**L0**~~ | ~~Fondations : arbo, tokens CSS, config Vite, client Supabase~~ | ✅ fait | Le projet build et déploie |
 | **L1** | Schéma Supabase + RLS + seed Japon | 0,5 j | La donnée existe |
 | **L2** | Couche données + cache IndexedDB + hook `useTrip` | 1 j | L'app lit online et offline |
 | **L3** | Shell + étapes + catégories + items (lecture) | 1,5 j | **App utilisable** |
@@ -153,17 +205,23 @@ STOP
 - N'installe aucune dépendance hors @supabase/supabase-js sans me demander.
 ```
 
-**Notes L0** — voir `design/README.md` pour la palette réelle.
-- ⚠️ Le prompt annonce « rouge sombre / crème / **vert sauge** ». Le vert sauge
-  n'existe pas comme couleur globale dans le design : il n'apparaît que comme
-  couleur de la catégorie Activités (`#3f6b4a`). Les 7 variables à poser sont
-  dans `design/README.md`.
-- `src/lib/supabase.js` existe mais **ne lève pas d'erreur** si les variables
-  manquent : il renvoie `null`. C'est précisément le point à corriger.
-- `vite.config.js` n'a pas l'alias `@`.
-- `index.html` charge déjà Playfair Display et EB Garamond.
-- `src/App.jsx` et `src/styles.css` sont le Hello World de déploiement, hex en dur.
-- `@supabase/supabase-js` est déjà installé, rien à ajouter.
+**L0 — fait le 24 août 2026.** Le prompt ci-dessus est conservé tel qu'il a été lancé ;
+voici ce qui a réellement été livré et les deux écarts assumés.
+
+Livré : `src/theme/` complet (voir « Système de thème » plus haut), `supabase.js` qui
+lève en nommant les variables manquantes, alias `@` dans `vite.config.js`,
+`.env.example` en placeholders, `src/styles.css` supprimé, `components/` `hooks/`
+`pages/` créés. Une seule dépendance ajoutée : `sass` en devDependency.
+
+**Écart 1 — SCSS au lieu de CSS.** Le thème n'est donc pas dans `src/theme/japan.css`
+mais dans `src/theme/themes/_japan.scss`. Motif : le contrat de tokens devient
+vérifiable à la compilation.
+
+**Écart 2 — `--sage` n'existe pas.** Remplacé par `--accent-2` (`#3f6b4a` côté Japon).
+Un token nommé d'après une couleur est un piège dans un système multi-thème : `--sage`
+contiendrait de l'ocre au Maroc. Les 7 variables du contrat sont présentes, sous des
+noms de rôle neutres. Le vert sauge reste par ailleurs la couleur de la catégorie
+Activités (`--cat-activite`).
 
 ---
 
@@ -313,6 +371,8 @@ STOP
 ```
 
 **Notes L3**
+- Les tokens sont posés (L0) : aucune couleur en dur, tout passe par les `--*`
+  listés dans « Système de thème ». Les puces de catégorie utilisent `--cat-*`.
 - Les images sont servies en `.webp`, pas `.png`.
 - 3 images du header manquent encore — voir « Reste à faire hors lots ».
 - Voir l'écart signalé plus haut sur le bandeau photo.
