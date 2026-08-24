@@ -14,7 +14,8 @@ et il est exclu de l'image Docker (voir `.dockerignore`).
 | `japan-map.jsx` | Carte du Japon : d3-geoMercator, pan/zoom/pinch, placement auto des labels |
 | `support.js` | Runtime du canvas Claude Design (généré) — requis pour ouvrir le `.dc.html` |
 | `image-slot.js` | Composant starter du canvas — requis pour ouvrir le `.dc.html` |
-| `img` | Lien symbolique vers `../public/img` |
+| `img/` | **Les PNG sources.** Compressés en WebP vers `public/img/` par `npm run img` |
+| `img/.manifest.json` | Hachages des PNG, sert au contrôle de fraîcheur en CI |
 
 Pour ouvrir le design dans un navigateur, il faut le servir en HTTP
 (le `.dc.html` charge d3 et topojson depuis unpkg) :
@@ -22,6 +23,28 @@ Pour ouvrir le design dans un navigateur, il faut le servir en HTTP
 ```sh
 npx serve design
 ```
+
+## Images
+
+Les PNG de `img/` sont la **source de vérité**. Ils ne sont jamais servis :
+`npm run img` les compresse en WebP dans `public/img/`, et ce sont les WebP qui
+sont commités et déployés (4,2 Mo → 251 Ko, −94 %).
+
+```sh
+npm run img          # compresse ce qui a changé
+npm run img -- --all # réencode tout
+npm run img:check    # vérifie sans compresser (tourne en CI)
+```
+
+Nécessite `cwebp` : `brew install webp` (ou `apt install webp`). Seul
+`npm run img:check` s'en passe, c'est pourquoi la CI peut le lancer.
+
+Après avoir ajouté ou remplacé un PNG, lance `npm run img` et commite
+`public/img/` **et** `design/img/.manifest.json` — sinon la CI échoue.
+
+Réglages : WebP q80, `-alpha_q 90`, `-m 6`. Les 28 images ont toutes de la
+transparence réelle, donc JPEG est exclu. AVIF ne gagnerait que ~5 % de plus
+pour un encodage 10× plus lent et un support limité à iOS 16+.
 
 ## Palette (extraite du .dc.html, par fréquence)
 
@@ -62,7 +85,8 @@ de L1 et le calibrage de L5.
 Ils ont été supprimés plutôt que laissés corrompus (en-tête PNG valide mais chunk
 `IEND` absent — `file` ne détecte pas le problème).
 
-À récupérer manuellement depuis le canvas puis à déposer dans `public/img/` :
+À récupérer manuellement depuis le canvas puis à déposer dans `design/img/`
+(puis `npm run img`) :
 
 ```
 alpes2  baguettes  deco-fuji  deco-fuji2  deco-momiji  hero-pagode
@@ -72,5 +96,4 @@ koyasan2  matcha  miyajima2  narai  shirakawago2  sumo  sushi
 `deco-fuji`, `deco-momiji` et `hero-pagode` sont les décos du header — nécessaires
 à partir de L3. Les 28 autres images sont présentes et complètes.
 
-Toutes ces images font plus de 190 Ko. Prévoir une conversion WebP avant le
-précache intégral de L7.
+Elles seront compressées comme les autres par `npm run img`.
