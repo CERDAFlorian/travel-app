@@ -1,0 +1,8 @@
+// Point d'entrée unique du système de thème.
+// Importé une seule fois, par src/main.jsx.
+//
+// Ordre : les variables d'abord (thèmes puis invariants), les règles ensuite.
+@use 'emit';
+@use 'base/invariants';
+@use 'base/reset';
+@use 'base/typography';

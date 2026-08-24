@@ -1,0 +1,57 @@
+// Contrat de thème
+// ----------------
+// La liste ci-dessous est la source de vérité : tout thème de src/theme/themes/
+// doit fournir EXACTEMENT ces clés. Une clé manquante ou inconnue casse la
+// compilation, ce qui évite qu'un thème incomplet parte en production.
+//
+// Ajouter un token = l'ajouter ici, puis dans CHAQUE thème.
+// Ne mets ici que ce qui varie d'un voyage à l'autre : l'espacement, les
+// couleurs de catégorie et les durées sont des invariants, ils vivent dans
+// base/_invariants.scss.
+
+@use 'sass:map';
+@use 'sass:list';
+
+$required: (
+  // Fonds
+  bg, surface, surface-raised, overlay,
+  // Texte
+  text, text-heading, muted, text-invert,
+  // Accent principal
+  accent, accent-hover, accent-contrast, accent-soft,
+  // Accent secondaire
+  accent-2, accent-2-soft,
+  // Traits
+  border, border-strong, border-soft,
+  // États
+  ok, warn, danger, info,
+  // Typographie
+  font-display, font-body,
+  // Formes
+  radius-sm, radius-md, radius-lg, radius-pill,
+  shadow-sm, shadow-md, shadow-lg
+);
+
+// Valide une map de thème et la renvoie telle quelle.
+@function validate($name, $theme) {
+  @each $key in $required {
+    @if not map.has-key($theme, $key) {
+      @error "Thème « #{$name} » : token manquant « #{$key} » (voir src/theme/_contract.scss).";
+    }
+  }
+
+  @each $key, $value in $theme {
+    @if not list.index($required, $key) {
+      @error "Thème « #{$name} » : token inconnu « #{$key} ». Ajoute-le à $required ou retire-le.";
+    }
+  }
+
+  @return $theme;
+}
+
+// Émet les custom properties d'un thème dans le sélecteur courant.
+@mixin emit($theme) {
+  @each $key, $value in $theme {
+    --#{$key}: #{$value};
+  }
+}
