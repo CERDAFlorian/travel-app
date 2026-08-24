@@ -65,13 +65,18 @@ Polices : `Playfair Display` (600/700) et `EB Garamond` — déjà chargées dan
 |---|---|---|---|---|
 | `hotel` | Hôtel | `#2c5271` | oui | oui |
 | `activite` | Activités | `#3f6b4a` | oui | oui |
-| `resto` | Restaurants | `#b4621f` | oui | non |
+| `restaurant` | Restaurants | `#b4621f` | oui | non |
 | `shopping` | Shopping | `#6b3f6e` | oui | non |
 | `lieu` | Lieux touristiques | `#1f6f74` | oui | oui |
 | `note` | Notes perso | `#8a6a2f` | non | non |
 
-⚠️ **Écart à trancher avant L1** : le design utilise la clé `resto`, le contrat SQL
-du lot L1 impose `CHECK IN (...,'restaurant',...)`. Aligner un côté ou l'autre.
+**Décision : la clé canonique est `restaurant`.** Le `.dc.html` utilise `resto`,
+le contrat SQL de L1 impose `CHECK IN (...,'restaurant',...)` ; c'est la spec qui
+tranche. Le tableau ci-dessus donne les valeurs à utiliser dans l'app.
+
+Le `.dc.html` n'est pas modifié : c'est un import fidèle du canvas, le corriger
+le ferait diverger de sa source. En transposant son code, remplacer `resto` par
+`restaurant` — c'est la seule des 6 clés qui change.
 
 ## Données géographiques
 
@@ -79,21 +84,42 @@ du lot L1 impose `CHECK IN (...,'restaurant',...)`. Aligner un côté ou l'autre
 de labels (`lx`, `ly`, `ox`, `oy`, `anchor`). Réutilisable directement pour le seed
 de L1 et le calibrage de L5.
 
-## ⚠️ 13 images manquantes
+## ⚠️ 9 images à récupérer
 
-`get_file` du MCP plafonne à 256 Ko ; 13 PNG dépassaient et arrivaient tronqués.
-Ils ont été supprimés plutôt que laissés corrompus (en-tête PNG valide mais chunk
-`IEND` absent — `file` ne détecte pas le problème).
+`get_file` du MCP plafonne à 256 Ko ; 13 PNG dépassaient et arrivaient tronqués
+(en-tête PNG valide mais chunk `IEND` absent — `file` ne le détecte pas). Ils ont
+été supprimés plutôt que laissés corrompus. Le plafond est infranchissable côté
+MCP : l'export doit se faire à la main depuis le canvas.
 
-À récupérer manuellement depuis le canvas puis à déposer dans `design/img/`
-(puis `npm run img`) :
+Sur ces 13, **4 ne sont référencées nulle part** dans le `.dc.html` — ce sont des
+variantes inutilisées, inutile de les récupérer : `alpes2`, `deco-fuji2`,
+`koyasan2`, `miyajima2`.
 
-```
-alpes2  baguettes  deco-fuji  deco-fuji2  deco-momiji  hero-pagode
-koyasan2  matcha  miyajima2  narai  shirakawago2  sumo  sushi
-```
+Les **9 réellement utilisées** :
 
-`deco-fuji`, `deco-momiji` et `hero-pagode` sont les décos du header — nécessaires
-à partir de L3. Les 28 autres images sont présentes et complètes.
+| Image | Rôle | Bloque L3 ? |
+|---|---|---|
+| `deco-momiji` | décor du header, en haut à gauche | **oui** |
+| `deco-fuji` | décor du header, en haut à droite | **oui** |
+| `hero-pagode` | bandeau hero pleine largeur | **oui** |
+| `sushi` | items « sushi », « toyosu », « tsukiji » | non |
+| `sumo` | items « sumo », « ryogoku » | non |
+| `shirakawago2` | items « shiroyama », « vallée » | non |
+| `narai` | items « narai », « nakasendo » | non |
+| `matcha` | items « matcha », « thé » | non |
+| `baguettes` | items « baguette » | non |
 
-Elles seront compressées comme les autres par `npm run img`.
+Les 6 dernières alimentent l'appariement par mots-clés (voir plus bas) : leur
+absence laisse simplement l'item sans photo, sans rien casser. Les 3 premières
+sont structurantes pour le shell de L3.
+
+**Procédure** : exporter depuis le canvas Claude Design, déposer les `.png` dans
+`design/img/`, puis `npm run img`. Le manifeste et les WebP se mettent à jour
+tout seuls, il n'y a rien d'autre à toucher.
+
+## Appariement photo ↔ item
+
+Le design n'attache pas les photos aux étapes : il fait correspondre des
+**mots-clés du titre de l'item** à une image (`.dc.html`, lignes 366-381). Le
+bandeau d'une étape est composé des photos de ses items qui matchent. À reprendre
+tel quel pour le `StepCard` de L3.
