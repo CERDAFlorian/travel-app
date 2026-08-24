@@ -1,23 +1,89 @@
 # travel-app — Découpage en lots & prompts Claude Code
 
-Stack figée : React + Vite + Supabase + IndexedDB. Déploiement Coolify (static + SPA fallback).
+Stack figée : React + Vite + Supabase + IndexedDB. Déploiement Coolify via image Docker
+(nginx, fallback SPA — le README décrivait un build pack static, c'était périmé).
 Offline en **lecture seule**. Carte SVG unique zoomable, ancres géographiques + labels déportés.
 
-Use the claude_design MCP (https://api.anthropic.com/v1/design/mcp, auth via /design-login) to import this project:
-https://claude.ai/design/p/ffcea357-0409-407c-94cb-8441582baff1?file=Itin%C3%A9raire+Japon.dc.html
+> **Design importé.** Le MCP `claude_design` est configuré (scope user) et le projet
+> [Itinéraire Japon interactif](https://claude.ai/design/p/ffcea357-0409-407c-94cb-8441582baff1)
+> a été importé dans `design/`. **Lire `design/README.md` avant tout lot** : palette,
+> couleurs des catégories, 25 villes géolocalisées, appariement photo ↔ item.
 
-Focus on these files (the whole project is readable):
-- `Itinéraire Japon.dc.html`
+---
 
-Also read these files the selection imports:
-- `image-slot.js`
-- `img/deco-fuji.png`
-- `img/deco-momiji.png`
-- `img/hero-pagode.png`
-- `japan-map.jsx`
-- `support.js`
+## État du projet — 24 août 2026
 
-Implement: `Itinéraire Japon.dc.html`
+Branche de travail : `dev`, synchronisée avec `origin/dev`. `main` est en retard,
+la fusion se fera par PR. **Aucun lot n'est commencé** : L0 est le prochain.
+
+### Ce qui est en place
+
+| | |
+|---|---|
+| Stack | React 18 + Vite 8, `@supabase/supabase-js` déjà installé |
+| Build | `npm run build` → 51 ms, `dist` = 448 Ko |
+| Dev | `npm run dev` → http://localhost:5173 |
+| Images | 28 WebP dans `public/img/` (251 Ko), sources PNG dans `design/img/` |
+| CI | `check.yml` sur push `dev` et PR `main` : `img:check` + build |
+| Déploiement | image Docker → GHCR → Coolify. `nginx.conf` fait le fallback SPA |
+
+### Commandes
+
+```sh
+npm run dev          # serveur de développement
+npm run build        # build production
+npm run img          # compresse design/img/*.png → public/img/*.webp
+npm run img:check    # vérifie sans compresser (tourne en CI)
+```
+
+### Décisions prises
+
+- **Clé catégorie : `restaurant`**, pas `resto`. Le design utilise `resto`, la spec
+  L1 tranche. C'est la seule des 6 clés qui diffère.
+- **Images servies en WebP.** Les PNG sources vivent dans `design/img/` et n'entrent
+  pas dans l'image Docker. Toute nouvelle image : la déposer là, puis `npm run img`.
+- **Le `.dc.html` n'est jamais modifié.** C'est un import fidèle du canvas ; le
+  corriger le ferait diverger de sa source.
+
+### Reste à faire hors lots
+
+**3 images bloquent L3** — à exporter du canvas vers `design/img/` puis `npm run img` :
+`deco-momiji.png`, `deco-fuji.png`, `hero-pagode.png` (décor du header et bandeau hero).
+
+6 autres sont optionnelles (`sushi`, `sumo`, `shirakawago2`, `narai`, `matcha`,
+`baguettes`) : leur absence laisse l'item sans photo, rien ne casse. Le plafond de
+256 Ko de `get_file` empêche de les récupérer via le MCP.
+
+---
+
+## ⚠️ Écarts entre ces specs et le design importé
+
+Constatés en lisant `design/japan-map.jsx` et le `.dc.html`. **À arbitrer au moment
+du lot concerné**, les prompts ci-dessous n'en tiennent pas compte.
+
+**L5 — la carte décrite n'est pas celle du design.** Le contrat parle d'un « SVG
+stylisé dessiné à la main » avec calibrage manuel par ville. En réalité
+`japan-map.jsx` télécharge `world-atlas` (TopoJSON) depuis un CDN et le projette
+avec `d3.geoMercator().fitExtent()`. Conséquences :
+
+- le calibrage `src/data/city-bounds.js` devient inutile, la projection donne déjà
+  les positions ;
+- le déport de labels n'utilise **pas** `d3-force` : la fonction `place()` essaie
+  des positions candidates et garde la première sans collision ;
+- le cache par paliers de zoom n'existe pas, tout est recalculé à chaque rendu —
+  l'exigence de perf reste donc entièrement à faire ;
+- **bloquant offline** : la carte `fetch` un CDN au montage. Hors ligne au Japon
+  elle ne s'affiche pas. Le TopoJSON du Japon doit être embarqué dans le bundle.
+
+**L1 — `pin_x` / `pin_y` sont probablement inutiles.** Le contrat les justifie par
+un placement manuel dans le SVG. Avec une vraie projection, `lat`/`lng` suffisent.
+
+**L3 — le bandeau photo n'est pas un champ de l'étape.** Le design apparie les
+photos par **mots-clés du titre d'item** (`.dc.html`, lignes 366-381), pas via un
+tableau sur l'étape. À arbitrer avec `steps.images text[]` prévu en L1.
+
+**L7 — les headers de cache sont déjà faits.** `nginx.conf` gère `no-cache` sur
+`index.html`/`sw.js`/`manifest.webmanifest` et `immutable` sur `/assets/`.
 
 ---
 
@@ -87,6 +153,18 @@ STOP
 - N'installe aucune dépendance hors @supabase/supabase-js sans me demander.
 ```
 
+**Notes L0** — voir `design/README.md` pour la palette réelle.
+- ⚠️ Le prompt annonce « rouge sombre / crème / **vert sauge** ». Le vert sauge
+  n'existe pas comme couleur globale dans le design : il n'apparaît que comme
+  couleur de la catégorie Activités (`#3f6b4a`). Les 7 variables à poser sont
+  dans `design/README.md`.
+- `src/lib/supabase.js` existe mais **ne lève pas d'erreur** si les variables
+  manquent : il renvoie `null`. C'est précisément le point à corriger.
+- `vite.config.js` n'a pas l'alias `@`.
+- `index.html` charge déjà Playfair Display et EB Garamond.
+- `src/App.jsx` et `src/styles.css` sont le Hello World de déploiement, hex en dur.
+- `@supabase/supabase-js` est déjà installé, rien à ajouter.
+
 ---
 
 ## L1 — Schéma Supabase + RLS
@@ -140,6 +218,11 @@ STOP
 - N'exécute rien contre Supabase. Tu produis le SQL, je l'applique moi-même.
 - Ne crée aucune policy permissive du type `using (true)`.
 ```
+
+**Notes L1**
+- Clé catégorie : **`restaurant`** (décidé), le design dit `resto`.
+- `design/README.md` liste 25 villes avec `lat`/`lon` réels, réutilisables pour le seed.
+- Voir l'écart signalé plus haut sur `pin_x` / `pin_y`.
 
 ---
 
@@ -228,6 +311,11 @@ STOP
 - Pas de carte dans ce lot.
 - Ne modifie pas la couche données de L2. Si elle te manque quelque chose, remonte-le.
 ```
+
+**Notes L3**
+- Les images sont servies en `.webp`, pas `.png`.
+- 3 images du header manquent encore — voir « Reste à faire hors lots ».
+- Voir l'écart signalé plus haut sur le bandeau photo.
 
 ---
 
@@ -337,6 +425,9 @@ STOP
   les paramètres testés plutôt que de continuer à tâtonner.
 ```
 
+**Notes L5** — lire l'encadré « Écarts » en haut du document avant de commencer.
+Le contrat décrit une carte différente de celle qui existe.
+
 ---
 
 ## L6 — Vols, trajets, expériences, budget
@@ -407,6 +498,10 @@ STOP
 - Ne mets pas en cache les appels Nominatim : inutile hors ligne.
 - Ne tente pas de rendre l'écriture disponible offline.
 ```
+
+**Notes L7**
+- Les headers de cache sont déjà dans `nginx.conf`.
+- Images déjà optimisées : 251 Ko de WebP au lieu de 4,2 Mo de PNG, `dist` = 448 Ko.
 
 ---
 
