@@ -44,8 +44,3 @@ jobs:
             VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      # - name: Trigger Coolify deploy
-      #   run: |
-      #     curl -X GET "${{ secrets.COOLIFY_WEBHOOK_URL }}" \
-      #       -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}"
