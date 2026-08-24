@@ -7,3 +7,8 @@ dist
 *.log
 .DS_Store
 README.md
+
+# Références de conception et specs : hors image de production
+design
+travel-app-lots-et-prompts.md
+supabase
