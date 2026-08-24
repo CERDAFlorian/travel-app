@@ -1,6 +1,11 @@
 # Travel App
 
-Application React/Vite minimale pour valider le deploiement Coolify.
+Application de préparation de voyage. React + Vite + Supabase + IndexedDB.
+Offline en lecture seule. Déploiement Coolify via image Docker.
+
+Le découpage du développement en lots est dans
+[`travel-app-lots-et-prompts.md`](travel-app-lots-et-prompts.md).
+Les références de conception sont dans [`design/`](design/README.md).
 
 ## Installation locale
 
@@ -10,49 +15,66 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Pour le moment, Supabase est installe mais vide. Les variables peuvent rester vides tant que l'app Hello World ne lit pas encore la base.
+L'app démarre sur http://localhost:5173.
 
 ## Build production
 
 ```sh
-npm run build
+npm run build     # sortie dans dist/
+npm run preview   # sert dist/ localement
 ```
+
+## Variables d'environnement
+
+| Variable | Usage |
+|---|---|
+| `VITE_SUPABASE_URL` | URL du projet Supabase |
+| `VITE_SUPABASE_ANON_KEY` | Clé publiable (elle part dans le bundle, ce n'est pas un secret) |
+
+`.env.example` contient les valeurs du projet. `.env` et `.env.local` sont gitignorés.
 
 ## Branches et CI/CD
 
-- `dev` : branche de travail. Chaque push lance un build de verification.
-- `main` : branche de production. Chaque push build l'app puis declenche un deploiement Coolify.
+- `dev` — branche de travail. Chaque push lance `.github/workflows` → build de vérification.
+- `main` — production. Chaque push construit l'image Docker et la pousse sur
+  GHCR (`ghcr.io/cerdaflorian/travel-app:latest` + tag du SHA).
 
-## Secrets GitHub
+Coolify tire ensuite cette image. Il n'y a **pas** de webhook de déploiement
+déclenché depuis GitHub : les secrets `COOLIFY_DEPLOY_WEBHOOK` et `COOLIFY_TOKEN`
+ne sont utilisés par aucun workflow.
 
-Dans `Settings > Secrets and variables > Actions`, ajouter :
+### Secrets GitHub requis
+
+Dans `Settings > Secrets and variables > Actions` :
 
 ```txt
 VITE_SUPABASE_URL
 VITE_SUPABASE_ANON_KEY
-COOLIFY_DEPLOY_WEBHOOK
-COOLIFY_TOKEN
 ```
 
-## Configuration Coolify
+`GITHUB_TOKEN` est fourni automatiquement pour le push sur GHCR.
 
-1. Dans Coolify, creer un nouveau projet.
-2. Ajouter une nouvelle application.
-3. Choisir GitHub comme source.
-4. Selectionner le depot `CERDAFlorian/travel-app`.
-5. Choisir la branche `main` pour la production.
-6. Selectionner un build pack compatible Vite, idealement `Nixpacks` ou `Static`.
-7. Renseigner les commandes :
+## Déploiement Coolify
 
-```txt
-Install Command: npm ci
-Build Command: npm run build
-Publish Directory: dist
-```
+L'app se déploie comme **image Docker préconstruite**, pas via un build pack.
 
-8. Ajouter les variables d'environnement `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY` quand ton projet Supabase sera cree.
-9. Ajouter ton domaine dans Coolify.
-10. Garder HTTPS active.
-11. Deployer une premiere fois depuis Coolify.
-12. Copier le `Deploy Webhook (auth required)` dans le secret GitHub `COOLIFY_DEPLOY_WEBHOOK`.
-13. Creer un token API Coolify avec la permission `deploy`, puis le mettre dans `COOLIFY_TOKEN`.
+1. Dans Coolify, créer une application de type *Docker Image*.
+2. Image : `ghcr.io/cerdaflorian/travel-app:latest`.
+3. Port exposé : `80`.
+4. Ajouter le domaine, garder HTTPS actif.
+
+Le [`Dockerfile`](Dockerfile) construit l'app avec Node 24 puis la sert avec nginx.
+Les variables `VITE_*` sont injectées **au build** (via `build-args` dans le workflow),
+pas au runtime — changer une variable impose de reconstruire l'image.
+
+### Headers de cache
+
+Déjà configurés dans [`nginx.conf`](nginx.conf), rien à faire côté Coolify :
+
+- `index.html`, `sw.js`, `manifest.webmanifest` → `no-cache`
+- `/assets/` (hashés par Vite) → `immutable`, 1 an
+
+## Base de données
+
+Les migrations SQL vivront dans `supabase/`. Elles s'appliquent manuellement,
+la CI ne touche jamais à la base.

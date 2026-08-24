@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap">
+<script src="https://unpkg.com/d3@7.9.0/dist/d3.min.js" integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js" integrity="sha384-Ukv1p/xTma6P4/2bY5KzWBw+ydSpXmhCMtyciIQVDJ1RmOxtCYNMF1uXT9T63H67" crossorigin="anonymous"></script>
+<script src="./image-slot.js"></script>
+<style>
+html, body { margin: 0; padding: 0; }
+body { background: #f8ecd9; color: #3d2f24; font-family: 'EB Garamond', Georgia, serif; -webkit-font-smoothing: antialiased; }
+* { box-sizing: border-box; }
+a { color: #8f1d24; text-decoration: none; }
+a:hover { color: #6d1418; }
+ul { margin: 0; padding: 0; list-style: none; }
+input, select { font-family: inherit; color: inherit; }
+input::placeholder { color: #b39a72; font-style: italic; }
+@keyframes softin { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+</style>
+</helmet>
+
+<div style="min-height: 100vh; background: #f8ecd9;">
+
+<header style="position: relative; overflow: hidden; border-bottom: 1px solid #e6d2ab;">
+  <img src="img/deco-momiji.png" alt="" style="position: absolute; left: -18px; top: -14px; width: clamp(96px, 11vw, 168px); pointer-events: none;">
+  <img src="img/deco-fuji.png" alt="" style="position: absolute; right: 0; top: 0; width: clamp(190px, 26vw, 360px); pointer-events: none;">
+  <div style="position: relative; padding: clamp(16px, 2.4vw, 30px) clamp(200px, 27vw, 375px) clamp(12px, 1.6vw, 18px) clamp(84px, 8vw, 130px); display: flex; flex-wrap: wrap; align-items: flex-end; gap: clamp(8px, 1.6vw, 20px);">
+    <h1 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: clamp(40px, 6.2vw, 86px); line-height: .92; color: #8f1d24;">JAPON</h1>
+    <div style="padding-bottom: clamp(4px, .8vw, 10px);">
+      <div style="font-size: clamp(17px, 2.1vw, 29px); font-style: italic; color: #4a3a2c;">— Itinéraire interactif, jour par jour</div>
+      <div style="margin-top: 3px; font-size: clamp(13px, 1.4vw, 18px); font-style: italic; color: #8f1d24;">{{ dateRange }}</div>
+    </div>
+    <div style="margin-left: auto; display: flex; flex-wrap: wrap; gap: 8px; padding-bottom: 4px;">
+      <span style="border: 1px solid #d0b177; border-radius: 999px; padding: 5px 13px; background: #fdf6e9; font-size: clamp(11px, 1.15vw, 14px); letter-spacing: .09em; text-transform: uppercase; color: #7a2027;">{{ stepCount }} étapes</span>
+      <span style="border: 1px solid #d0b177; border-radius: 999px; padding: 5px 13px; background: #fdf6e9; font-size: clamp(11px, 1.15vw, 14px); letter-spacing: .09em; text-transform: uppercase; color: #7a2027;">{{ nightsTotal }} nuits</span>
+      <span style="border: 1px solid #d0b177; border-radius: 999px; padding: 5px 13px; background: #fdf6e9; font-size: clamp(11px, 1.15vw, 14px); letter-spacing: .09em; text-transform: uppercase; color: #7a2027;">{{ totalPlaces }} lieux</span>
+    </div>
+  </div>
+
+  <div style="position: relative; padding: 0 clamp(16px, 3vw, 44px) clamp(12px, 1.6vw, 18px);">
+    <div style="display: flex; gap: 4px; align-items: stretch;">
+      <sc-for list="{{ segments }}" as="seg" hint-placeholder-count="7">
+        <div onClick="{{ seg.select }}" title="{{ seg.title }}" style="flex-grow: 1; flex-basis: 0; min-width: 0; cursor: pointer; border-radius: 6px; padding: 6px 8px; border: 1px solid #dcc39a; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: clamp(10px, 1.05vw, 13.5px); letter-spacing: .04em; text-transform: uppercase; background: #efe0c4; color: #6b4a2c; flex-grow: {{ seg.grow }}; background: {{ seg.bg }}; color: {{ seg.fg }};">{{ seg.label }}</div>
+      </sc-for>
+    </div>
+  </div>
+</header>
+
+<section style="padding: clamp(14px, 1.8vw, 22px) clamp(16px, 3vw, 44px) 0;">
+  <div style="background: #fdf6e9; border: 1.5px solid #e0caa2; border-radius: 14px; padding: clamp(11px, 1.2vw, 16px);">
+    <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; margin-bottom: 10px;">
+      <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: clamp(16px, 1.7vw, 23px); letter-spacing: .04em; text-transform: uppercase; color: #8f1d24;">Billets d'avion</h2>
+      <span style="font-size: clamp(11.5px, 1.2vw, 14.5px); font-style: italic; color: #8a6c47;">aller, retour et vols intérieurs</span>
+      <span style="margin-left: auto; font-size: clamp(12.5px, 1.3vw, 16px); color: #6b5238;">Total vols <span style="color: #8f1d24; font-style: italic;">{{ flightsTotal }}</span></span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr)); gap: clamp(8px, 1vw, 14px);">
+      <sc-for list="{{ flights }}" as="f" hint-placeholder-count="2">
+        <div style="position: relative; border: 1px solid #ddc59b; border-radius: 12px; padding: 10px 12px; background: #f8eed9;">
+          <div style="display: flex; align-items: baseline; gap: 8px;">
+            <span style="font-size: clamp(10.5px, 1.05vw, 12.5px); letter-spacing: .12em; text-transform: uppercase; color: #8f1d24;">{{ f.label }}</span>
+            <span style="font-size: clamp(11.5px, 1.2vw, 14px); font-style: italic; color: #8a6c47;">{{ f.date }}</span>
+            <span onClick="{{ f.del }}" title="Supprimer" style="margin-left: auto; cursor: pointer; color: #bb9a6c; font-size: 13px;">✕</span>
+          </div>
+          <div style="margin-top: 3px; font-family: 'Playfair Display', Georgia, serif; font-size: clamp(14.5px, 1.5vw, 19px); color: #3a2a1e;">{{ f.route }}</div>
+          <div style="margin-top: 5px; display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: clamp(11.5px, 1.2vw, 14px); letter-spacing: .06em; text-transform: uppercase; color: #a08050;">{{ f.flight }}</span>
+            <span style="flex: 1; height: 1px; background: repeating-linear-gradient(90deg, #d6b783 0 5px, transparent 5px 10px);"></span>
+            <input type="text" defaultValue="{{ f.price }}" placeholder="prix €" onBlur="{{ f.setPrice }}" onKeyDown="{{ f.priceKey }}" style="width: 84px; text-align: right; padding: 3px 7px; border: 1px solid #ddc59b; border-radius: 7px; background: #fffdf7; font-size: clamp(12px, 1.25vw, 15px); font-style: italic; color: #8f1d24;">
+          </div>
+        </div>
+      </sc-for>
+      <div style="border: 1px dashed #d0b177; border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px;">
+        <div style="font-size: clamp(11px, 1.1vw, 13px); letter-spacing: .1em; text-transform: uppercase; color: #a08050;">Ajouter un vol</div>
+        <input type="text" placeholder="Paris CDG → Tokyo Haneda" style="padding: 4px 8px; border: 1px solid #ddc59b; border-radius: 7px; background: #fffdf7; font-size: clamp(12.5px, 1.25vw, 15px);">
+        <div style="display: flex; gap: 6px;">
+          <input type="text" placeholder="7 nov. 2026" style="flex: 1; min-width: 0; padding: 4px 8px; border: 1px solid #ddc59b; border-radius: 7px; background: #fffdf7; font-size: clamp(12.5px, 1.25vw, 15px);">
+          <input type="text" placeholder="NH 216" style="width: 34%; min-width: 0; padding: 4px 8px; border: 1px solid #ddc59b; border-radius: 7px; background: #fffdf7; font-size: clamp(12.5px, 1.25vw, 15px);">
+        </div>
+        <div style="display: flex; gap: 6px;">
+          <input type="text" placeholder="890 €" style="flex: 1; min-width: 0; padding: 4px 8px; border: 1px solid #ddc59b; border-radius: 7px; background: #fffdf7; font-size: clamp(12.5px, 1.25vw, 15px);">
+          <span onClick="{{ addFlight }}" style="cursor: pointer; border: 1px solid #c9a86a; border-radius: 7px; padding: 4px 12px; background: #f6e3c4; color: #8f1d24; font-size: clamp(12.5px, 1.25vw, 15px); white-space: nowrap;">+ Ajouter</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<main style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 430px), 1fr)); gap: clamp(16px, 2vw, 28px); padding: clamp(14px, 2vw, 26px) clamp(16px, 3vw, 44px) clamp(20px, 2.4vw, 32px);">
+
+  <section style="display: flex; flex-direction: column; gap: clamp(10px, 1.2vw, 15px); min-width: 0;">
+    <sc-for list="{{ steps }}" as="s" hint-placeholder-count="7">
+      <article onClick="{{ s.select }}" style="position: relative; display: grid; grid-template-columns: auto 1fr; gap: clamp(10px, 1.2vw, 16px); padding: clamp(11px, 1.2vw, 16px); background: #fdf6e9; border: 1.5px solid #e0caa2; border-radius: 14px; cursor: pointer; border-color: {{ s.ring }}; box-shadow: {{ s.shadow }};">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 7px;">
+          <div style="width: clamp(30px, 3.4vw, 40px); height: clamp(30px, 3.4vw, 40px); border-radius: 50%; background: #8f1d24; color: #fdf1dc; display: flex; align-items: center; justify-content: center; font-size: clamp(15px, 1.7vw, 21px); font-weight: 600; box-shadow: inset 0 0 0 2px rgba(253,241,220,.35);">{{ s.n }}</div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 12px; color: #c2a377;">
+            <span onClick="{{ s.up }}" title="Monter" style="cursor: pointer;">▲</span>
+            <span onClick="{{ s.down }}" title="Descendre" style="cursor: pointer;">▼</span>
+            <span onClick="{{ s.remove }}" title="Retirer cette ville" style="cursor: pointer; color: #c98f8f;">✕</span>
+          </div>
+          <div style="flex: 1; width: 1px; background: linear-gradient(#d9bd8c, rgba(217,189,140,.15));"></div>
+        </div>
+        <div style="min-width: 0;">
+          <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px;">
+            <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: clamp(19px, 2.1vw, 28px); color: #3a2a1e; line-height: 1.1;">{{ s.name }}</h2>
+            <span style="font-style: italic; font-size: clamp(13px, 1.35vw, 17px); color: #8f1d24;">{{ s.dates }}</span>
+            <span style="margin-left: auto; display: inline-flex; align-items: center; gap: 7px; border: 1px solid #d8bd8e; border-radius: 999px; padding: 2px 8px; font-size: clamp(10.5px, 1.1vw, 13px); letter-spacing: .06em; text-transform: uppercase; color: #7a5a33; background: #f7eddb; white-space: nowrap;">
+              <span onClick="{{ s.less }}" title="Une nuit de moins" style="cursor: pointer; color: #8f1d24;">−</span>{{ s.nightsLabel }}<span onClick="{{ s.more }}" title="Une nuit de plus" style="cursor: pointer; color: #8f1d24;">+</span>
+            </span>
+          </div>
+          <div style="display: grid; display: {{ s.photoShow }}; margin-top: 9px; grid-template-columns: repeat(3, 1fr); gap: 6px;">
+            <sc-for list="{{ s.photos }}" as="p" hint-placeholder-count="3">
+              <figure style="margin: 0; border-radius: 8px; overflow: hidden; border: 1px solid #dcc49a; background: #efe2c8;">
+                <sc-if value="{{ p.hasImg }}" hint-placeholder-val="{{ true }}">
+                  <div role="img" style="width: 100%; height: clamp(70px, 8vw, 108px); background-color: #efe2c8; background-size: cover; background-position: center; background-image: {{ p.bg }};"></div>
+                </sc-if>
+                <sc-if value="{{ p.noImg }}" hint-placeholder-val="{{ false }}">
+                  <div onClick="{{ stop }}" style="width: 100%; height: clamp(70px, 8vw, 108px); position: relative;">
+                    <image-slot id="{{ p.slotId }}" shape="rect" placeholder="{{ p.name }}"></image-slot>
+                    <a href="{{ p.searchUrl }}" target="_blank" rel="noopener" onClick="{{ stop }}" title="Chercher des photos de ce lieu, puis glisser l'image ici" style="position: absolute; right: 4px; top: 4px; z-index: 2; font-size: 9.5px; letter-spacing: .06em; text-transform: uppercase; background: rgba(253,246,233,.9); border: 1px solid #d0b177; border-radius: 999px; padding: 1px 7px; color: #8f1d24;">chercher</a>
+                  </div>
+                </sc-if>
+                <figcaption style="background: #9c2a2a; color: #fbeed7; font-size: clamp(8.5px, .82vw, 10.5px); letter-spacing: .07em; text-transform: uppercase; padding: 3px 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ p.cap }}</figcaption>
+              </figure>
+            </sc-for>
+          </div>
+          <div style="display: none; display: {{ s.phShow }}; margin-top: 9px; height: clamp(56px, 6vw, 74px); border-radius: 8px; border: 1px dashed #d0b177; background: repeating-linear-gradient(45deg, #f4e7cd 0 8px, #efe0c4 8px 16px); align-items: center; justify-content: center; font-family: ui-monospace, Menlo, monospace; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #a08050;">photos de {{ s.short }} à déposer ici</div>
+
+          <div style="margin-top: 10px; border-top: 1px solid #eadcc0;">
+            <sc-for list="{{ s.sections }}" as="sec" hint-placeholder-count="6">
+              <div style="border-bottom: 1px dotted #e4d2b0;">
+                <div onClick="{{ sec.toggle }}" style="display: flex; align-items: center; gap: 8px; padding: 5px 2px; cursor: pointer;">
+                  <span style="width: 9px; height: 9px; border-radius: 50%; flex: none; background: #8f1d24; background: {{ sec.color }};"></span>
+                  <span style="font-size: clamp(12.5px, 1.3vw, 16px); letter-spacing: .05em; text-transform: uppercase; color: #5c4630;">{{ sec.label }}</span>
+                  <span style="font-size: clamp(11px, 1.15vw, 13.5px); font-style: italic; color: #a08050;">{{ sec.count }}</span>
+                  <span style="margin-left: auto; font-size: clamp(11.5px, 1.2vw, 14.5px); font-style: italic; color: #8f1d24;">{{ sec.total }}</span>
+                  <span style="font-size: clamp(11px, 1.15vw, 13.5px); color: #b39a72;">{{ sec.caret }}</span>
+                </div>
+                <div style="display: none; display: {{ sec.open }}; flex-direction: column; gap: 4px; padding: 2px 2px 9px 17px; animation: softin .22s ease both;">
+                  <sc-for list="{{ sec.items }}" as="it" hint-placeholder-count="2">
+                    <div onClick="{{ it.pick }}" style="display: flex; flex-wrap: wrap; align-items: center; gap: 7px; padding: 3px 5px; border-radius: 8px; cursor: pointer; background: transparent; background: {{ it.bg }};">
+                      <sc-if value="{{ it.hasThumb }}" hint-placeholder-val="{{ false }}">
+                        <div role="img" style="width: 44px; height: 31px; border-radius: 4px; border: 1px solid #d5c3a4; flex: none; background-color: #efe2c8; background-size: cover; background-position: center; background-image: {{ it.bgThumb }};"></div>
+                      </sc-if>
+                      <span style="width: 7px; height: 7px; border-radius: 50%; flex: none; background: {{ it.color }};"></span>
+                      <span style="font-size: clamp(12.5px, 1.3vw, 16px); color: #3d2f24;">{{ it.name }}</span>
+                      <span style="font-size: clamp(11px, 1.15vw, 13.5px); font-style: italic; color: #8a6c47;">{{ it.meta }}</span>
+                      <sc-if value="{{ it.hasMap }}" hint-placeholder-val="{{ true }}">
+                        <a href="{{ it.mapUrl }}" target="_blank" rel="noopener" onClick="{{ stop }}" title="Ouvrir dans Plan / Google Maps" style="font-size: clamp(10.5px, 1.05vw, 12.5px); letter-spacing: .06em; text-transform: uppercase; border: 1px solid #cbb691; border-radius: 999px; padding: 1px 8px; color: #6b5238;">{{ mapLabel }}</a>
+                      </sc-if>
+                      <span style="margin-left: auto; display: flex; align-items: center; gap: 6px;">
+                        <span onClick="{{ it.star }}" title="Mettre en avant : ce lieu illustre la ville (3 maximum)" style="display: {{ it.starShow }}; cursor: pointer; font-size: 14px; line-height: 1; color: {{ it.starColor }};">{{ it.starIcon }}</span>
+                        <span onClick="{{ it.locate }}" title="Placer automatiquement sur la carte" style="display: {{ it.locateShow }}; cursor: pointer; font-size: clamp(10.5px, 1.05vw, 12.5px); letter-spacing: .06em; text-transform: uppercase; border: 1px dashed #b6c6d5; border-radius: 999px; padding: 1px 8px; color: #52708a; white-space: nowrap;">{{ it.locateLabel }}</span>
+                        <input type="text" defaultValue="{{ it.price }}" placeholder="prix" onClick="{{ stop }}" onBlur="{{ it.setPrice }}" onKeyDown="{{ it.priceKey }}" style="display: {{ it.priceShow }}; width: 74px; text-align: right; padding: 2px 6px; border: 1px solid #e2d0ae; border-radius: 6px; background: #fffdf7; font-size: clamp(11.5px, 1.2vw, 14px); font-style: italic; color: #8f1d24;">
+                        <span onClick="{{ it.del }}" title="Supprimer" style="cursor: pointer; color: #c2a377; font-size: 12.5px; padding: 0 3px;">✕</span>
+                      </span>
+                    </div>
+                  </sc-for>
+                  <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 2px;">
+                    <input type="text" placeholder="{{ sec.placeholder }}" onKeyDown="{{ sec.onKey }}" onClick="{{ stop }}" style="flex: 1; min-width: 120px; padding: 4px 8px; border: 1px solid #ddc59b; border-radius: 7px; background: #fffdf7; font-size: clamp(12px, 1.25vw, 15px);">
+                    <input type="text" placeholder="prix" onKeyDown="{{ sec.onKey }}" onClick="{{ stop }}" style="display: {{ sec.priceOn }}; width: 74px; padding: 4px 8px; border: 1px solid #ddc59b; border-radius: 7px; background: #fffdf7; font-size: clamp(12px, 1.25vw, 15px);">
+                    <span onClick="{{ sec.onAdd }}" style="cursor: pointer; border: 1px solid #d8bd8e; border-radius: 7px; padding: 3px 10px; background: #f6e3c4; color: #8f1d24; font-size: clamp(12px, 1.25vw, 15px); white-space: nowrap;">+</span>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display: flex; display: {{ s.travelShow }}; align-items: center; gap: 9px; margin-top: 10px; padding-top: 8px;">
+            <span style="font-size: clamp(11px, 1.15vw, 14px); letter-spacing: .08em; text-transform: uppercase; color: #a08050;">{{ s.travelKind }}</span>
+            <span style="flex: 1; height: 1px; background: repeating-linear-gradient(90deg, #cdae7d 0 6px, transparent 6px 11px);"></span>
+            <span style="font-size: clamp(12.5px, 1.3vw, 16px); font-style: italic; color: #8f1d24;">{{ s.travelText }}</span>
+          </div>
+        </div>
+      </article>
+    </sc-for>
+
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: clamp(10px, 1.1vw, 14px); border: 1px dashed #d0b177; border-radius: 14px; background: #fbf3e3;">
+      <span style="font-size: clamp(11px, 1.1vw, 13px); letter-spacing: .1em; text-transform: uppercase; color: #a08050;">Ajouter une ville</span>
+      <select style="flex: 1; min-width: 150px; padding: 4px 8px; border: 1px solid #ddc59b; border-radius: 7px; background: #fffdf7; font-size: clamp(12.5px, 1.25vw, 15px);">
+        <option value="">Choisir une étape…</option>
+        <sc-for list="{{ cityOptions }}" as="c" hint-placeholder-count="6">
+          <option value="{{ c.key }}">{{ c.label }}</option>
+        </sc-for>
+      </select>
+      <input type="number" min="1" max="30" defaultValue="2" title="Nombre de nuits" style="width: 66px; padding: 4px 8px; border: 1px solid #ddc59b; border-radius: 7px; background: #fffdf7; font-size: clamp(12.5px, 1.25vw, 15px);">
+      <span onClick="{{ addCity }}" style="cursor: pointer; border: 1px solid #c9a86a; border-radius: 7px; padding: 4px 13px; background: #f6e3c4; color: #8f1d24; font-size: clamp(12.5px, 1.25vw, 15px); white-space: nowrap;">+ Ajouter l'étape</span>
+      <span style="flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; font-size: clamp(11.5px, 1.2vw, 14px); font-style: italic; color: #8a6c47;">L'étape s'ajoute à la fin ; utilisez ▲ ▼ pour la replacer. Dates, nuits et temps de trajet se recalculent tout seuls.
+        <span onClick="{{ resetAll }}" title="Revenir à l'itinéraire d'origine" style="margin-left: auto; cursor: pointer; font-style: normal; letter-spacing: .06em; text-transform: uppercase; font-size: clamp(10.5px, 1.05vw, 12.5px); border: 1px solid #cbb691; border-radius: 999px; padding: 2px 10px; color: #8f1d24; white-space: nowrap;">Réinitialiser l'itinéraire</span>
+      </span>
+    </div>
+  </section>
+
+  <aside style="min-width: 0;">
+   <div style="position: sticky; top: 12px; background: #fdf6e9; border: 1.5px solid #e0caa2; border-radius: 16px; padding: clamp(11px, 1.2vw, 16px);">
+    <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; margin-bottom: 8px;">
+      <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: clamp(17px, 1.8vw, 24px); color: #8f1d24;">La carte du voyage</h2>
+      <span style="font-size: clamp(11.5px, 1.2vw, 14.5px); font-style: italic; color: #8a6c47;">molette pour zoomer · glisser pour déplacer</span>
+      <span onClick="{{ locateAll }}" title="Chercher l'adresse de chaque lieu et le placer précisément" style="margin-left: auto; cursor: pointer; font-size: clamp(10.5px, 1.05vw, 13px); letter-spacing: .06em; text-transform: uppercase; border: 1px solid #b6c6d5; border-radius: 999px; padding: 3px 11px; color: #2c5271; background: #f2f6f9; white-space: nowrap;">{{ geoLabel }}</span>
+    </div>
+    <x-import component="JapanMap" from="./japan-map.jsx" pins="{{ pins }}" points="{{ points }}" cats="{{ cats }}" hidden="{{ hidden }}" legs="{{ legs }}" selected="{{ selected }}" selected-point="{{ selectedPoint }}" on-select="{{ onPin }}" on-point="{{ onPoint }}" hint-size="100%,380px"></x-import>
+    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0;">
+      <span style="display: inline-flex; align-items: center; gap: 7px; border: 1px solid #d8bd8e; border-radius: 999px; padding: 3px 11px; font-size: clamp(11px, 1.15vw, 14px); color: #5c1b1b; background: #f7eddb;"><span style="width: 11px; height: 11px; border-radius: 50%; background: #8f1d24;"></span>Étapes</span>
+      <sc-for list="{{ legend }}" as="lg" hint-placeholder-count="6">
+        <span onClick="{{ lg.toggle }}" title="Afficher / masquer sur la carte" style="display: inline-flex; align-items: center; gap: 7px; cursor: pointer; border: 1px solid #d8bd8e; border-radius: 999px; padding: 3px 11px; font-size: clamp(11px, 1.15vw, 14px); border-color: {{ lg.border }}; color: {{ lg.fg }}; background: {{ lg.bg }}; opacity: {{ lg.op }};"><span style="width: 11px; height: 11px; border-radius: 50%; background: {{ lg.dot }};"></span>{{ lg.label }}</span>
+      </sc-for>
+    </div>
+    <div style="display: block; display: {{ travelPanel }}; margin-top: clamp(10px, 1.2vw, 15px); padding: clamp(9px, 1vw, 13px); border: 1px solid #e0caa2; border-radius: 12px; background: #f8eed9;">
+      <div style="text-align: center; font-size: clamp(11.5px, 1.15vw, 14px); letter-spacing: .12em; text-transform: uppercase; color: #8f1d24; margin-bottom: 6px;">Temps de trajet approximatifs</div>
+      <sc-for list="{{ legsList }}" as="lg" hint-placeholder-count="6">
+        <div style="display: flex; align-items: baseline; gap: 8px; padding: 3px 0; border-bottom: 1px dotted #ddc59b;">
+          <span style="font-size: clamp(12.5px, 1.3vw, 16px); color: #4d3c2d;">{{ lg.label }}</span>
+          <span style="flex: 1; min-width: 10px; height: 1px; background: repeating-linear-gradient(90deg, #d6b783 0 5px, transparent 5px 10px);"></span>
+          <span style="font-size: clamp(12.5px, 1.3vw, 16px); font-style: italic; color: #8f1d24; white-space: nowrap;">{{ lg.time }}</span>
+        </div>
+      </sc-for>
+    </div>
+   </div>
+  </aside>
+</main>
+
+<section style="position: relative; margin: 0 clamp(16px, 3vw, 44px) clamp(18px, 2.2vw, 28px); border-radius: 16px; overflow: hidden; border: 1.5px solid #e0caa2;">
+  <img src="img/hero-pagode.png" alt="" style="width: 100%; height: clamp(120px, 15vw, 210px); object-fit: cover; display: block;">
+  <div style="position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: clamp(12px, 1.6vw, 22px); background: linear-gradient(90deg, rgba(40,20,10,.55) 0%, rgba(40,20,10,.15) 55%, transparent 100%);">
+    <div style="font-family: 'Playfair Display', Georgia, serif; font-size: clamp(17px, 2.2vw, 30px); color: #fdf1dc;">Des instants précieux, des souvenirs impérissables</div>
+    <div style="font-size: clamp(12.5px, 1.35vw, 17px); font-style: italic; color: #f6dcb8;">{{ tagline }}</div>
+  </div>
+</section>
+
+<section style="display: block; display: {{ expShow }}; padding: 0 clamp(16px, 3vw, 44px) clamp(22px, 2.6vw, 34px);">
+  <div style="display: flex; align-items: center; gap: 14px; margin-bottom: clamp(10px, 1.2vw, 16px);">
+    <span style="flex: 1; height: 1px; background: linear-gradient(90deg, transparent, #d9bd8c);"></span>
+    <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: clamp(17px, 2vw, 26px); letter-spacing: .06em; text-transform: uppercase; color: #8f1d24;">Expériences à vivre</h2>
+    <span style="flex: 1; height: 1px; background: linear-gradient(90deg, #d9bd8c, transparent);"></span>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: clamp(10px, 1.4vw, 18px);">
+    <sc-for list="{{ experiences }}" as="e" hint-placeholder-count="4">
+      <article style="background: #fdf6e9; border: 1.5px solid #e0caa2; border-radius: 14px; overflow: hidden;">
+        <div role="img" style="width: 100%; height: clamp(96px, 11vw, 150px); background-color: #efe2c8; background-size: cover; background-position: center; background-image: {{ e.bg }};"></div>
+        <div style="padding: clamp(9px, 1vw, 14px); text-align: center;">
+          <h3 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: clamp(15px, 1.6vw, 20px); color: #8f1d24;">{{ e.name }}</h3>
+          <div style="margin: 6px auto; width: 46px; height: 1px; background: #d9bd8c;"></div>
+          <p style="margin: 0; font-size: clamp(12.5px, 1.3vw, 16px); color: #4d3c2d; line-height: 1.4;">{{ e.text }}</p>
+          <div style="margin-top: 7px; font-size: clamp(10.5px, 1.1vw, 13px); letter-spacing: .07em; text-transform: uppercase; color: #a08050;">{{ e.where }}</div>
+        </div>
+      </article>
+    </sc-for>
+  </div>
+</section>
+
+<section style="padding: 0 clamp(16px, 3vw, 44px) clamp(24px, 2.8vw, 36px);">
+  <div style="background: #fdf6e9; border: 1.5px solid #e0caa2; border-radius: 16px; padding: clamp(12px, 1.4vw, 20px);">
+    <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px; margin-bottom: clamp(10px, 1.2vw, 14px);">
+      <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: clamp(17px, 2vw, 26px); letter-spacing: .05em; text-transform: uppercase; color: #8f1d24;">Budget global</h2>
+      <span style="font-size: clamp(11.5px, 1.2vw, 14.5px); font-style: italic; color: #8a6c47;">{{ budgetHint }}</span>
+      <span style="margin-left: auto; display: inline-flex; align-items: center; gap: 8px; font-size: clamp(12px, 1.25vw, 15px); color: #6b5238;">Voyageurs
+        <input type="number" min="1" max="12" defaultValue="{{ travelers }}" onBlur="{{ setTravelers }}" onKeyDown="{{ travelersKey }}" style="width: 58px; padding: 3px 7px; border: 1px solid #ddc59b; border-radius: 7px; background: #fffdf7; font-size: clamp(12px, 1.25vw, 15px);">
+      </span>
+    </div>
+    <div style="display: flex; height: 12px; border-radius: 999px; overflow: hidden; border: 1px solid #e0caa2; background: #f3e6cd;">
+      <sc-for list="{{ budgetRows }}" as="b" hint-placeholder-count="7">
+        <div title="{{ b.title }}" style="flex-grow: 0; flex-basis: 0; background: #d9bd8c; flex-grow: {{ b.grow }}; background: {{ b.color }};"></div>
+      </sc-for>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: clamp(8px, 1vw, 16px); margin-top: clamp(10px, 1.2vw, 14px);">
+      <sc-for list="{{ budgetRows }}" as="b" hint-placeholder-count="7">
+        <div style="display: flex; align-items: baseline; gap: 8px; padding: 4px 2px; border-bottom: 1px dotted #e0caa2;">
+          <span style="width: 10px; height: 10px; border-radius: 50%; flex: none; background: {{ b.color }};"></span>
+          <span style="font-size: clamp(12.5px, 1.3vw, 16px); color: #4d3c2d;">{{ b.label }}</span>
+          <span style="font-size: clamp(11px, 1.1vw, 13px); font-style: italic; color: #a08050;">{{ b.note }}</span>
+          <span style="flex: 1; min-width: 8px; height: 1px; background: repeating-linear-gradient(90deg, #d6b783 0 5px, transparent 5px 10px);"></span>
+          <span style="font-size: clamp(12.5px, 1.3vw, 16px); color: #8f1d24; white-space: nowrap;">{{ b.amount }}</span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: clamp(12px, 2vw, 30px); margin-top: clamp(12px, 1.4vw, 18px); padding-top: clamp(10px, 1.2vw, 14px); border-top: 1px solid #e0caa2;">
+      <div>
+        <div style="font-size: clamp(10.5px, 1.1vw, 13px); letter-spacing: .12em; text-transform: uppercase; color: #a08050;">Total du voyage</div>
+        <div style="font-family: 'Playfair Display', Georgia, serif; font-size: clamp(26px, 3.4vw, 46px); line-height: 1.05; color: #8f1d24;">{{ grandTotal }}</div>
+      </div>
+      <div>
+        <div style="font-size: clamp(10.5px, 1.1vw, 13px); letter-spacing: .12em; text-transform: uppercase; color: #a08050;">Par voyageur</div>
+        <div style="font-family: 'Playfair Display', Georgia, serif; font-size: clamp(19px, 2.2vw, 30px); line-height: 1.1; color: #4a3a2c;">{{ perPerson }}</div>
+      </div>
+      <div>
+        <div style="font-size: clamp(10.5px, 1.1vw, 13px); letter-spacing: .12em; text-transform: uppercase; color: #a08050;">Par nuit</div>
+        <div style="font-family: 'Playfair Display', Georgia, serif; font-size: clamp(19px, 2.2vw, 30px); line-height: 1.1; color: #4a3a2c;">{{ perNight }}</div>
+      </div>
+      <div style="margin-left: auto; max-width: 320px; font-size: clamp(11.5px, 1.2vw, 14.5px); font-style: italic; color: #8a6c47;">{{ budgetNote }}</div>
+    </div>
+  </div>
+</section>
+
+<footer style="position: relative; padding: clamp(12px, 1.6vw, 20px) clamp(16px, 3vw, 44px) clamp(30px, 3.4vw, 46px); text-align: center; border-top: 1px solid #e6d2ab;">
+  <div style="font-size: clamp(13px, 1.4vw, 18px); font-style: italic; color: #6b5238;">{{ routeLine }}</div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: clamp(14px, 1.8vw, 24px); background-image: url('img/deco-band.png'); background-size: auto 100%; background-repeat: repeat-x;"></div>
+</footer>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showTravelTimes&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Contenu&quot;},&quot;showExperiences&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Contenu&quot;}}">
+class Component extends DCLogic {
+  KEY = "japon-itin-v3";
+  START = [2026, 10, 7];
+  MONTHS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+
+  CATS = {
+    hotel: { label: "Hôtel", color: "#2c5271", ph: "Nom de l'hôtel…", map: true, budget: true },
+    activite: { label: "Activités", color: "#3f6b4a", ph: "Une activité…", map: true, budget: true },
+    resto: { label: "Restaurants", color: "#b4621f", ph: "Un restaurant…", map: true, budget: false },
+    shopping: { label: "Shopping", color: "#6b3f6e", ph: "Une boutique, un quartier…", map: true, budget: false },
+    lieu: { label: "Lieux touristiques", color: "#1f6f74", ph: "Un lieu à voir…", map: true, budget: true },
+    note: { label: "Notes perso", color: "#8a6a2f", ph: "Une note à retenir…", map: false, budget: false }
+  };
+
+  CITIES = {
+    tokyo: { name: "Tokyo", lon: 139.69, lat: 35.68, lx: 23, ly: -6 },
+    yokohama: { name: "Yokohama", lon: 139.64, lat: 35.44, lx: 20, ly: 16 },
+    kamakura: { name: "Kamakura", lon: 139.55, lat: 35.32, lx: 16, ly: 20 },
+    hakone: { name: "Hakone", lon: 139.03, lat: 35.23, lx: 0, ly: 24, anchor: "middle" },
+    kawaguchiko: { name: "Fuji-Kawaguchiko", short: "Kawaguchiko", lon: 138.76, lat: 35.50, lx: 0, ly: -16, anchor: "middle" },
+    nikko: { name: "Nikkō", lon: 139.60, lat: 36.75, lx: 18, ly: -8 },
+    matsumoto: { name: "Matsumoto & Alpes japonaises", short: "Matsumoto", lon: 137.97, lat: 36.24, lx: 0, ly: 28, anchor: "middle" },
+    nagano: { name: "Nagano", lon: 138.19, lat: 36.65, lx: 18, ly: -8 },
+    takayama: { name: "Takayama", lon: 137.25, lat: 36.14, lx: 16, ly: 18 },
+    shirakawa: { name: "Shirakawa-go", lon: 136.90, lat: 36.26, lx: -18, ly: -16, anchor: "end" },
+    kanazawa: { name: "Kanazawa", lon: 136.65, lat: 36.56, lx: -18, ly: -6, anchor: "end" },
+    toyama: { name: "Toyama", lon: 137.21, lat: 36.70, lx: 16, ly: -8 },
+    nagoya: { name: "Nagoya", lon: 136.91, lat: 35.18, lx: 16, ly: 16 },
+    ise: { name: "Ise", lon: 136.71, lat: 34.49, lx: 14, ly: 16 },
+    kyoto: { name: "Kyoto", lon: 135.77, lat: 35.01, oy: -9, lx: 21, ly: 5 },
+    nara: { name: "Nara", lon: 135.83, lat: 34.69, ox: 16, oy: 16, lx: 14, ly: 12 },
+    osaka: { name: "Osaka", lon: 135.50, lat: 34.69, ox: -11, oy: 11, lx: -19, ly: 6, anchor: "end" },
+    kobe: { name: "Kobe", lon: 135.19, lat: 34.69, lx: -16, ly: 16, anchor: "end" },
+    himeji: { name: "Himeji", lon: 134.69, lat: 34.82, lx: 0, ly: -14, anchor: "middle" },
+    okayama: { name: "Okayama", lon: 133.92, lat: 34.66, lx: 0, ly: 20, anchor: "middle" },
+    hiroshima: { name: "Hiroshima", lon: 132.46, lat: 34.39, lx: -21, ly: -5, anchor: "end" },
+    fukuoka: { name: "Fukuoka", lon: 130.40, lat: 33.59, lx: 16, ly: 12 },
+    beppu: { name: "Beppu", lon: 131.49, lat: 33.28, lx: 14, ly: 14 },
+    kumamoto: { name: "Kumamoto", lon: 130.71, lat: 32.80, lx: 14, ly: 14 },
+    sendai: { name: "Sendai", lon: 140.87, lat: 38.27, lx: -16, ly: -6, anchor: "end" }
+  };
+
+  TIMES = {
+    "matsumoto|tokyo": "2h40", "matsumoto|shirakawa": "3h30", "kyoto|shirakawa": "3h30",
+    "hiroshima|kyoto": "1h45", "hiroshima|osaka": "1h30", "osaka|tokyo": "2h30", "kyoto|tokyo": "2h20",
+    "kyoto|osaka": "30 min", "nara|osaka": "45 min", "kyoto|nara": "45 min", "nikko|tokyo": "2h",
+    "hakone|tokyo": "1h30", "kamakura|tokyo": "1h", "kanazawa|kyoto": "2h", "kanazawa|shirakawa": "1h15",
+    "shirakawa|takayama": "50 min", "kyoto|nagoya": "35 min", "nagoya|tokyo": "1h40", "fukuoka|hiroshima": "1h05",
+    "okayama|osaka": "45 min", "hiroshima|okayama": "35 min", "sendai|tokyo": "1h35", "kobe|osaka": "30 min",
+    "himeji|osaka": "30 min", "kanazawa|toyama": "25 min", "kawaguchiko|tokyo": "2h", "tokyo|yokohama": "30 min",
+    "matsumoto|nagano": "50 min", "beppu|fukuoka": "2h", "fukuoka|kumamoto": "40 min", "ise|kyoto": "2h",
+    "kanazawa|osaka": "2h35", "matsumoto|nagoya": "2h", "kyoto|takayama": "3h30", "nagoya|takayama": "2h20"
+  };
+
+  // bibliothèque de photos indexée par mots-clés du nom de lieu
+  PHOTO_LIB = [
+    [["asakusa", "senso"], "img/asakusa.png"], [["shibuya"], "img/shibuya.png"], [["skytree"], "img/skytree.png"],
+    [["fushimi", "inari"], "img/fushimi.png"], [["pavillon d or", "kinkaku"], "img/kinkakuji.png"],
+    [["arashiyama", "bambou"], "img/arashiyama.png"], [["genbaku"], "img/genbaku.png"],
+    [["chateau d hiroshima"], "img/hiroshima-chateau.png"], [["okonomiyaki"], "img/okonomiyaki.png"],
+    [["chateau d osaka"], "img/osaka-chateau.png"], [["dotonbori", "kuromon"], "img/dotonbori.png"],
+    [["universal"], "img/universal.png"], [["sushi", "toyosu", "tsukiji"], "img/sushi.png"],
+    [["chateau de matsumoto"], "img/matsumoto-chateau.png"], [["alpes", "kamikochi"], "img/alpes.png"],
+    [["narai", "nakasendo"], "img/narai.png"], [["shirakawa", "gassho"], "img/shirakawago.png"],
+    [["onsen", "ryokan"], "img/onsen.png"], [["shiroyama", "vallee"], "img/shirakawago2.png"],
+    [["miyajima", "torii", "itsukushima"], "img/torii.png"], [["cerf"], "img/cerf.png"], [["daisho"], "img/daishoin.png"],
+    [["koyasan", "okunoin"], "img/okunoin.png"], [["kongobu"], "img/kongobuji.png"], [["shojin"], "img/shojin.png"],
+    [["kenrokuen"], "img/kenrokuen.png"], [["higashi", "chaya"], "img/higashi-chaya.png"],
+    [["disney"], "img/disney.png"],
+    [["sumo", "ryogoku"], "img/sumo.png"], [["illumination"], "img/illuminations.png"],
+    [["matcha", "the "], "img/matcha.png"], [["baguette"], "img/baguettes.png"],
+    [["vue sur tokyo", "vue de tokyo"], "img/tokyo-vue.png"]
+  ];
+
+  PHOTOS = {
+    tokyo: [["img/skytree.png", "Vue sur la Skytree"], ["img/asakusa.png", "Asakusa"], ["img/shibuya.png", "Shibuya"]],
+    tokyoAlt: [["img/tokyo-vue.png", "Vue sur Tokyo"], ["img/illuminations.png", "Illuminations"], ["img/sumo.png", "Sumo à Ryōgoku"]],
+    matsumoto: [["img/matsumoto-chateau.png", "Château de Matsumoto"], ["img/alpes.png", "Alpes japonaises"], ["img/narai.png", "Narai-juku"]],
+    shirakawa: [["img/shirakawago.png", "Shirakawa-go"], ["img/shirakawago2.png", "Vallée en automne"], ["img/onsen.png", "Onsen en montagne"]],
+    kyoto: [["img/fushimi.png", "Fushimi Inari"], ["img/kinkakuji.png", "Pavillon d'or"], ["img/arashiyama.png", "Arashiyama"]],
+    hiroshima: [["img/genbaku.png", "Dôme de Genbaku"], ["img/hiroshima-chateau.png", "Château d'Hiroshima"], ["img/okonomiyaki.png", "Okonomiyaki"]],
+    osaka: [["img/osaka-chateau.png", "Château d'Osaka"], ["img/dotonbori.png", "Dōtonbori"], ["img/sushi.png", "Street food & sushi"]],
+    kanazawa: [["img/kenrokuen.png", "Jardin Kenrokuen"], ["img/higashi-chaya.png", "Quartier Higashi Chaya"], ["img/shirakawago2.png", "Automne"]]
+  };
+
+  state = {
+    sel: "s1", pt: null, open: { "s1|hotel": true }, travelers: 2,
+    steps: this.seedSteps(), items: this.seed(), flights: this.seedFlights(), hidden: {}
+  };
+
+  uid(p) { return p + "-" + Math.random().toString(36).slice(2, 8); }
+
+  norm(s) { return String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " "); }
+
+  imgFor(name) {
+    const n = " " + this.norm(name) + " ";
+    for (let i = 0; i < this.PHOTO_LIB.length; i++) {
+      const keys = this.PHOTO_LIB[i][0];
+      for (let j = 0; j < keys.length; j++) if (n.indexOf(keys[j]) >= 0) return this.PHOTO_LIB[i][1];
+    }
+    return null;
+  }
+
+  // 3 photos : les lieux étoilés d'abord, puis on complète (lieux, activités, hôtel)
+  featured(list) {
+    const stars = list.filter(i => i.star && this.CATS[i.cat] && this.CATS[i.cat].map).slice(0, 3);
+    const out = stars.slice();
+    ["lieu", "activite", "hotel"].forEach(c => list.forEach(i => {
+      if (out.length < 3 && i.cat === c && out.indexOf(i) < 0) out.push(i);
+    }));
+    return out.slice(0, 3);
+  }
+
+  toggleStar(stepId, id) {
+    this.setState(s => {
+      const items = Object.assign({}, s.items);
+      const list = (items[stepId] || []).slice();
+      const target = list.find(i => i.id === id); if (!target) return {};
+      const on = !target.star;
+      let starred = list.filter(i => i.star && i.id !== id);
+      let drop = null;
+      if (on && starred.length >= 3) drop = starred[0].id;
+      items[stepId] = list.map(i => i.id === id ? Object.assign({}, i, { star: on }) : (i.id === drop ? Object.assign({}, i, { star: false }) : i));
+      return { items };
+    }, () => this.save());
+  }
+
+  seedSteps() {
+    return [
+      { id: "s1", city: "tokyo", nights: 2 }, { id: "s2", city: "matsumoto", nights: 1 },
+      { id: "s3", city: "shirakawa", nights: 1 }, { id: "s4", city: "kyoto", nights: 4 },
+      { id: "s5", city: "hiroshima", nights: 2 }, { id: "s6", city: "osaka", nights: 3 },
+      { id: "s7", city: "tokyo", nights: 6 }
+    ];
+  }
+
+  seedFlights() {
+    return [
+      { id: "fl-aller", label: "Aller", route: "Paris CDG → Tokyo Haneda", date: "7 nov. 2026", flight: "vol à confirmer", price: "" },
+      { id: "fl-retour", label: "Retour", route: "Tokyo Haneda → Paris CDG", date: "26 nov. 2026", flight: "vol à confirmer", price: "" }
+    ];
+  }
+
+  seed() {
+    const m = (cat, name, meta, geo) => Object.assign({ id: cat + "-" + Math.random().toString(36).slice(2, 7), cat, name, meta: meta || "", price: "" }, geo || {});
+    return {
+      s1: [
+        m("hotel", "Hôtel à Asakusa", "2 nuits"),
+        m("activite", "Distillerie Hakushu", "sur la route · détour 2h", { lon: 138.31, lat: 35.79, ox: 16, oy: -40 }),
+        m("activite", "Balade Asakusa & Nakamise", ""),
+        m("resto", "Izakaya à Shinjuku", ""),
+        m("lieu", "Temple Sensō-ji", ""),
+        m("lieu", "Shibuya Crossing", ""),
+        m("note", "Récupérer le JR Pass à l'aéroport", "")
+      ],
+      s2: [
+        m("hotel", "Ryokan avec onsen", "1 nuit"),
+        m("lieu", "Château de Matsumoto", ""),
+        m("activite", "Narai-juku, route du Nakasendō", ""),
+        m("resto", "Soba de Shinshū", ""),
+        m("note", "Prévoir des vêtements chauds", "")
+      ],
+      s3: [
+        m("hotel", "Nuit en maison gasshō-zukuri", "1 nuit"),
+        m("lieu", "Point de vue de Shiroyama", ""),
+        m("activite", "Balade dans le village", ""),
+        m("resto", "Bœuf de Hida", "")
+      ],
+      s4: [
+        m("hotel", "Machiya à Gion", "4 nuits"),
+        m("lieu", "Fushimi Inari", ""), m("lieu", "Pavillon d'or", ""), m("lieu", "Arashiyama & bambouseraie", ""),
+        m("activite", "Atelier matcha", ""),
+        m("resto", "Marché Nishiki", ""), m("resto", "Dîner kaiseki", ""),
+        m("shopping", "Teramachi", ""),
+        m("note", "Réserver le kaiseki avant le départ", "")
+      ],
+      s5: [
+        m("hotel", "Hôtel centre-ville", "2 nuits"),
+        m("activite", "Miyajima & torii flottant", "env. 45 min", { lon: 132.32, lat: 34.30, ox: -12, oy: 16, thumb: "img/torii.png" }),
+        m("lieu", "Mémorial de la Paix", ""), m("lieu", "Dôme de Genbaku", ""),
+        m("resto", "Okonomiyaki à Okonomi-mura", ""),
+        m("note", "Ferry inclus dans le JR Pass", "")
+      ],
+      s6: [
+        m("hotel", "Hôtel à Namba", "3 nuits"),
+        m("activite", "Universal Studios Japan", "env. 30 min", { lon: 135.43, lat: 34.67, ox: -46, oy: -4, thumb: "img/universal.png" }),
+        m("activite", "Kōyasan", "env. 2h30", { lon: 135.58, lat: 34.21, ox: 8, oy: 24, thumb: "img/okunoin.png" }),
+        m("lieu", "Château d'Osaka", ""),
+        m("resto", "Street food à Dōtonbori", ""), m("resto", "Marché Kuromon", ""),
+        m("shopping", "Shinsaibashi", ""),
+        m("note", "Billets Universal à réserver", "")
+      ],
+      s7: [
+        m("hotel", "Hôtel à Shinjuku", "6 nuits"),
+        m("activite", "Tokyo Disneyland", "env. 40 min", { lon: 139.88, lat: 35.63, ox: 26, oy: 28, thumb: "img/disney.png" }),
+        m("activite", "Sumo à Ryōgoku", ""), m("activite", "Atelier baguettes", ""),
+        m("resto", "Sushi au marché de Toyosu", ""),
+        m("shopping", "Ginza", ""), m("shopping", "Akihabara", ""),
+        m("lieu", "Illuminations d'automne", ""),
+        m("note", "Derniers souvenirs", "")
+      ]
+    };
+  }
+
+  componentDidMount() {
+    try {
+      const raw = localStorage.getItem(this.KEY);
+      if (!raw) return;
+      const d = JSON.parse(raw), p = {};
+      ["items", "flights", "hidden", "steps", "travelers"].forEach(k => { if (d && d[k]) p[k] = d[k]; });
+      if (Object.keys(p).length) this.setState(p);
+    } catch (e) { }
+  }
+
+  save() {
+    try {
+      const s = this.state;
+      localStorage.setItem(this.KEY, JSON.stringify({ items: s.items, flights: s.flights, hidden: s.hidden, steps: s.steps, travelers: s.travelers }));
+    } catch (e) { }
+  }
+
+  // ---------- prix ----------
+  num(v) {
+    if (!v) return 0;
+    const c = String(v).replace(/[^0-9.,]/g, "").replace(/\.(?=\d{3}\b)/g, "").replace(",", ".");
+    const n = parseFloat(c);
+    return isNaN(n) ? 0 : n;
+  }
+  eur(n) {
+    return n ? new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 }).format(Math.round(n)) + " €" : "—";
+  }
+
+  // ---------- dates ----------
+  fmt(d) { return d.getDate() + " " + this.MONTHS[d.getMonth()]; }
+  dayAt(offset) { return new Date(this.START[0], this.START[1], this.START[2] + offset); }
+
+  // ---------- trajets ----------
+  legTime(a, b) {
+    if (!a || !b || a === b) return "";
+    const k = [a, b].sort().join("|");
+    if (this.TIMES[k]) return "env. " + this.TIMES[k];
+    const A = this.CITIES[a], B = this.CITIES[b];
+    if (!A || !B) return "à estimer";
+    const R = 6371, r = Math.PI / 180;
+    const dLat = (B.lat - A.lat) * r, dLon = (B.lon - A.lon) * r;
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(A.lat * r) * Math.cos(B.lat * r) * Math.sin(dLon / 2) ** 2;
+    const km = 2 * R * Math.asin(Math.sqrt(h)) * 1.25;
+    const mins = Math.round((0.55 + km / 170) * 60 / 5) * 5;
+    return "env. " + (mins >= 60 ? Math.floor(mins / 60) + "h" + (mins % 60 ? String(mins % 60).padStart(2, "0") : "") : mins + " min");
+  }
+
+  // ---------- mutations ----------
+  addItem(stepId, cat, name, price) {
+    const v = (name || "").trim(); if (!v) return;
+    const id = this.uid(cat);
+    this.setState(s => {
+      const items = Object.assign({}, s.items);
+      items[stepId] = (items[stepId] || []).concat([{ id, cat, name: v, meta: "", price: (price || "").trim() }]);
+      return { items };
+    }, () => { this.save(); if (this.CATS[cat] && this.CATS[cat].map) this.locate(stepId, id); });
+  }
+
+  patchItem(stepId, id, patch) {
+    this.setState(s => {
+      const items = Object.assign({}, s.items);
+      items[stepId] = (items[stepId] || []).map(i => i.id === id ? Object.assign({}, i, patch) : i);
+      return { items };
+    }, () => this.save());
+  }
+
+  // géocodage automatique : nom du lieu + ville → coordonnées réelles (OpenStreetMap)
+  async locate(stepId, id) {
+    const list = this.state.items[stepId] || [];
+    const it = list.find(x => x.id === id);
+    if (!it) return;
+    const step = this.state.steps.find(s => s.id === stepId);
+    const city = step && this.CITIES[step.city] ? (this.CITIES[step.city].short || this.CITIES[step.city].name) : "";
+    this.patchItem(stepId, id, { geoState: "pending" });
+    // 1er essai : le nom tel quel ; 2e essai : le lieu-dit après « à / en / au / du »
+    const tries = [it.name];
+    const m = it.name.match(/\s(?:à|en|au|aux|du|de|dans)\s+(.+)$/i);
+    if (m && m[1].length > 2) tries.push(m[1]);
+    try {
+      for (let i = 0; i < tries.length; i++) {
+        const q = encodeURIComponent(tries[i] + ", " + city + ", Japon");
+        const r = await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&accept-language=fr&q=" + q);
+        const j = await r.json();
+        if (j && j.length) {
+          this.patchItem(stepId, id, { lon: parseFloat(j[0].lon), lat: parseFloat(j[0].lat), ox: 0, oy: 0, geoState: "ok" });
+          return true;
+        }
+        if (i < tries.length - 1) await new Promise(z => setTimeout(z, 1100));
+      }
+      this.patchItem(stepId, id, { geoState: "fail" });
+    } catch (e) { this.patchItem(stepId, id, { geoState: "fail" }); }
+    return false;
+  }
+
+  async locateAll() {
+    if (this.state.geoBusy) return;
+    const todo = [];
+    this.state.steps.forEach(s => (this.state.items[s.id] || []).forEach(it => {
+      if (it.lon == null && this.CATS[it.cat] && this.CATS[it.cat].map) todo.push([s.id, it.id]);
+    }));
+    if (!todo.length) return;
+    for (let i = 0; i < todo.length; i++) {
+      this.setState({ geoBusy: { done: i, total: todo.length } });
+      await this.locate(todo[i][0], todo[i][1]);
+      await new Promise(r => setTimeout(r, 1150));
+    }
+    this.setState({ geoBusy: null });
+  }
+  delItem(stepId, id) {
+    this.setState(s => {
+      const items = Object.assign({}, s.items);
+      items[stepId] = (items[stepId] || []).filter(i => i.id !== id);
+      return { items, pt: s.pt === id ? null : s.pt };
+    }, () => this.save());
+  }
+  setPrice(stepId, id, v) {
+    this.setState(s => {
+      const items = Object.assign({}, s.items);
+      items[stepId] = (items[stepId] || []).map(i => i.id === id ? Object.assign({}, i, { price: v.trim() }) : i);
+      return { items };
+    }, () => this.save());
+  }
+  addCity(node) {
+    const box = node.parentNode;
+    const sel = box.querySelector("select"), nInp = box.querySelector("input");
+    const city = sel.value; if (!city) { sel.focus(); return; }
+    const nights = Math.max(1, parseInt(nInp.value, 10) || 1);
+    const id = this.uid("s");
+    this.setState(s => ({ steps: s.steps.concat([{ id, city, nights }]), items: Object.assign({}, s.items, { [id]: [] }), sel: id }), () => this.save());
+    sel.value = "";
+  }
+  resetAll() {
+    if (!window.confirm("Revenir à l'itinéraire d'origine ? Vos ajouts et vos prix seront perdus.")) return;
+    this.setState({ steps: this.seedSteps(), items: this.seed(), flights: this.seedFlights(), sel: "s1", pt: null }, () => this.save());
+  }
+  delCity(id, label) {
+    if (!window.confirm("Retirer « " + label + " » de l'itinéraire ? Sa liste de lieux sera supprimée.")) return;
+    this.setState(s => {
+      const steps = s.steps.filter(x => x.id !== id);
+      const items = Object.assign({}, s.items); delete items[id];
+      return { steps, items, sel: s.sel === id ? (steps[0] ? steps[0].id : null) : s.sel };
+    }, () => this.save());
+  }
+  moveCity(id, dir) {
+    this.setState(s => {
+      const steps = s.steps.slice(), i = steps.findIndex(x => x.id === id), j = i + dir;
+      if (i < 0 || j < 0 || j >= steps.length) return {};
+      const t = steps[i]; steps[i] = steps[j]; steps[j] = t;
+      return { steps };
+    }, () => this.save());
+  }
+  setNights(id, d) {
+    this.setState(s => ({ steps: s.steps.map(x => x.id === id ? Object.assign({}, x, { nights: Math.max(1, x.nights + d) }) : x) }), () => this.save());
+  }
+  addFlightFrom(node) {
+    const inp = node.parentNode.parentNode.querySelectorAll("input");
+    const route = inp[0].value.trim(); if (!route) { inp[0].focus(); return; }
+    const f = { id: this.uid("fl"), label: "Vol", route, date: inp[1].value.trim() || "date à préciser", flight: inp[2].value.trim() || "vol à confirmer", price: inp[3].value.trim() };
+    inp.forEach(i => { i.value = ""; });
+    this.setState(s => ({ flights: s.flights.concat([f]) }), () => this.save());
+  }
+  delFlight(id) { this.setState(s => ({ flights: s.flights.filter(f => f.id !== id) }), () => this.save()); }
+  setFlightPrice(id, v) { this.setState(s => ({ flights: s.flights.map(f => f.id === id ? Object.assign({}, f, { price: v.trim() }) : f) }), () => this.save()); }
+  toggleCat(c) { this.setState(s => { const hidden = Object.assign({}, s.hidden); hidden[c] = !hidden[c]; return { hidden }; }, () => this.save()); }
+  toggleSection(k) { this.setState(s => { const open = Object.assign({}, s.open); open[k] = !open[k]; return { open }; }); }
+  select(id) { this.setState({ sel: id }); }
+
+  mapLink(name, cityName) {
+    const q = encodeURIComponent(name + ", " + cityName + ", Japon");
+    const ios = /iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent || "");
+    return ios ? "https://maps.apple.com/?q=" + q : "https://www.google.com/maps/search/?api=1&query=" + q;
+  }
+
+  renderVals() {
+    const C = this.CATS, catKeys = Object.keys(C), CITY = this.CITIES;
+    const st = this.state, items = st.items, hidden = st.hidden;
+    const showTravel = this.props.showTravelTimes !== false;
+    const ios = /iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent || "");
+
+    // étapes enrichies
+    let off = 0, seen = {};
+    const rows = st.steps.map((s, i) => {
+      const c = CITY[s.city] || { name: s.city, lon: null, lat: null };
+      const arrive = this.dayAt(off), leave = this.dayAt(off + s.nights);
+      off += s.nights;
+      seen[s.city] = (seen[s.city] || 0) + 1;
+      return {
+        raw: s, i, city: s.city, c, arrive, leave,
+        next: st.steps[i + 1] ? st.steps[i + 1].city : null
+      };
+    });
+    const nightsTotal = st.steps.reduce((a, s) => a + s.nights, 0);
+    const endDate = this.dayAt(nightsTotal);
+
+    // points carte + budget
+    const points = [];
+    const totals = {}; catKeys.forEach(k => { totals[k] = { sum: 0, n: 0, blank: 0 }; });
+    rows.forEach(r => (items[r.raw.id] || []).forEach(it => {
+      points.push({ id: it.id, pin: r.city, cat: it.cat, name: it.name, lon: it.lon, lat: it.lat, ox: it.ox, oy: it.oy, step: r.raw.id });
+      const t = totals[it.cat]; if (!t) return;
+      t.n++; const v = this.num(it.price); t.sum += v; if (!v) t.blank++;
+    }));
+    const budgetKeys = catKeys.filter(k => C[k].budget);
+    const flightsSum = st.flights.reduce((a, f) => a + this.num(f.price), 0);
+    const grand = flightsSum + budgetKeys.reduce((a, k) => a + totals[k].sum, 0);
+    const trav = Math.max(1, parseInt(st.travelers, 10) || 1);
+    const blanks = st.flights.filter(f => !this.num(f.price)).length + budgetKeys.reduce((a, k) => a + totals[k].blank, 0);
+
+    // pins (regroupés par ville) + segments de route
+    const pinMap = {};
+    rows.forEach(r => {
+      if (r.c.lon == null) return;
+      if (!pinMap[r.city]) pinMap[r.city] = Object.assign({}, r.c, { key: r.city, name: r.c.short || r.c.name, ids: [], nums: [] });
+      pinMap[r.city].ids.push(r.raw.id);
+      pinMap[r.city].nums.push(r.i + 1);
+    });
+    const pins = Object.keys(pinMap).map(k => {
+      const p = pinMap[k];
+      return { key: k, name: p.name, lon: p.lon, lat: p.lat, ox: p.ox, oy: p.oy, lx: p.lx, ly: p.ly, anchor: p.anchor, ids: p.ids, badge: p.nums.join("·") };
+    });
+    const legs = [], legsList = [];
+    rows.forEach((r, i) => {
+      if (!r.next || r.next === r.city) return;
+      legs.push({ from: r.city, to: r.next, bow: (i % 2 ? -1 : 1) * (0.1 + (i % 3) * 0.03) });
+      legsList.push({ label: (r.c.short || r.c.name) + " → " + ((CITY[r.next] || {}).short || (CITY[r.next] || {}).name || r.next), time: this.legTime(r.city, r.next) });
+    });
+
+    const budgetRows = [{ key: "vols", label: "Vols", color: "#8f1d24", sum: flightsSum, n: st.flights.length, blank: st.flights.filter(f => !this.num(f.price)).length }]
+      .concat(budgetKeys.map(k => ({ key: k, label: C[k].label, color: C[k].color, sum: totals[k].sum, n: totals[k].n, blank: totals[k].blank })));
+
+    return {
+      stop: e => e.stopPropagation(),
+      mapLabel: ios ? "Plan ↗" : "Maps ↗",
+      dateRange: "Du " + this.fmt(this.dayAt(0)) + " au " + this.fmt(endDate) + " " + endDate.getFullYear(),
+      nightsTotal: nightsTotal, stepCount: st.steps.length, totalPlaces: points.length,
+      tagline: nightsTotal + " nuits, " + st.steps.length + " étapes, un itinéraire qui vous ressemble",
+      routeLine: rows.map(r => r.c.short || r.c.name).join(" → "),
+      cityOptions: Object.keys(CITY).map(k => ({ key: k, label: CITY[k].name })),
+      addCity: e => this.addCity(e.currentTarget),
+      resetAll: () => this.resetAll(),
+
+      steps: rows.map(r => {
+        const s = r.raw, list = items[s.id] || [], sameMonth = r.arrive.getMonth() === r.leave.getMonth();
+        const used = {};
+        const tiles = this.featured(list).map((it, ti) => {
+          let src = it.thumb || this.imgFor(it.name);
+          if (src && used[src]) src = null; else if (src) used[src] = 1;
+          return {
+            cap: it.name, name: it.name, hasImg: !!src, noImg: !src,
+            bg: src ? "url('" + src + "')" : "none", slotId: "slot-" + s.id + "-" + ti,
+            searchUrl: "https://www.google.com/search?tbm=isch&q=" + encodeURIComponent(it.name + " " + (r.c.short || r.c.name) + " Japon")
+          };
+        });
+        return {
+          n: r.i + 1, name: r.c.name, short: r.c.short || r.c.name,
+          dates: sameMonth ? r.arrive.getDate() + " – " + this.fmt(r.leave) : this.fmt(r.arrive) + " – " + this.fmt(r.leave),
+          nightsLabel: s.nights + (s.nights > 1 ? " nuits" : " nuit"),
+          photos: tiles,
+          photoShow: tiles.length ? "grid" : "none",
+          phShow: tiles.length ? "none" : "flex",
+          ring: st.sel === s.id ? "#8f1d24" : "#e0caa2",
+          shadow: st.sel === s.id ? "0 6px 20px rgba(143,29,36,.16)" : "0 1px 2px rgba(120,90,40,.07)",
+          travelShow: r.next && showTravel ? "flex" : "none",
+          travelKind: r.next ? "vers " + ((CITY[r.next] || {}).short || (CITY[r.next] || {}).name || r.next) : "",
+          travelText: r.next ? this.legTime(r.city, r.next) : "",
+          select: () => this.select(s.id),
+          remove: e => { e.stopPropagation(); this.delCity(s.id, r.c.short || r.c.name); },
+          up: e => { e.stopPropagation(); this.moveCity(s.id, -1); },
+          down: e => { e.stopPropagation(); this.moveCity(s.id, 1); },
+          less: e => { e.stopPropagation(); this.setNights(s.id, -1); },
+          more: e => { e.stopPropagation(); this.setNights(s.id, 1); },
+          sections: catKeys.map(c => {
+            const key = s.id + "|" + c, open = !!st.open[key];
+            const li = list.filter(i => i.cat === c);
+            const sum = li.reduce((a, i) => a + this.num(i.price), 0);
+            return {
+              label: C[c].label, color: C[c].color, count: li.length ? "(" + li.length + ")" : "—",
+              total: C[c].budget && sum ? this.eur(sum) : "", open: open ? "flex" : "none", caret: open ? "▾" : "▸",
+              placeholder: C[c].ph, priceOn: C[c].budget ? "inline-block" : "none",
+              toggle: e => { e.stopPropagation(); this.toggleSection(key); },
+              onKey: e => {
+                e.stopPropagation();
+                if (e.key !== "Enter") return;
+                const row = e.currentTarget.parentNode, ins = row.querySelectorAll("input");
+                this.addItem(s.id, c, ins[0].value, ins[1].value);
+                ins[0].value = ""; ins[1].value = ""; ins[0].focus();
+              },
+              onAdd: e => {
+                e.stopPropagation();
+                const ins = e.currentTarget.parentNode.querySelectorAll("input");
+                this.addItem(s.id, c, ins[0].value, ins[1].value);
+                ins[0].value = ""; ins[1].value = "";
+              },
+              items: li.map(it => ({
+                name: it.name, meta: it.meta || "", color: C[c].color, price: it.price || "",
+                hasThumb: !!it.thumb, bgThumb: it.thumb ? "url('" + it.thumb + "')" : "none",
+                hasMap: !!C[c].map, mapUrl: this.mapLink(it.name, r.c.short || r.c.name),
+                priceShow: C[c].budget ? "inline-block" : "none",
+                starShow: C[c].map ? "inline-block" : "none",
+                starIcon: it.star ? "★" : "☆",
+                starColor: it.star ? "#c08a2e" : "#cbb691",
+                star: e => { e.stopPropagation(); this.toggleStar(s.id, it.id); },
+                locateShow: C[c].map && it.lon == null ? "inline-block" : "none",
+                locateLabel: it.geoState === "pending" ? "recherche…" : (it.geoState === "fail" ? "non trouvé" : "Localiser"),
+                locate: e => { e.stopPropagation(); this.locate(s.id, it.id); },
+                bg: st.pt === it.id ? "#f1e7d3" : "transparent",
+                pick: e => { e.stopPropagation(); this.setState({ sel: s.id, pt: st.pt === it.id ? null : it.id }); },
+                del: e => { e.stopPropagation(); this.delItem(s.id, it.id); },
+                setPrice: e => this.setPrice(s.id, it.id, e.target.value),
+                priceKey: e => { if (e.key === "Enter") e.target.blur(); }
+              }))
+            };
+          })
+        };
+      }),
+
+      segments: rows.map(r => ({
+        label: (r.c.short || r.c.name).split(" ")[0] + " · " + r.raw.nights + "n",
+        grow: r.raw.nights + 2.5, title: r.c.name,
+        bg: st.sel === r.raw.id ? "#8f1d24" : "#efe0c4", fg: st.sel === r.raw.id ? "#fdf1dc" : "#6b4a2c",
+        select: () => this.select(r.raw.id)
+      })),
+
+      flights: st.flights.map(f => ({
+        label: f.label, route: f.route, date: f.date, flight: f.flight, price: f.price,
+        del: () => this.delFlight(f.id),
+        setPrice: e => this.setFlightPrice(f.id, e.target.value),
+        priceKey: e => { if (e.key === "Enter") e.target.blur(); }
+      })),
+      addFlight: e => this.addFlightFrom(e.currentTarget),
+      flightsTotal: this.eur(flightsSum),
+
+      cats: C, hidden: hidden, points: points, pins: pins, legs: legs,
+      legend: catKeys.map(c => ({
+        label: C[c].label, dot: C[c].color, border: hidden[c] ? "#d8bd8e" : C[c].color,
+        fg: hidden[c] ? "#a08050" : C[c].color, bg: hidden[c] ? "#f3e8d3" : "#fdf6e9",
+        op: hidden[c] ? 0.5 : 1, toggle: () => this.toggleCat(c)
+      })),
+      selected: st.sel, selectedPoint: st.pt,
+      onPin: p => this.select(p.ids.indexOf(st.sel) === 0 && p.ids.length > 1 ? p.ids[1] : p.ids[0]),
+      onPoint: p => this.setState(s => {
+        const open = Object.assign({}, s.open); open[p.step + "|" + p.cat] = true;
+        return { sel: p.step, pt: s.pt === p.id ? null : p.id, open };
+      }),
+      travelPanel: showTravel ? "block" : "none",
+      legsList: legsList,
+      expShow: this.props.showExperiences === false ? "none" : "block",
+      experiences: [
+        { bg: "url('img/baguettes.png')", name: "Création de baguettes", text: "Atelier artisanal : repartez avec vos propres baguettes.", where: "Tokyo ou Kyoto" },
+        { bg: "url('img/sumo.png')", name: "Combat de sumo", text: "Entraînement du matin ou tournoi dans une salle mythique.", where: "Tokyo · Ryōgoku" },
+        { bg: "url('img/matcha.png')", name: "Atelier matcha", text: "Cérémonie du thé et gestes traditionnels.", where: "Kyoto" },
+        { bg: "url('img/sushi.png')", name: "Expérience sushi", text: "Atelier ou dégustation dans un cadre authentique.", where: "Osaka ou Tokyo" }
+      ],
+
+      travelers: st.travelers,
+      setTravelers: e => { const v = Math.max(1, parseInt(e.target.value, 10) || 1); this.setState({ travelers: v }, () => this.save()); },
+      travelersKey: e => { if (e.key === "Enter") e.target.blur(); },
+      budgetRows: budgetRows.map(b => ({
+        label: b.label, color: b.color, amount: this.eur(b.sum), grow: b.sum,
+        note: b.n ? (b.blank ? b.n + " lignes · " + b.blank + " sans prix" : b.n + " lignes") : "vide",
+        title: b.label + " : " + this.eur(b.sum)
+      })),
+      grandTotal: this.eur(grand),
+      perPerson: this.eur(grand / trav),
+      perNight: this.eur(grand / Math.max(1, nightsTotal)),
+      budgetHint: "vols, hôtels, activités et visites — restaurants et shopping restent hors budget",
+      budgetNote: blanks ? blanks + " ligne(s) encore sans prix — le total ne les compte pas." : "Toutes les lignes ont un prix : le total est complet.",
+      geoLabel: st.geoBusy ? "Localisation " + (st.geoBusy.done + 1) + "/" + st.geoBusy.total + "…" : "Localiser les lieux",
+      geoBusy: !!st.geoBusy,
+      locateAll: () => this.locateAll()
+    };
+  }
+}
+
+</script>
+</body>
+</html>
