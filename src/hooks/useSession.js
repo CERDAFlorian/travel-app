@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase.js';
+import { useOnline } from './useOnline.js';
 
 // État d'authentification, et rien d'autre.
 //
@@ -32,6 +33,7 @@ function messageFor(error) {
 }
 
 export function useSession() {
+  const online = useOnline();
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -75,5 +77,15 @@ export function useSession() {
     await supabase.auth.signOut();
   }, []);
 
-  return { session, user: session?.user ?? null, loading, signIn, signOut };
+  return {
+    session,
+    user: session?.user ?? null,
+    loading,
+    // Drapeau pour l'UI d'édition (L4). Deux raisons de bloquer l'écriture :
+    // pas de réseau, ou pas de session — le jeton expire en une heure et son
+    // renouvellement demande le réseau, donc les deux vont souvent ensemble.
+    readOnly: !online || !session,
+    signIn,
+    signOut,
+  };
 }

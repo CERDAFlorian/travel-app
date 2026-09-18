@@ -88,3 +88,54 @@
     &[data-cat='note']       { background: var(--cat-note); }
   }
 }
+
+.trip {
+  &__count {
+    margin-left: auto;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__steps {
+    display: grid;
+    gap: var(--sp-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: none;
+  }
+
+  &__step {
+    display: flex;
+    gap: var(--sp-3);
+    align-items: center;
+    padding: var(--sp-3) var(--sp-4);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+  }
+
+  &__step-position {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--radius-pill);
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+  }
+
+  &__step-name {
+    @include mixins.truncate;
+  }
+
+  &__step-meta {
+    margin-left: auto;
+    flex: none;
+    color: var(--muted);
+    font-size: var(--fs-xs);
+  }
+}

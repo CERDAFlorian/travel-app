@@ -14,7 +14,11 @@ Offline en **lecture seule**. Carte SVG unique zoomable, ancres géographiques +
 ## État du projet — 18 septembre 2026
 
 Branche de travail : `dev`. `main` est en retard, la fusion se fera par PR.
-**L0 et L1 sont terminés.** L2 est le prochain.
+**L0, L1, L1.5 et L2 sont terminés.** L3 est le prochain.
+
+⚠️ **Départ le 7 novembre 2026 — sept semaines.** L3 à L6 pèsent environ six
+jours de travail. L7 (PWA, service worker) est le lot qui rend l'app utilisable
+sur place : s'il faut rogner, rogner sur L6, jamais sur L7.
 
 **Le SQL est appliqué** — les trois fichiers sont passés dans le SQL Editor le
 18 septembre 2026, comptages vérifiés : 7 étapes, 48 items, 6 liaisons, 2 vols,
@@ -163,6 +167,15 @@ tableau sur l'étape. À arbitrer avec `steps.images text[]` prévu en L1.
 `NULL` dans le seed ; L3 compose le bandeau par mots-clés, et la colonne sert
 de surcharge quand l'appariement automatique ne donne rien de bon.
 
+**L2 — « offline + recharge » est intestable avant L7.** Le mode Offline de
+DevTools coupe aussi le serveur qui sert l'app : sans service worker, le
+rechargement ne ramène même pas `index.html`, on obtient le dinosaure de Chrome
+et rien du code applicatif ne s'exécute. IndexedDB cache la **donnée**, jamais
+l'**application**. Tant que L7 n'a pas posé le service worker, un lot ne peut se
+vérifier qu'en coupant Supabase seul, via *Network request blocking* sur
+`*supabase.co*`. Le critère d'arrêt de L2 ci-dessous a été corrigé en
+conséquence ; la version d'origine était invérifiable.
+
 **L7 — les headers de cache sont déjà faits.** `nginx.conf` gère `no-cache` sur
 `index.html`/`sw.js`/`manifest.webmanifest` et `immutable` sur `/assets/`.
 
@@ -187,7 +200,7 @@ Colle un prompt, laisse la boucle tourner, vérifie, commit, passe au suivant. N
 | ~~**L0**~~ | ~~Fondations : arbo, tokens CSS, config Vite, client Supabase~~ | ✅ fait | Le projet build et déploie |
 | ~~**L1**~~ | ~~Schéma Supabase + RLS + seed Japon~~ | ✅ fait | La donnée existe |
 | ~~**L1.5**~~ | ~~Connexion, routeur, sélection de voyage~~ | ✅ fait | On entre dans l'app |
-| **L2** | Couche données + cache IndexedDB + hook `useTrip` | 1 j | L'app lit online et offline |
+| ~~**L2**~~ | ~~Couche données + cache IndexedDB + hook `useTrip`~~ | ✅ fait | L'app lit online et offline |
 | **L3** | Shell + étapes + catégories + items (lecture) | 1,5 j | **App utilisable** |
 | **L4** | Édition items + LOCALISER (Nominatim) + Haversine | 1,5 j | Prépa autonome dans l'app |
 | **L5** | Carte SVG : pan/zoom, ancres, labels déportés, filtres tags | 2 j | La pièce maîtresse |
@@ -450,17 +463,56 @@ BOUCLE
 1. Implémente db.js, vérifie en console : écriture puis relecture d'un objet.
 2. Implémente api.js, vérifie la forme de l'objet retourné (log de la structure).
 3. Implémente useTrip.js.
-4. Test manuel obligatoire : charge la page online, passe l'onglet en mode offline
-   (DevTools → Network → Offline), recharge. L'app doit afficher la donnée cachée.
+4. Test manuel obligatoire : charge la page online, coupe SUPABASE SEULEMENT
+   (DevTools → ⋮ → More tools → Network request blocking → motif *supabase.co*),
+   recharge. L'app doit afficher la donnée cachée.
 5. Si échec, corrige et relance l'étape 4.
 
 CRITÈRE D'ARRÊT
-Rechargement en mode offline → la donnée s'affiche, isOffline = true.
+Supabase bloqué + rechargement → la donnée s'affiche, isOffline = true.
 
 STOP
 - N'installe ni RxDB, ni WatermelonDB, ni PowerSync. Surdimensionné pour ce volume.
 - N'implémente pas d'écriture offline ni de queue de mutations.
 ```
+
+---
+
+**L2 — fait le 18 septembre 2026.** Vérifié en bloquant Supabase seul
+(*Request conditions* → `*://*.supabase.co/*`) : l'itinéraire complet s'affiche
+depuis IndexedDB, bandeau « Hors ligne · synchronisé il y a 3 min ». Et le test
+qui compte — déconnexion, puis rechargement avec Supabase bloqué — laisse
+l'itinéraire à l'écran. Le rendu ne passe pas par l'authentification.
+
+Livré : `lib/db.js` (IndexedDB natif, stores `trips` et `meta`), `lib/api.js`
+(`fetchTrips`, `fetchTrip`), `lib/dates.js`, `hooks/useCached.js` et ses deux
+enveloppes `useTrip` / `useTrips`, `hooks/useOnline.js`,
+`components/SyncLine.jsx`. `src/data/trips.js` supprimé : plus aucune donnée en
+dur dans l'app.
+
+**Écart 1 — la liste des voyages est branchée aussi.** Le contrat ne parlait que
+de `fetchTrip(slug)`. Mais L1.5 a introduit une page de sélection, et ne brancher
+que la page voyage aurait laissé une liste mensongère pendant tout L3.
+
+**Écart 2 — `isOffline` ne se fie pas à `navigator.onLine`.** Celui-ci répond
+`true` dès qu'une interface réseau existe, wifi d'hôtel qui ne route rien
+compris. `isOffline` vaut donc « pas de réseau déclaré **ou** dernier fetch
+échoué ». Un fetch qui échoue n'efface jamais le cache : on garde à l'écran ce
+qu'on avait et on signale que ça date.
+
+**Décision — la déconnexion ne vide pas le cache.** C'est ce qui permet de lire
+son itinéraire quand le jeton a expiré sans réseau pour le renouveler.
+Contrepartie assumée : sur un téléphone déverrouillé, le voyage reste lisible
+sans être connecté. Acceptable sur deux téléphones personnels.
+
+**Ajouté hors contrat — `navigator.storage.persist()`.** Sans lui le navigateur
+peut évincer IndexedDB quand l'espace manque. Safari ne l'implémente pas : côté
+iPhone, seule l'installation sur l'écran d'accueil (L7) protège le cache, les
+sites en onglet perdant toutes leurs données après 7 jours sans visite.
+
+**Ce que L3 en hérite** — `useTrip(slug)` rend le voyage complet, étapes et
+items déjà triés par `position`. `useSession()` expose `readOnly`
+(`!online || !session`) pour l'UI d'édition de L4.
 
 ---
 

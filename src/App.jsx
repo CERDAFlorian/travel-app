@@ -1,38 +1,51 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useSession } from '@/hooks/useSession.js';
+import { useTrips } from '@/hooks/useTrips.js';
 import Login from '@/pages/Login.jsx';
 import Trips from '@/pages/Trips.jsx';
 import Trip from '@/pages/Trip.jsx';
 import './App.scss';
 
 export default function App() {
-  const { user, loading, signIn, signOut } = useSession();
+  const { user, loading: sessionLoading, signIn, signOut } = useSession();
+  const trips = useTrips();
 
-  // Le temps de relire le jeton stocké. Sans cette attente, l'écran de
-  // connexion apparaît une fraction de seconde à chaque ouverture, alors qu'on
-  // est déjà connecté.
-  if (loading) return <main className="app-boot" aria-busy="true" />;
+  // On attend la session ET la première lecture du cache. Les deux sont des
+  // opérations locales de quelques millisecondes : rien d'inutile à afficher
+  // entre-temps.
+  if (sessionLoading || trips.loading) {
+    return <main className="app-boot" aria-busy="true" />;
+  }
 
-  // ⚠️ À REPRENDRE EN L2 — cette condition est provisoire.
+  // La connexion s'impose seulement quand il n'y a NI session NI cache — donc
+  // au tout premier lancement, et jamais après.
   //
-  // Aujourd'hui l'app n'a rien à afficher sans réseau : le cache n'existe pas
-  // encore. L'écran de connexion occupe donc la place quand il n'y a pas de
-  // session. Dès que useTrip() existe, la condition devient :
+  // C'est la règle centrale du projet : le rendu n'est pas conditionné à
+  // l'authentification. Le jeton expire en une heure et son renouvellement
+  // passe par le réseau ; hors ligne au Japon, `user` est null alors que
+  // l'itinéraire est là, complet, dans IndexedDB. Écrire `if (!user)` ici
+  // renverrait sur un formulaire de connexion impossible à valider.
   //
-  //     if (!user && !cachedTrips) return <Login … />;
-  //
-  // et les voyages s'affichent depuis IndexedDB même sans session — c'est toute
-  // la promesse de l'app hors ligne.
-  //
-  // Noter que la connexion n'est PAS une route, et ne doit pas le devenir :
-  // rediriger vers /connexion quand le jeton expire expulserait de son
-  // itinéraire quelqu'un qui n'a pas de réseau pour se reconnecter. L'écran se
-  // substitue au contenu, il ne déplace personne.
-  if (!user) return <Login onSignIn={signIn} />;
+  // La connexion n'est pas non plus une route : une redirection vers
+  // /connexion aurait le même effet, en pire, parce qu'elle changerait l'URL.
+  const hasCache = (trips.trips?.length ?? 0) > 0;
+  if (!user && !hasCache) return <Login onSignIn={signIn} />;
 
   return (
     <Routes>
-      <Route path="/" element={<Trips email={user.email} onSignOut={signOut} />} />
+      <Route
+        path="/"
+        element={
+          <Trips
+            trips={trips.trips}
+            isOffline={trips.isOffline}
+            lastSync={trips.lastSync}
+            onRefresh={trips.refresh}
+            email={user?.email ?? null}
+            onSignOut={user ? signOut : null}
+          />
+        }
+      />
       <Route path="/voyage/:slug" element={<Trip />} />
       {/* replace : une URL inconnue ne doit pas s'empiler dans l'historique,
           sinon le bouton retour y ramène en boucle. */}
