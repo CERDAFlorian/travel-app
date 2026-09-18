@@ -11,14 +11,16 @@ Offline en **lecture seule**. Carte SVG unique zoomable, ancres géographiques +
 
 ---
 
-## État du projet — 25 août 2026
+## État du projet — 18 septembre 2026
 
-Branche de travail : `dev`, synchronisée avec `origin/dev`. `main` est en retard,
-la fusion se fera par PR. **L0 et L1 sont terminés.** L2 est le prochain.
+Branche de travail : `dev`. `main` est en retard, la fusion se fera par PR.
+**L0 et L1 sont terminés.** L2 est le prochain.
 
-L1 a produit du SQL, pas du code : rien n'est appliqué tant que les trois
-fichiers ne sont pas passés à la main dans le SQL Editor de Supabase. Tant que
-ce n'est pas fait, L2 n'a aucune donnée à lire.
+**Le SQL est appliqué** — les trois fichiers sont passés dans le SQL Editor le
+18 septembre 2026, comptages vérifiés : 7 étapes, 48 items, 6 liaisons, 2 vols,
+4 expériences, 2 membres. La base contient le voyage `japon-2026` et L2 a de
+quoi lire. Les fichiers de `supabase/` restent la source de vérité : toute
+évolution de schéma s'y écrit d'abord, puis se rejoue à la main.
 
 ### Ce qui est en place
 
@@ -336,13 +338,17 @@ Sept hôtels et six activités en ont reçu un, ordres de grandeur plausibles,
 pour que le budget de L6 ait quelque chose à additionner (370 800 ¥
 actuellement). À remplacer par les vrais montants.
 
-**À faire avant L2** : appliquer les trois fichiers depuis le SQL Editor, après
-avoir créé les deux comptes depuis **Authentication → Users** du dashboard — il
-n'y a pas encore d'écran de connexion dans l'app, ça ne peut pas se faire
-autrement. Le seed rattache le voyage aux comptes présents dans `auth.users` ;
-si la table est vide, RLS rend le voyage invisible et l'app affichera une page
-vide sans erreur. Marche à suivre détaillée dans
+**Appliqué le 18 septembre 2026.** Les deux comptes ont été créés depuis
+**Authentication → Users** (il n'y a pas encore d'écran de connexion dans
+l'app), puis les trois fichiers exécutés dans l'ordre. Vérification passée :
+`membres` = 2, donc le voyage est visible par les deux comptes. Marche à suivre,
+reset et rattachement d'un compte supplémentaire dans
 [`supabase/README.md`](supabase/README.md).
+
+Piège rencontré, noté pour la prochaine fois : les migrations se lancent avec le
+rôle par défaut du SQL Editor (`postgres`), **sans user impersonation**. En se
+faisant passer pour un `authenticated`, les `create table` et les `grant`
+échouent. L'impersonation ne sert qu'à tester les policies après coup.
 
 ---
 
