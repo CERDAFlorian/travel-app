@@ -14,7 +14,11 @@ Offline en **lecture seule**. Carte SVG unique zoomable, ancres géographiques +
 ## État du projet — 18 septembre 2026
 
 Branche de travail : `dev`. `main` est en retard, la fusion se fera par PR.
-**L0 et L1 sont terminés.** L2 est le prochain.
+**L0, L1, L1.5, L2 et L3 sont terminés — l'app est utilisable.** L4 est le prochain.
+
+⚠️ **Départ le 7 novembre 2026 — sept semaines.** L4 à L6 pèsent environ quatre
+jours de travail. L7 (PWA, service worker) est le lot qui rend l'app utilisable
+sur place : s'il faut rogner, rogner sur L6, jamais sur L7.
 
 **Le SQL est appliqué** — les trois fichiers sont passés dans le SQL Editor le
 18 septembre 2026, comptages vérifiés : 7 étapes, 48 items, 6 liaisons, 2 vols,
@@ -102,17 +106,39 @@ formes `--radius-sm|md|lg|pill` `--shadow-sm|md|lg`.
 **Ajouter un pays** : copier `themes/_neutral.scss`, une ligne dans `$themes`
 (`_emit.scss`), une entrée dans `themes.js`. Aucun composant à toucher.
 
-**Bascule** : `<html data-theme="…">` via `applyTheme()`, alimenté par `trips.theme`
-une fois la donnée branchée en L2. Aujourd'hui figé sur `japan` dans `main.jsx`.
+**Portée de la charte pays** — décidée le 18 septembre 2026, elle structure tout le
+reste : un thème pays n'habille **que l'intérieur d'un voyage**. L'écran de connexion,
+la liste des voyages et la création d'un voyage portent la charte de l'application,
+qui est `neutral`. C'est ce que `:root` émet (`_emit.scss`), et ce que vaut
+`APP_THEME` (`themes.js`). Peindre les écrans communs aux couleurs du Japon n'aurait
+plus de sens dès le deuxième voyage — et l'app est destinée à devenir un créateur
+d'itinéraires.
+
+**Bascule** : `applyTheme(id)` pose `data-theme` sur `<html>`, alimenté par
+`trips.theme` (L2). À n'appeler qu'en entrant dans un voyage, et à rappeler avec
+`APP_THEME` en sortant. Les sélecteurs `[data-theme="…"]` étant autonomes, un thème
+pays peut aussi habiller un sous-arbre plutôt que la page entière — utile le jour où
+une liste de voyages affichera plusieurs pays côte à côte.
+
+**Attention à `_neutral.scss`** : il cumule trois rôles — charte de l'app, repli d'un
+thème inconnu, gabarit d'un nouveau pays. Pour ajouter un pays on le **copie**, on ne
+le modifie pas en place, sinon on repeint l'écran de connexion.
 
 ### Reste à faire hors lots
 
-**3 images bloquent L3** — à exporter du canvas vers `design/img/` puis `npm run img` :
-`deco-momiji.png`, `deco-fuji.png`, `hero-pagode.png` (décor du header et bandeau hero).
+**Les 3 images bloquantes sont arrivées** (18 septembre 2026) — `deco-momiji`,
+`deco-fuji`, `hero-pagode`, exportées à la main du canvas et compressées. 31 PNG
+sources, 311 Ko de WebP servis.
 
-6 autres sont optionnelles (`sushi`, `sumo`, `shirakawago2`, `narai`, `matcha`,
-`baguettes`) : leur absence laisse l'item sans photo, rien ne casse. Le plafond de
-256 Ko de `get_file` empêche de les récupérer via le MCP.
+**6 restent à exporter**, et trois d'entre elles se voient : `narai`,
+`shirakawago2` et `sumo` correspondent à des items du seed dont le bandeau
+tombe en repli. Les déposer dans `design/img/` puis `npm run img` fait passer
+les étapes à bandeau complet de **2 sur 7 à 4 sur 7**, sans toucher au code.
+Les trois autres (`sushi`, `matcha`, `baguettes`) ne servent qu'aux expériences
+de L6. Le plafond de 256 Ko de `get_file` empêche de les récupérer via le MCP.
+
+**Trois items n'auront jamais de photo** : Distillerie Hakushu, Balade dans le
+village, Mémorial de la Paix. Aucun mot-clé ne leur correspond dans le design.
 
 ---
 
@@ -148,6 +174,15 @@ tableau sur l'étape. À arbitrer avec `steps.images text[]` prévu en L1.
 `NULL` dans le seed ; L3 compose le bandeau par mots-clés, et la colonne sert
 de surcharge quand l'appariement automatique ne donne rien de bon.
 
+**L2 — « offline + recharge » est intestable avant L7.** Le mode Offline de
+DevTools coupe aussi le serveur qui sert l'app : sans service worker, le
+rechargement ne ramène même pas `index.html`, on obtient le dinosaure de Chrome
+et rien du code applicatif ne s'exécute. IndexedDB cache la **donnée**, jamais
+l'**application**. Tant que L7 n'a pas posé le service worker, un lot ne peut se
+vérifier qu'en coupant Supabase seul, via *Network request blocking* sur
+`*supabase.co*`. Le critère d'arrêt de L2 ci-dessous a été corrigé en
+conséquence ; la version d'origine était invérifiable.
+
 **L7 — les headers de cache sont déjà faits.** `nginx.conf` gère `no-cache` sur
 `index.html`/`sw.js`/`manifest.webmanifest` et `immutable` sur `/assets/`.
 
@@ -171,8 +206,9 @@ Colle un prompt, laisse la boucle tourner, vérifie, commit, passe au suivant. N
 |---|---|---|---|
 | ~~**L0**~~ | ~~Fondations : arbo, tokens CSS, config Vite, client Supabase~~ | ✅ fait | Le projet build et déploie |
 | ~~**L1**~~ | ~~Schéma Supabase + RLS + seed Japon~~ | ✅ fait | La donnée existe |
-| **L2** | Couche données + cache IndexedDB + hook `useTrip` | 1 j | L'app lit online et offline |
-| **L3** | Shell + étapes + catégories + items (lecture) | 1,5 j | **App utilisable** |
+| ~~**L1.5**~~ | ~~Connexion, routeur, sélection de voyage~~ | ✅ fait | On entre dans l'app |
+| ~~**L2**~~ | ~~Couche données + cache IndexedDB + hook `useTrip`~~ | ✅ fait | L'app lit online et offline |
+| ~~**L3**~~ | ~~Shell + étapes + catégories + items (lecture)~~ | ✅ fait | **App utilisable** |
 | **L4** | Édition items + LOCALISER (Nominatim) + Haversine | 1,5 j | Prépa autonome dans l'app |
 | **L5** | Carte SVG : pan/zoom, ancres, labels déportés, filtres tags | 2 j | La pièce maîtresse |
 | **L6** | Vols, trajets, expériences, budget | 1 j | Périmètre complet |
@@ -352,6 +388,55 @@ faisant passer pour un `authenticated`, les `create table` et les `grant`
 
 ---
 
+## L1.5 — Connexion, routeur, sélection de voyage
+
+Lot ajouté le 18 septembre 2026, absent du découpage d'origine. Il comble un
+trou : aucun lot ne prévoyait d'écran de connexion, alors que `0001_schema.sql`
+retire tout droit à `anon`. Sans session, `fetchTrip()` ne ramène rien et le
+critère d'arrêt de L2 — « charge online, passe offline, recharge » — est
+invérifiable, faute de pouvoir remplir le cache une première fois.
+
+**Livré**
+
+| | |
+|---|---|
+| `src/hooks/useSession.js` | `getSession()` + `onAuthStateChange`, `signIn`, `signOut` |
+| `src/hooks/useTheme.js` | chaque page déclare la charte qu'elle porte |
+| `src/pages/Login.jsx` | email + mot de passe |
+| `src/pages/Trips.jsx` | sélection d'un voyage, une carte par voyage |
+| `src/pages/Trip.jsx` | intérieur d'un voyage — placeholder, L3 le remplit |
+| `src/data/trips.js` | ⚠️ le voyage en dur, à remplacer par Supabase en L2 |
+
+**Email + mot de passe, pas de magic link.** Le SMTP par défaut de Supabase est
+plafonné et n'envoie qu'aux adresses de l'équipe du projet ; et recevoir un mail
+suppose un réseau et une boîte accessible depuis le téléphone, à l'étranger. Les
+deux comptes sont créés à la main dans le dashboard. Pas de formulaire
+d'inscription non plus : l'app a deux utilisateurs connus.
+
+**La connexion n'est pas une route, et ne doit pas le devenir.** Rediriger vers
+`/connexion` quand le jeton expire expulserait de son itinéraire quelqu'un qui
+n'a pas de réseau pour se reconnecter. L'écran se substitue au contenu, il ne
+déplace personne.
+
+**Routeur : `react-router-dom` 7.** Décidé ici plutôt qu'en L3 parce que le
+routeur détermine d'où vient le slug, et que le slug est le paramètre d'entrée
+de `useTrip()` en L2. Trancher après coup imposerait de réécrire `App`, les deux
+pages, l'effet de thème et le hook de données. Routes : `/` pour la liste,
+`/voyage/:slug` pour un voyage, tout le reste redirigé sur `/`. `BrowserRouter`
+et non `HashRouter` : `nginx.conf` fait déjà le fallback SPA, les URL restent
+propres. Coût : +13,6 Ko gzip (101,5 → 115,1), payés une fois à l'installation
+de la PWA, pas pendant le voyage.
+
+**Pas de création de voyage.** Volontaire. Le formulaire viendra avec le
+créateur d'itinéraires, hors lots actuels.
+
+**Ce que L2 en hérite** — `useTrip(slug)` lit le slug de la route, pas d'un état
+local. Et la condition d'affichage de `App.jsx` doit passer de `!user` à
+`!user && !cachedTrips` : le commentaire est dans le code, à l'endroit exact où
+le changer.
+
+---
+
 ## L2 — Couche données + cache offline
 
 ```
@@ -385,17 +470,56 @@ BOUCLE
 1. Implémente db.js, vérifie en console : écriture puis relecture d'un objet.
 2. Implémente api.js, vérifie la forme de l'objet retourné (log de la structure).
 3. Implémente useTrip.js.
-4. Test manuel obligatoire : charge la page online, passe l'onglet en mode offline
-   (DevTools → Network → Offline), recharge. L'app doit afficher la donnée cachée.
+4. Test manuel obligatoire : charge la page online, coupe SUPABASE SEULEMENT
+   (DevTools → ⋮ → More tools → Network request blocking → motif *supabase.co*),
+   recharge. L'app doit afficher la donnée cachée.
 5. Si échec, corrige et relance l'étape 4.
 
 CRITÈRE D'ARRÊT
-Rechargement en mode offline → la donnée s'affiche, isOffline = true.
+Supabase bloqué + rechargement → la donnée s'affiche, isOffline = true.
 
 STOP
 - N'installe ni RxDB, ni WatermelonDB, ni PowerSync. Surdimensionné pour ce volume.
 - N'implémente pas d'écriture offline ni de queue de mutations.
 ```
+
+---
+
+**L2 — fait le 18 septembre 2026.** Vérifié en bloquant Supabase seul
+(*Request conditions* → `*://*.supabase.co/*`) : l'itinéraire complet s'affiche
+depuis IndexedDB, bandeau « Hors ligne · synchronisé il y a 3 min ». Et le test
+qui compte — déconnexion, puis rechargement avec Supabase bloqué — laisse
+l'itinéraire à l'écran. Le rendu ne passe pas par l'authentification.
+
+Livré : `lib/db.js` (IndexedDB natif, stores `trips` et `meta`), `lib/api.js`
+(`fetchTrips`, `fetchTrip`), `lib/dates.js`, `hooks/useCached.js` et ses deux
+enveloppes `useTrip` / `useTrips`, `hooks/useOnline.js`,
+`components/SyncLine.jsx`. `src/data/trips.js` supprimé : plus aucune donnée en
+dur dans l'app.
+
+**Écart 1 — la liste des voyages est branchée aussi.** Le contrat ne parlait que
+de `fetchTrip(slug)`. Mais L1.5 a introduit une page de sélection, et ne brancher
+que la page voyage aurait laissé une liste mensongère pendant tout L3.
+
+**Écart 2 — `isOffline` ne se fie pas à `navigator.onLine`.** Celui-ci répond
+`true` dès qu'une interface réseau existe, wifi d'hôtel qui ne route rien
+compris. `isOffline` vaut donc « pas de réseau déclaré **ou** dernier fetch
+échoué ». Un fetch qui échoue n'efface jamais le cache : on garde à l'écran ce
+qu'on avait et on signale que ça date.
+
+**Décision — la déconnexion ne vide pas le cache.** C'est ce qui permet de lire
+son itinéraire quand le jeton a expiré sans réseau pour le renouveler.
+Contrepartie assumée : sur un téléphone déverrouillé, le voyage reste lisible
+sans être connecté. Acceptable sur deux téléphones personnels.
+
+**Ajouté hors contrat — `navigator.storage.persist()`.** Sans lui le navigateur
+peut évincer IndexedDB quand l'espace manque. Safari ne l'implémente pas : côté
+iPhone, seule l'installation sur l'écran d'accueil (L7) protège le cache, les
+sites en onglet perdant toutes leurs données après 7 jours sans visite.
+
+**Ce que L3 en hérite** — `useTrip(slug)` rend le voyage complet, étapes et
+items déjà triés par `position`. `useSession()` expose `readOnly`
+(`!online || !session`) pour l'UI d'édition de L4.
 
 ---
 
@@ -444,6 +568,41 @@ STOP
 - Les images sont servies en `.webp`, pas `.png`.
 - 3 images du header manquent encore — voir « Reste à faire hors lots ».
 - Voir l'écart signalé plus haut sur le bandeau photo.
+
+---
+
+**L3 — fait le 18 septembre 2026.** Les 7 étapes s'affichent, compteurs justes,
+accordéons fonctionnels, rien ne déborde à 375 px.
+
+Livré : `lib/categories.js` (les 6 catégories, source unique), `lib/photos.js`
+(PHOTO_LIB et featured transposés), `PhotoStrip`, `ItemRow`,
+`CategoryAccordion`, `StepCard`, et `pages/Trip.jsx` qui assemble le shell avec
+le décor et le hero. `.sr-only` ajouté au reset.
+
+**Correction du doc — `PHOTOS` est du code mort.** Le `.dc.html` contient une
+table qui fige 3 photos par ville ; elle n'est appelée nulle part. Le vrai
+mécanisme est `featured(items)` + `imgFor(titre)`, par mots-clés. La reprendre
+aurait figé le Japon dans un composant censé servir tous les voyages.
+
+**`items.favorite` était nécessaire.** La colonne ajoutée hors contrat en L1 est
+exactement l'étoile dont `featured()` a besoin pour choisir les 3 photos.
+
+**Arbitrage — tout replié par défaut.** Le contrat disait « replié sauf si le
+compteur est > 0 », ce qui revient à tout ouvrir : sur 48 items, Tokyo ferait un
+mur à 375 px. On prépare un voyage en ouvrant la catégorie qu'on cherche.
+
+**Arbitrage — pas de bouton supprimer.** Le contrat le voulait inerte. Un bouton
+qui ne fait rien apprend au doigt un geste qui deviendra destructeur en L4 : il
+arrivera avec l'action qu'il déclenche. Même raison pour l'étoile, qui reste un
+indicateur et non un interrupteur.
+
+**Les 5 coordonnées du seed sont décommentées** et remontées dans la
+transaction — elles étaient après le `commit;`. Elles donnent 5 boutons Plan
+réellement testables ; sans elles la fonction était invérifiable jusqu'à L4.
+
+**Ce que L4 en hérite** — `ItemRow` est en lecture seule : l'étoile et la
+suppression sont à y ajouter, pas à y activer. `useSession().readOnly` dit quand
+l'écriture doit être bloquée.
 
 ---
 

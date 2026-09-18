@@ -1,0 +1,89 @@
+@use '../theme/mixins';
+
+.login {
+  display: grid;
+  place-items: center;
+  min-height: 100svh;
+  padding: var(--sp-5) var(--page-pad);
+
+  &__card {
+    display: grid;
+    gap: var(--sp-4);
+    width: min(100%, 380px);
+    padding: var(--sp-6);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-md);
+  }
+
+  &__title {
+    margin: 0;
+  }
+
+  &__intro {
+    margin: 0;
+    color: var(--muted);
+    font-size: var(--fs-sm);
+  }
+
+  &__field {
+    display: grid;
+    gap: var(--sp-1);
+  }
+
+  &__label {
+    font-size: var(--fs-sm);
+    color: var(--muted);
+  }
+
+  &__input {
+    padding: var(--sp-3);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    background: var(--bg);
+    color: var(--text);
+    // 16px minimum : en dessous, Safari iOS zoome sur le champ au focus et ne
+    // dézoome jamais. Le formulaire sera rempli au téléphone.
+    font: inherit;
+    font-size: var(--fs-md);
+
+    &:focus-visible {
+      @include mixins.focus-ring;
+    }
+  }
+
+  // Occupe sa place en permanence : sans hauteur réservée, l'apparition du
+  // message décale le bouton juste au moment où le doigt le vise.
+  &__error {
+    margin: 0;
+    min-height: var(--sp-5);
+    color: var(--danger);
+    font-size: var(--fs-sm);
+  }
+
+  &__submit {
+    padding: var(--sp-3) var(--sp-4);
+    border: 0;
+    border-radius: var(--radius-md);
+    background: var(--accent);
+    color: var(--accent-contrast);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--dur-fast) var(--ease-out);
+
+    &:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
+
+    &:focus-visible {
+      @include mixins.focus-ring;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: progress;
+    }
+  }
+}

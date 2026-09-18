@@ -1,0 +1,83 @@
+@use '../theme/mixins';
+
+.accordion {
+  border-top: 1px solid var(--border-soft);
+
+  &--empty {
+    display: flex;
+    gap: var(--sp-3);
+    align-items: center;
+    padding: var(--sp-3) 0;
+    color: var(--muted);
+    opacity: 0.55;
+  }
+
+  &__head {
+    display: flex;
+    gap: var(--sp-3);
+    align-items: center;
+    width: 100%;
+    padding: var(--sp-3) 0;
+    border: 0;
+    background: none;
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  &__dot {
+    flex: none;
+    width: 9px;
+    height: 9px;
+    border-radius: var(--radius-pill);
+    background: var(--cat-note);
+
+    &[data-cat='hotel']      { background: var(--cat-hotel); }
+    &[data-cat='activite']   { background: var(--cat-activite); }
+    &[data-cat='restaurant'] { background: var(--cat-restaurant); }
+    &[data-cat='shopping']   { background: var(--cat-shopping); }
+    &[data-cat='lieu']       { background: var(--cat-lieu); }
+    &[data-cat='note']       { background: var(--cat-note); }
+  }
+
+  &__label {
+    flex: 1;
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  &__count {
+    flex: none;
+    min-width: 22px;
+    padding: 2px var(--sp-2);
+    border-radius: var(--radius-pill);
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: var(--fs-xs);
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+  }
+
+  &__chevron {
+    flex: none;
+    color: var(--muted);
+    font-size: var(--fs-lg);
+    line-height: 1;
+    transition: transform var(--dur-fast) var(--ease-out);
+
+    &[data-open] {
+      transform: rotate(90deg);
+    }
+  }
+
+  &__panel {
+    margin: 0 0 var(--sp-3);
+    padding: 0 0 0 var(--sp-5);
+    list-style: none;
+  }
+}

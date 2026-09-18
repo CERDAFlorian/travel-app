@@ -1,0 +1,92 @@
+@use '../theme/mixins';
+
+.trip {
+  display: grid;
+  align-content: start;
+  gap: var(--sp-5);
+  width: min(100%, var(--page-max));
+  margin-inline: auto;
+  padding: var(--sp-5) var(--page-pad) var(--sp-7);
+
+  &__head {
+    position: relative;
+    display: grid;
+    gap: var(--sp-1);
+    // Laisse la place au décor sans que le titre passe dessous.
+    padding-top: var(--sp-2);
+  }
+
+  // Momiji et Fuji, aux deux coins du bandeau. Purement ornementaux : ils se
+  // retirent sous 480 px, où chaque pixel compte et où ils écraseraient le
+  // titre au lieu de l'encadrer.
+  &__deco {
+    position: absolute;
+    top: 0;
+    width: 88px;
+    height: auto;
+    opacity: 0.85;
+    pointer-events: none;
+    user-select: none;
+    display: none;
+
+    @include mixins.from('sm') {
+      display: block;
+    }
+
+    &--left  { left: 0; }
+    &--right { right: 0; }
+  }
+
+  &__back {
+    justify-self: start;
+    margin-bottom: var(--sp-4);
+    padding: var(--sp-2) var(--sp-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-size: var(--fs-sm);
+    text-decoration: none;
+    cursor: pointer;
+    // Au-dessus du décor, sinon le momiji intercepte le clic au coin gauche.
+    position: relative;
+    z-index: var(--z-base);
+
+    &:hover { border-color: var(--border-strong); }
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  &__title {
+    margin: 0;
+  }
+
+  &__subtitle {
+    margin: 0;
+    color: var(--muted);
+  }
+
+  &__hero {
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    // Ratio fixe : la hauteur est connue avant que l'image n'arrive, la page
+    // ne saute pas au chargement.
+    aspect-ratio: 16 / 7;
+    background: var(--accent-soft);
+  }
+
+  &__hero-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  &__steps {
+    display: grid;
+    gap: var(--sp-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+}

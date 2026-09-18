@@ -16,17 +16,22 @@ export const THEMES = [
   },
 ];
 
-export const DEFAULT_THEME = 'japan';
+// Charte de l'application : connexion, liste des voyages, création d'un voyage.
+// Distincte des thèmes pays, qui n'habillent que l'intérieur d'un voyage.
+// Sert aussi de repli quand trips.theme porte une valeur inconnue.
+export const APP_THEME = 'neutral';
 
 export function isKnownTheme(id) {
   return THEMES.some((theme) => theme.id === id);
 }
 
-// Applique un thème à <html>. La valeur vient de trips.theme (colonne prévue
-// en L1) ; un thème inconnu retombe sur le thème par défaut plutôt que de
-// laisser la page sans couleurs.
+// Applique un thème à <html>. La valeur vient de trips.theme ; un thème inconnu
+// retombe sur la charte de l'app plutôt que de laisser la page sans couleurs.
+//
+// À n'appeler qu'en entrant dans un voyage, et à rappeler avec APP_THEME en
+// sortant : hors d'un voyage, l'app porte sa propre charte.
 export function applyTheme(id) {
-  const resolved = isKnownTheme(id) ? id : DEFAULT_THEME;
+  const resolved = isKnownTheme(id) ? id : APP_THEME;
   document.documentElement.dataset.theme = resolved;
   return resolved;
 }
