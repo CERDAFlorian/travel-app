@@ -12,8 +12,18 @@ $themes: (
   'japan':   japan.$theme
 );
 
-// Thème appliqué quand <html> ne porte pas de data-theme.
-$default: 'japan';
+// Thème de :root, donc de tout ce qui ne porte pas de data-theme.
+//
+// C'est 'neutral', et ce n'est pas un repli par défaut : c'est la charte de
+// l'application elle-même — connexion, liste des voyages, création d'un voyage.
+// Un thème pays n'habille QUE l'intérieur d'un voyage. Mettre 'japan' ici
+// peindrait l'écran de connexion aux couleurs d'un seul des voyages, ce qui
+// n'a plus de sens dès qu'il y en a deux.
+//
+// Les sélecteurs [data-theme='…'] ci-dessous sont autonomes : un thème pays
+// s'applique aussi bien à <html> qu'à un sous-arbre, selon que le voyage
+// occupe la page entière ou une zone.
+$default: 'neutral';
 
 :root {
   @include contract.emit(map.get($themes, $default));

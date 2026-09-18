@@ -102,8 +102,23 @@ formes `--radius-sm|md|lg|pill` `--shadow-sm|md|lg`.
 **Ajouter un pays** : copier `themes/_neutral.scss`, une ligne dans `$themes`
 (`_emit.scss`), une entrée dans `themes.js`. Aucun composant à toucher.
 
-**Bascule** : `<html data-theme="…">` via `applyTheme()`, alimenté par `trips.theme`
-une fois la donnée branchée en L2. Aujourd'hui figé sur `japan` dans `main.jsx`.
+**Portée de la charte pays** — décidée le 18 septembre 2026, elle structure tout le
+reste : un thème pays n'habille **que l'intérieur d'un voyage**. L'écran de connexion,
+la liste des voyages et la création d'un voyage portent la charte de l'application,
+qui est `neutral`. C'est ce que `:root` émet (`_emit.scss`), et ce que vaut
+`APP_THEME` (`themes.js`). Peindre les écrans communs aux couleurs du Japon n'aurait
+plus de sens dès le deuxième voyage — et l'app est destinée à devenir un créateur
+d'itinéraires.
+
+**Bascule** : `applyTheme(id)` pose `data-theme` sur `<html>`, alimenté par
+`trips.theme` (L2). À n'appeler qu'en entrant dans un voyage, et à rappeler avec
+`APP_THEME` en sortant. Les sélecteurs `[data-theme="…"]` étant autonomes, un thème
+pays peut aussi habiller un sous-arbre plutôt que la page entière — utile le jour où
+une liste de voyages affichera plusieurs pays côte à côte.
+
+**Attention à `_neutral.scss`** : il cumule trois rôles — charte de l'app, repli d'un
+thème inconnu, gabarit d'un nouveau pays. Pour ajouter un pays on le **copie**, on ne
+le modifie pas en place, sinon on repeint l'écran de connexion.
 
 ### Reste à faire hors lots
 
@@ -171,6 +186,7 @@ Colle un prompt, laisse la boucle tourner, vérifie, commit, passe au suivant. N
 |---|---|---|---|
 | ~~**L0**~~ | ~~Fondations : arbo, tokens CSS, config Vite, client Supabase~~ | ✅ fait | Le projet build et déploie |
 | ~~**L1**~~ | ~~Schéma Supabase + RLS + seed Japon~~ | ✅ fait | La donnée existe |
+| ~~**L1.5**~~ | ~~Connexion, routeur, sélection de voyage~~ | ✅ fait | On entre dans l'app |
 | **L2** | Couche données + cache IndexedDB + hook `useTrip` | 1 j | L'app lit online et offline |
 | **L3** | Shell + étapes + catégories + items (lecture) | 1,5 j | **App utilisable** |
 | **L4** | Édition items + LOCALISER (Nominatim) + Haversine | 1,5 j | Prépa autonome dans l'app |
@@ -349,6 +365,55 @@ Piège rencontré, noté pour la prochaine fois : les migrations se lancent avec
 rôle par défaut du SQL Editor (`postgres`), **sans user impersonation**. En se
 faisant passer pour un `authenticated`, les `create table` et les `grant`
 échouent. L'impersonation ne sert qu'à tester les policies après coup.
+
+---
+
+## L1.5 — Connexion, routeur, sélection de voyage
+
+Lot ajouté le 18 septembre 2026, absent du découpage d'origine. Il comble un
+trou : aucun lot ne prévoyait d'écran de connexion, alors que `0001_schema.sql`
+retire tout droit à `anon`. Sans session, `fetchTrip()` ne ramène rien et le
+critère d'arrêt de L2 — « charge online, passe offline, recharge » — est
+invérifiable, faute de pouvoir remplir le cache une première fois.
+
+**Livré**
+
+| | |
+|---|---|
+| `src/hooks/useSession.js` | `getSession()` + `onAuthStateChange`, `signIn`, `signOut` |
+| `src/hooks/useTheme.js` | chaque page déclare la charte qu'elle porte |
+| `src/pages/Login.jsx` | email + mot de passe |
+| `src/pages/Trips.jsx` | sélection d'un voyage, une carte par voyage |
+| `src/pages/Trip.jsx` | intérieur d'un voyage — placeholder, L3 le remplit |
+| `src/data/trips.js` | ⚠️ le voyage en dur, à remplacer par Supabase en L2 |
+
+**Email + mot de passe, pas de magic link.** Le SMTP par défaut de Supabase est
+plafonné et n'envoie qu'aux adresses de l'équipe du projet ; et recevoir un mail
+suppose un réseau et une boîte accessible depuis le téléphone, à l'étranger. Les
+deux comptes sont créés à la main dans le dashboard. Pas de formulaire
+d'inscription non plus : l'app a deux utilisateurs connus.
+
+**La connexion n'est pas une route, et ne doit pas le devenir.** Rediriger vers
+`/connexion` quand le jeton expire expulserait de son itinéraire quelqu'un qui
+n'a pas de réseau pour se reconnecter. L'écran se substitue au contenu, il ne
+déplace personne.
+
+**Routeur : `react-router-dom` 7.** Décidé ici plutôt qu'en L3 parce que le
+routeur détermine d'où vient le slug, et que le slug est le paramètre d'entrée
+de `useTrip()` en L2. Trancher après coup imposerait de réécrire `App`, les deux
+pages, l'effet de thème et le hook de données. Routes : `/` pour la liste,
+`/voyage/:slug` pour un voyage, tout le reste redirigé sur `/`. `BrowserRouter`
+et non `HashRouter` : `nginx.conf` fait déjà le fallback SPA, les URL restent
+propres. Coût : +13,6 Ko gzip (101,5 → 115,1), payés une fois à l'installation
+de la PWA, pas pendant le voyage.
+
+**Pas de création de voyage.** Volontaire. Le formulaire viendra avec le
+créateur d'itinéraires, hors lots actuels.
+
+**Ce que L2 en hérite** — `useTrip(slug)` lit le slug de la route, pas d'un état
+local. Et la condition d'affichage de `App.jsx` doit passer de `!user` à
+`!user && !cachedTrips` : le commentaire est dans le code, à l'endroit exact où
+le changer.
 
 ---
 

@@ -1,6 +1,12 @@
-// Thème « neutral » — repli et GABARIT.
-// Pour un nouveau voyage : copie ce fichier sous themes/_pays.scss, remplace
-// la couche 1, enregistre-le dans src/theme/_emit.scss et src/theme/themes.js.
+// Thème « neutral » — CHARTE DE L'APPLICATION, repli, et gabarit.
+//
+// Trois rôles, dont un qui impose de la prudence : c'est la charte de tout ce
+// qui n'est pas l'intérieur d'un voyage — écran de connexion, liste des
+// voyages, création d'un voyage. Le modifier repeint ces écrans.
+//
+// Pour un nouveau voyage : COPIE ce fichier sous themes/_pays.scss (ne le
+// modifie pas en place), remplace la couche 1, enregistre-le dans
+// src/theme/_emit.scss et src/theme/themes.js.
 // Aucune autre ligne de l'app n'est à toucher.
 @use '../contract';
 

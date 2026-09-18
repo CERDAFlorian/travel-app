@@ -1,0 +1,90 @@
+@use '../theme/mixins';
+
+.trip {
+  display: grid;
+  align-content: start;
+  gap: var(--sp-5);
+  width: min(100%, var(--page-max));
+  margin-inline: auto;
+  min-height: 100svh;
+  padding: var(--sp-6) var(--page-pad) var(--sp-7);
+
+  &__head {
+    display: grid;
+    gap: var(--sp-1);
+  }
+
+  &__back {
+    justify-self: start;
+    margin-bottom: var(--sp-4);
+    padding: var(--sp-2) var(--sp-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: var(--fs-sm);
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover { border-color: var(--border-strong); }
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  &__title {
+    margin: 0;
+  }
+
+  &__subtitle {
+    margin: 0;
+    color: var(--muted);
+  }
+
+  &__card {
+    padding: var(--sp-6);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-md);
+  }
+
+  &__intro {
+    margin: 0;
+    color: var(--muted);
+  }
+
+  &__cats {
+    display: grid;
+    gap: var(--sp-2);
+    margin: var(--sp-5) 0 0;
+    padding: 0;
+    list-style: none;
+
+    @include mixins.from('sm') {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  &__cat {
+    display: flex;
+    gap: var(--sp-2);
+    align-items: center;
+    font-size: var(--fs-sm);
+  }
+
+  // Les 6 couleurs de catégorie sont des invariants : identiques pour tous les
+  // voyages, quel que soit le thème pays. C'est le fil conducteur visuel.
+  &__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: var(--radius-pill);
+    background: var(--cat-note);
+
+    &[data-cat='hotel']      { background: var(--cat-hotel); }
+    &[data-cat='activite']   { background: var(--cat-activite); }
+    &[data-cat='restaurant'] { background: var(--cat-restaurant); }
+    &[data-cat='shopping']   { background: var(--cat-shopping); }
+    &[data-cat='lieu']       { background: var(--cat-lieu); }
+    &[data-cat='note']       { background: var(--cat-note); }
+  }
+}

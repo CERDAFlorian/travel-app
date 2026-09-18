@@ -1,0 +1,133 @@
+@use '../theme/mixins';
+
+.trips {
+  display: grid;
+  align-content: start;
+  gap: var(--sp-6);
+  width: min(100%, var(--page-max));
+  margin-inline: auto;
+  min-height: 100svh;
+  padding: var(--sp-7) var(--page-pad) var(--sp-5);
+
+  &__head {
+    display: grid;
+    gap: var(--sp-1);
+  }
+
+  &__title {
+    margin: 0;
+  }
+
+  &__list {
+    display: grid;
+    gap: var(--sp-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    // Plusieurs pays côte à côte le jour venu ; une seule colonne au téléphone.
+    @include mixins.from('md') {
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+  }
+
+  &__foot {
+    display: flex;
+    gap: var(--sp-3);
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: var(--sp-4);
+    border-top: 1px solid var(--border-soft);
+    font-size: var(--fs-sm);
+  }
+
+  &__email {
+    color: var(--muted);
+    @include mixins.truncate;
+  }
+
+  &__signout {
+    flex: none;
+    padding: var(--sp-1) var(--sp-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: var(--fs-sm);
+    cursor: pointer;
+
+    &:hover { border-color: var(--border-strong); }
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+}
+
+// La carte porte data-theme : toutes les variables lues ici sont donc celles du
+// pays, pas celles de la page. Aucune couleur en dur, c'est ce qui permet au
+// même composant de servir tous les voyages.
+.trip-card {
+  display: grid;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: var(--sp-6) var(--sp-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  // La carte est un <a> depuis le passage au routeur : sans ça, elle hérite du
+  // bleu souligné du navigateur, qui ignore le thème du pays.
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+
+  // Bandeau d'accent : la signature du pays, visible avant même de lire.
+  border-top: 4px solid var(--accent);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  &:focus-visible { @include mixins.focus-ring; }
+
+  &__period {
+    color: var(--accent);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  &__title {
+    font-family: var(--font-display);
+    font-size: var(--fs-xl);
+    color: var(--text-heading);
+    line-height: var(--lh-tight);
+  }
+
+  &__subtitle {
+    color: var(--muted);
+    font-size: var(--fs-sm);
+  }
+
+  &__facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    margin-top: var(--sp-2);
+  }
+
+  &__fact {
+    padding: var(--sp-1) var(--sp-3);
+    border-radius: var(--radius-pill);
+    background: var(--accent-soft);
+    color: var(--text);
+    font-size: var(--fs-xs);
+  }
+}
