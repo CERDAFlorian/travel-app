@@ -179,15 +179,19 @@ begin
   end if;
 end $$;
 
-commit;
-
 -- ---------------------------------------------------------------------------
--- Coordonnées portées par le design, à décommenter pour éviter de les
--- re-géocoder. Les autres items passeront par LOCALISER (L4).
--- ---------------------------------------------------------------------------
+-- Coordonnées déjà portées par le design : autant de moins à demander à
+-- Nominatim en L4. `geocoded_at` reste NULL — la convention du schéma veut que
+-- NULL avec lat/lng signifie « saisi à la main », pas « géocodé par l'app ».
 --
--- update public.items set lat = 35.790000, lng = 138.310000 where title = 'Distillerie Hakushu';
--- update public.items set lat = 34.300000, lng = 132.320000 where title = 'Miyajima & torii flottant';
--- update public.items set lat = 34.670000, lng = 135.430000 where title = 'Universal Studios Japan';
--- update public.items set lat = 34.210000, lng = 135.580000 where title = 'Kōyasan';
--- update public.items set lat = 35.630000, lng = 139.880000 where title = 'Tokyo Disneyland';
+-- Elles servent aussi à L3 : sans elles, le bouton PLAN serait désactivé sur
+-- les 48 items et rien ne permettrait de l'éprouver.
+-- ---------------------------------------------------------------------------
+
+update public.items set lat = 35.790000, lng = 138.310000 where title = 'Distillerie Hakushu';
+update public.items set lat = 34.300000, lng = 132.320000 where title = 'Miyajima & torii flottant';
+update public.items set lat = 34.670000, lng = 135.430000 where title = 'Universal Studios Japan';
+update public.items set lat = 34.210000, lng = 135.580000 where title = 'Kōyasan';
+update public.items set lat = 35.630000, lng = 139.880000 where title = 'Tokyo Disneyland';
+
+commit;

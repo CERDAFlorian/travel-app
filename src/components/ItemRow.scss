@@ -1,0 +1,81 @@
+@use '../theme/mixins';
+
+.item-row {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: baseline;
+  padding: var(--sp-3) 0;
+  border-top: 1px solid var(--border-soft);
+
+  &:first-child {
+    border-top: 0;
+  }
+
+  // Les 6 couleurs de catégorie sont invariantes : les mêmes pour tous les
+  // voyages, hors contrat de thème. C'est le fil conducteur visuel de l'app.
+  &__dot {
+    flex: none;
+    width: 9px;
+    height: 9px;
+    border-radius: var(--radius-pill);
+    background: var(--cat-note);
+    // La pastille est alignée sur la ligne de base du titre, pas sur son haut.
+    transform: translateY(-1px);
+
+    &[data-cat='hotel']      { background: var(--cat-hotel); }
+    &[data-cat='activite']   { background: var(--cat-activite); }
+    &[data-cat='restaurant'] { background: var(--cat-restaurant); }
+    &[data-cat='shopping']   { background: var(--cat-shopping); }
+    &[data-cat='lieu']       { background: var(--cat-lieu); }
+    &[data-cat='note']       { background: var(--cat-note); }
+  }
+
+  // min-width: 0 — sans ça, un titre long refuse de se contracter et pousse le
+  // prix hors de l'écran à 375 px.
+  &__body {
+    display: grid;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__title {
+    font-size: var(--fs-sm);
+  }
+
+  &__star {
+    margin-left: var(--sp-1);
+    color: var(--accent);
+  }
+
+  &__notes {
+    color: var(--muted);
+    font-size: var(--fs-xs);
+  }
+
+  // tabular-nums : les prix s'alignent chiffre à chiffre d'une ligne à l'autre.
+  &__price {
+    flex: none;
+    color: var(--text);
+    font-size: var(--fs-sm);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__plan {
+    flex: none;
+    padding: var(--sp-1) var(--sp-3);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    color: var(--accent);
+    font-size: var(--fs-xs);
+    text-decoration: none;
+    // 44 px de haut au minimum : la cible tactile recommandée par Apple. Un
+    // lien de 20 px se rate une fois sur trois dans un train.
+    min-height: 32px;
+    display: inline-flex;
+    align-items: center;
+
+    &:hover { border-color: var(--accent); }
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+}

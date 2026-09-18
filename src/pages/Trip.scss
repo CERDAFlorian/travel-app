@@ -6,12 +6,35 @@
   gap: var(--sp-5);
   width: min(100%, var(--page-max));
   margin-inline: auto;
-  min-height: 100svh;
-  padding: var(--sp-6) var(--page-pad) var(--sp-7);
+  padding: var(--sp-5) var(--page-pad) var(--sp-7);
 
   &__head {
+    position: relative;
     display: grid;
     gap: var(--sp-1);
+    // Laisse la place au décor sans que le titre passe dessous.
+    padding-top: var(--sp-2);
+  }
+
+  // Momiji et Fuji, aux deux coins du bandeau. Purement ornementaux : ils se
+  // retirent sous 480 px, où chaque pixel compte et où ils écraseraient le
+  // titre au lieu de l'encadrer.
+  &__deco {
+    position: absolute;
+    top: 0;
+    width: 88px;
+    height: auto;
+    opacity: 0.85;
+    pointer-events: none;
+    user-select: none;
+    display: none;
+
+    @include mixins.from('sm') {
+      display: block;
+    }
+
+    &--left  { left: 0; }
+    &--right { right: 0; }
   }
 
   &__back {
@@ -20,12 +43,15 @@
     padding: var(--sp-2) var(--sp-3);
     border: 1px solid var(--border);
     border-radius: var(--radius-pill);
-    background: transparent;
+    background: var(--surface);
     color: var(--text);
     font: inherit;
     font-size: var(--fs-sm);
     text-decoration: none;
     cursor: pointer;
+    // Au-dessus du décor, sinon le momiji intercepte le clic au coin gauche.
+    position: relative;
+    z-index: var(--z-base);
 
     &:hover { border-color: var(--border-strong); }
     &:focus-visible { @include mixins.focus-ring; }
@@ -40,102 +66,27 @@
     color: var(--muted);
   }
 
-  &__card {
-    padding: var(--sp-6);
-    border: 1px solid var(--border);
+  &__hero {
+    overflow: hidden;
     border-radius: var(--radius-lg);
-    background: var(--surface);
-    box-shadow: var(--shadow-md);
+    // Ratio fixe : la hauteur est connue avant que l'image n'arrive, la page
+    // ne saute pas au chargement.
+    aspect-ratio: 16 / 7;
+    background: var(--accent-soft);
   }
 
-  &__intro {
-    margin: 0;
-    color: var(--muted);
-  }
-
-  &__cats {
-    display: grid;
-    gap: var(--sp-2);
-    margin: var(--sp-5) 0 0;
-    padding: 0;
-    list-style: none;
-
-    @include mixins.from('sm') {
-      grid-template-columns: 1fr 1fr;
-    }
-  }
-
-  &__cat {
-    display: flex;
-    gap: var(--sp-2);
-    align-items: center;
-    font-size: var(--fs-sm);
-  }
-
-  // Les 6 couleurs de catégorie sont des invariants : identiques pour tous les
-  // voyages, quel que soit le thème pays. C'est le fil conducteur visuel.
-  &__dot {
-    width: 10px;
-    height: 10px;
-    border-radius: var(--radius-pill);
-    background: var(--cat-note);
-
-    &[data-cat='hotel']      { background: var(--cat-hotel); }
-    &[data-cat='activite']   { background: var(--cat-activite); }
-    &[data-cat='restaurant'] { background: var(--cat-restaurant); }
-    &[data-cat='shopping']   { background: var(--cat-shopping); }
-    &[data-cat='lieu']       { background: var(--cat-lieu); }
-    &[data-cat='note']       { background: var(--cat-note); }
-  }
-}
-
-.trip {
-  &__count {
-    margin-left: auto;
-    color: var(--muted);
-    font-variant-numeric: tabular-nums;
+  &__hero-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
 
   &__steps {
     display: grid;
-    gap: var(--sp-2);
+    gap: var(--sp-4);
     margin: 0;
     padding: 0;
     list-style: none;
-    counter-reset: none;
-  }
-
-  &__step {
-    display: flex;
-    gap: var(--sp-3);
-    align-items: center;
-    padding: var(--sp-3) var(--sp-4);
-    border: 1px solid var(--border-soft);
-    border-radius: var(--radius-md);
-    background: var(--surface);
-  }
-
-  &__step-position {
-    display: grid;
-    place-items: center;
-    flex: none;
-    width: 26px;
-    height: 26px;
-    border-radius: var(--radius-pill);
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-size: var(--fs-xs);
-    font-weight: 700;
-  }
-
-  &__step-name {
-    @include mixins.truncate;
-  }
-
-  &__step-meta {
-    margin-left: auto;
-    flex: none;
-    color: var(--muted);
-    font-size: var(--fs-xs);
   }
 }

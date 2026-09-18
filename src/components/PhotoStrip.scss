@@ -1,0 +1,55 @@
+.photo-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  &__tile {
+    position: relative;
+    // Réserve la place avant le chargement : sans ratio fixe, les sept bandeaux
+    // feraient sauter la page à mesure que les images arrivent.
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    background: var(--accent-soft);
+
+    &[data-empty] {
+      display: grid;
+      place-items: center;
+      border: 1px dashed var(--border-strong);
+      background: var(--surface);
+    }
+  }
+
+  &__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  &__fallback {
+    padding: var(--sp-2);
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    text-align: center;
+  }
+
+  // Légende posée sur la photo. Le dégradé garantit la lisibilité quelle que
+  // soit l'image dessous — un simple texte blanc disparaît sur un ciel clair.
+  &__caption {
+    position: absolute;
+    inset: auto 0 0 0;
+    padding: var(--sp-4) var(--sp-2) var(--sp-2);
+    background: linear-gradient(to top, rgb(0 0 0 / 65%), transparent);
+    color: #fff;
+    font-size: var(--fs-xs);
+    line-height: var(--lh-tight);
+
+    .photo-strip__tile[data-empty] & {
+      display: none;
+    }
+  }
+}

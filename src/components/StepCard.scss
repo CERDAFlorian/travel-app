@@ -1,0 +1,51 @@
+.step-card {
+  display: grid;
+  gap: var(--sp-4);
+  padding: var(--sp-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+
+  &__head {
+    display: flex;
+    gap: var(--sp-3);
+    align-items: center;
+  }
+
+  &__number {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-pill);
+    background: var(--accent);
+    color: var(--accent-contrast);
+    font-family: var(--font-display);
+    font-size: var(--fs-md);
+    font-weight: 700;
+  }
+
+  &__identity {
+    min-width: 0;
+  }
+
+  &__name {
+    margin: 0;
+    font-size: var(--fs-lg);
+    line-height: var(--lh-tight);
+  }
+
+  &__dates {
+    margin: 2px 0 0;
+    color: var(--muted);
+    font-size: var(--fs-xs);
+  }
+
+  // La dernière catégorie ne porte pas de trait bas : le bord de la carte fait
+  // déjà la séparation.
+  &__cats {
+    border-bottom: 1px solid var(--border-soft);
+  }
+}

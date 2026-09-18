@@ -14,9 +14,9 @@ Offline en **lecture seule**. Carte SVG unique zoomable, ancres géographiques +
 ## État du projet — 18 septembre 2026
 
 Branche de travail : `dev`. `main` est en retard, la fusion se fera par PR.
-**L0, L1, L1.5 et L2 sont terminés.** L3 est le prochain.
+**L0, L1, L1.5, L2 et L3 sont terminés — l'app est utilisable.** L4 est le prochain.
 
-⚠️ **Départ le 7 novembre 2026 — sept semaines.** L3 à L6 pèsent environ six
+⚠️ **Départ le 7 novembre 2026 — sept semaines.** L4 à L6 pèsent environ quatre
 jours de travail. L7 (PWA, service worker) est le lot qui rend l'app utilisable
 sur place : s'il faut rogner, rogner sur L6, jamais sur L7.
 
@@ -126,12 +126,19 @@ le modifie pas en place, sinon on repeint l'écran de connexion.
 
 ### Reste à faire hors lots
 
-**3 images bloquent L3** — à exporter du canvas vers `design/img/` puis `npm run img` :
-`deco-momiji.png`, `deco-fuji.png`, `hero-pagode.png` (décor du header et bandeau hero).
+**Les 3 images bloquantes sont arrivées** (18 septembre 2026) — `deco-momiji`,
+`deco-fuji`, `hero-pagode`, exportées à la main du canvas et compressées. 31 PNG
+sources, 311 Ko de WebP servis.
 
-6 autres sont optionnelles (`sushi`, `sumo`, `shirakawago2`, `narai`, `matcha`,
-`baguettes`) : leur absence laisse l'item sans photo, rien ne casse. Le plafond de
-256 Ko de `get_file` empêche de les récupérer via le MCP.
+**6 restent à exporter**, et trois d'entre elles se voient : `narai`,
+`shirakawago2` et `sumo` correspondent à des items du seed dont le bandeau
+tombe en repli. Les déposer dans `design/img/` puis `npm run img` fait passer
+les étapes à bandeau complet de **2 sur 7 à 4 sur 7**, sans toucher au code.
+Les trois autres (`sushi`, `matcha`, `baguettes`) ne servent qu'aux expériences
+de L6. Le plafond de 256 Ko de `get_file` empêche de les récupérer via le MCP.
+
+**Trois items n'auront jamais de photo** : Distillerie Hakushu, Balade dans le
+village, Mémorial de la Paix. Aucun mot-clé ne leur correspond dans le design.
 
 ---
 
@@ -201,7 +208,7 @@ Colle un prompt, laisse la boucle tourner, vérifie, commit, passe au suivant. N
 | ~~**L1**~~ | ~~Schéma Supabase + RLS + seed Japon~~ | ✅ fait | La donnée existe |
 | ~~**L1.5**~~ | ~~Connexion, routeur, sélection de voyage~~ | ✅ fait | On entre dans l'app |
 | ~~**L2**~~ | ~~Couche données + cache IndexedDB + hook `useTrip`~~ | ✅ fait | L'app lit online et offline |
-| **L3** | Shell + étapes + catégories + items (lecture) | 1,5 j | **App utilisable** |
+| ~~**L3**~~ | ~~Shell + étapes + catégories + items (lecture)~~ | ✅ fait | **App utilisable** |
 | **L4** | Édition items + LOCALISER (Nominatim) + Haversine | 1,5 j | Prépa autonome dans l'app |
 | **L5** | Carte SVG : pan/zoom, ancres, labels déportés, filtres tags | 2 j | La pièce maîtresse |
 | **L6** | Vols, trajets, expériences, budget | 1 j | Périmètre complet |
@@ -561,6 +568,41 @@ STOP
 - Les images sont servies en `.webp`, pas `.png`.
 - 3 images du header manquent encore — voir « Reste à faire hors lots ».
 - Voir l'écart signalé plus haut sur le bandeau photo.
+
+---
+
+**L3 — fait le 18 septembre 2026.** Les 7 étapes s'affichent, compteurs justes,
+accordéons fonctionnels, rien ne déborde à 375 px.
+
+Livré : `lib/categories.js` (les 6 catégories, source unique), `lib/photos.js`
+(PHOTO_LIB et featured transposés), `PhotoStrip`, `ItemRow`,
+`CategoryAccordion`, `StepCard`, et `pages/Trip.jsx` qui assemble le shell avec
+le décor et le hero. `.sr-only` ajouté au reset.
+
+**Correction du doc — `PHOTOS` est du code mort.** Le `.dc.html` contient une
+table qui fige 3 photos par ville ; elle n'est appelée nulle part. Le vrai
+mécanisme est `featured(items)` + `imgFor(titre)`, par mots-clés. La reprendre
+aurait figé le Japon dans un composant censé servir tous les voyages.
+
+**`items.favorite` était nécessaire.** La colonne ajoutée hors contrat en L1 est
+exactement l'étoile dont `featured()` a besoin pour choisir les 3 photos.
+
+**Arbitrage — tout replié par défaut.** Le contrat disait « replié sauf si le
+compteur est > 0 », ce qui revient à tout ouvrir : sur 48 items, Tokyo ferait un
+mur à 375 px. On prépare un voyage en ouvrant la catégorie qu'on cherche.
+
+**Arbitrage — pas de bouton supprimer.** Le contrat le voulait inerte. Un bouton
+qui ne fait rien apprend au doigt un geste qui deviendra destructeur en L4 : il
+arrivera avec l'action qu'il déclenche. Même raison pour l'étoile, qui reste un
+indicateur et non un interrupteur.
+
+**Les 5 coordonnées du seed sont décommentées** et remontées dans la
+transaction — elles étaient après le `commit;`. Elles donnent 5 boutons Plan
+réellement testables ; sans elles la fonction était invérifiable jusqu'à L4.
+
+**Ce que L4 en hérite** — `ItemRow` est en lecture seule : l'étoile et la
+suppression sont à y ajouter, pas à y activer. `useSession().readOnly` dit quand
+l'écriture doit être bloquée.
 
 ---
 

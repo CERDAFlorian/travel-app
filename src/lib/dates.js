@@ -50,3 +50,40 @@ export function formatSince(timestamp) {
   const days = Math.floor(hours / 24);
   return days === 1 ? 'hier' : `il y a ${days} jours`;
 }
+
+const DAY_MONTH = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' });
+
+// Dates d'une étape, format court : « 7 – 9 nov. » dans le mois,
+// « 30 oct. – 2 nov. » quand elle le déborde. Pas d'année : elle est déjà dans
+// l'en-tête du voyage, la répéter sept fois n'apprend rien.
+export function formatStepDates(startIso, endIso) {
+  const start = parse(startIso);
+  const end = parse(endIso);
+
+  if (!start && !end) return '';
+  if (!start) return DAY_MONTH.format(end);
+  if (!end) return DAY_MONTH.format(start);
+
+  const sameMonth =
+    start.getFullYear() === end.getFullYear() && start.getMonth() === end.getMonth();
+
+  return sameMonth
+    ? `${start.getDate()} – ${DAY_MONTH.format(end)}`
+    : `${DAY_MONTH.format(start)} – ${DAY_MONTH.format(end)}`;
+}
+
+// Un prix dans sa devise. Les montants sont entiers au Japon : le yen n'a pas
+// de subdivision, afficher « 34 000,00 ¥ » serait une faute de sens.
+export function formatPrice(amount, currency = 'JPY') {
+  if (amount === null || amount === undefined) return null;
+
+  try {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency,
+      maximumFractionDigits: currency === 'JPY' ? 0 : 2,
+    }).format(amount);
+  } catch {
+    return `${amount} ${currency}`;
+  }
+}
