@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "img": "node scripts/optimize-images.mjs",
-    "img:check": "node scripts/optimize-images.mjs --check"
+    "img:check": "node scripts/optimize-images.mjs --check",
+    "sql:check": "node scripts/check-sql.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",

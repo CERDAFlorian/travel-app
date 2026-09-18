@@ -24,6 +24,15 @@ npm run build     # sortie dans dist/
 npm run preview   # sert dist/ localement
 ```
 
+## Vérifications
+
+```sh
+npm run img:check   # les WebP servis sont à jour vis-à-vis des PNG sources
+npm run sql:check   # cohérence du schéma, des policies RLS et du seed
+```
+
+Les deux tournent en CI sur chaque push.
+
 ## Variables d'environnement
 
 | Variable | Usage |
@@ -76,5 +85,15 @@ Déjà configurés dans [`nginx.conf`](nginx.conf), rien à faire côté Coolify
 
 ## Base de données
 
-Les migrations SQL vivront dans `supabase/`. Elles s'appliquent manuellement,
-la CI ne touche jamais à la base.
+Les migrations SQL sont dans [`supabase/`](supabase/README.md) : schéma, RLS,
+seed du voyage Japon. Elles s'appliquent **à la main** depuis le SQL Editor de
+Supabase — ni le repo, ni la CI, ni le déploiement ne parlent à la base.
+
+```sh
+npm run sql:check   # contrôle statique des fichiers SQL (tourne aussi en CI)
+```
+
+Avant le premier seed, les comptes doivent exister dans `auth.users` — à créer
+depuis **Authentication → Users** du dashboard Supabase, l'app n'ayant pas
+encore d'écran de connexion. Le seed rattache le voyage aux comptes existants,
+et RLS le rend invisible tant que personne n'y est rattaché.

@@ -26,6 +26,9 @@ jobs:
       - name: Verifier que les WebP sont a jour
         run: npm run img:check
 
+      - name: Verifier le SQL Supabase
+        run: npm run sql:check
+
       - name: Install dependencies
         run: npm ci
 

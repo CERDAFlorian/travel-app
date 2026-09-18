@@ -11,10 +11,14 @@ Offline en **lecture seule**. Carte SVG unique zoomable, ancres géographiques +
 
 ---
 
-## État du projet — 24 août 2026
+## État du projet — 25 août 2026
 
 Branche de travail : `dev`, synchronisée avec `origin/dev`. `main` est en retard,
-la fusion se fera par PR. **L0 est terminé.** L1 est le prochain.
+la fusion se fera par PR. **L0 et L1 sont terminés.** L2 est le prochain.
+
+L1 a produit du SQL, pas du code : rien n'est appliqué tant que les trois
+fichiers ne sont pas passés à la main dans le SQL Editor de Supabase. Tant que
+ce n'est pas fait, L2 n'a aucune donnée à lire.
 
 ### Ce qui est en place
 
@@ -25,7 +29,8 @@ la fusion se fera par PR. **L0 est terminé.** L1 est le prochain.
 | Build | `npm run build` → ~150 ms, `dist` = 452 Ko, aucun warning |
 | Dev | `npm run dev` → http://localhost:5173 |
 | Images | 28 WebP dans `public/img/` (251 Ko), sources PNG dans `design/img/` |
-| CI | `check.yml` sur push `dev` et PR `main` : `img:check` + build |
+| Base | `supabase/` : schéma, RLS, seed Japon. À appliquer à la main |
+| CI | `check.yml` sur push `dev` et PR `main` : `img:check` + `sql:check` + build |
 | Déploiement | image Docker → GHCR → Coolify. `nginx.conf` fait le fallback SPA |
 
 ### Commandes
@@ -35,6 +40,7 @@ npm run dev          # serveur de développement
 npm run build        # build production
 npm run img          # compresse design/img/*.png → public/img/*.webp
 npm run img:check    # vérifie sans compresser (tourne en CI)
+npm run sql:check    # cohérence schéma / RLS / seed (tourne en CI)
 ```
 
 ### Décisions prises
@@ -129,10 +135,16 @@ avec `d3.geoMercator().fitExtent()`. Conséquences :
 
 **L1 — `pin_x` / `pin_y` sont probablement inutiles.** Le contrat les justifie par
 un placement manuel dans le SVG. Avec une vraie projection, `lat`/`lng` suffisent.
+→ **Arbitré en L1** : colonnes créées, contraintes à 0–1, laissées vides. Une
+colonne nullable inutilisée ne coûte rien ; l'ajouter plus tard coûte une
+migration. Elles servent de repli si une étape doit être forcée quelque part.
 
 **L3 — le bandeau photo n'est pas un champ de l'étape.** Le design apparie les
 photos par **mots-clés du titre d'item** (`.dc.html`, lignes 366-381), pas via un
 tableau sur l'étape. À arbitrer avec `steps.images text[]` prévu en L1.
+→ **Arbitré en L1** : les deux cohabitent. `steps.images` existe mais reste
+`NULL` dans le seed ; L3 compose le bandeau par mots-clés, et la colonne sert
+de surcharge quand l'appariement automatique ne donne rien de bon.
 
 **L7 — les headers de cache sont déjà faits.** `nginx.conf` gère `no-cache` sur
 `index.html`/`sw.js`/`manifest.webmanifest` et `immutable` sur `/assets/`.
@@ -156,13 +168,14 @@ Colle un prompt, laisse la boucle tourner, vérifie, commit, passe au suivant. N
 | Lot | Contenu | Effort | Palier atteint |
 |---|---|---|---|
 | ~~**L0**~~ | ~~Fondations : arbo, tokens CSS, config Vite, client Supabase~~ | ✅ fait | Le projet build et déploie |
-| **L1** | Schéma Supabase + RLS + seed Japon | 0,5 j | La donnée existe |
+| ~~**L1**~~ | ~~Schéma Supabase + RLS + seed Japon~~ | ✅ fait | La donnée existe |
 | **L2** | Couche données + cache IndexedDB + hook `useTrip` | 1 j | L'app lit online et offline |
 | **L3** | Shell + étapes + catégories + items (lecture) | 1,5 j | **App utilisable** |
 | **L4** | Édition items + LOCALISER (Nominatim) + Haversine | 1,5 j | Prépa autonome dans l'app |
 | **L5** | Carte SVG : pan/zoom, ancres, labels déportés, filtres tags | 2 j | La pièce maîtresse |
 | **L6** | Vols, trajets, expériences, budget | 1 j | Périmètre complet |
 | **L7** | PWA, précache, bouton sync, QA mobile | 1 j | Prêt pour le voyage |
+| **L8** | Séparer la base de dev de la base de prod | 0,5 j | On peut casser sans risque |
 
 **Cible réaliste jour 1 : L0 → L3.**
 
@@ -281,6 +294,55 @@ STOP
 - Clé catégorie : **`restaurant`** (décidé), le design dit `resto`.
 - `design/README.md` liste 25 villes avec `lat`/`lon` réels, réutilisables pour le seed.
 - Voir l'écart signalé plus haut sur `pin_x` / `pin_y`.
+
+**L1 — fait le 25 août 2026.** Rien n'a été exécuté contre Supabase : les
+fichiers sont écrits, à appliquer à la main. Procédure dans
+[`supabase/README.md`](supabase/README.md).
+
+Livré : `supabase/migrations/0001_schema.sql` (7 tables, contraintes, index,
+droits), `0002_rls.sql` (4 fonctions d'accès, 1 trigger, 28 policies),
+`supabase/seed.sql` (voyage Japon : 7 étapes, 48 items, 6 liaisons, 2 vols,
+4 expériences), `supabase/README.md`, plus `npm run sql:check` branché en CI.
+
+**Vérification.** Il n'y a pas de Postgres dans ce projet, donc pas de moyen
+d'exécuter le SQL pour le valider. `scripts/check-sql.mjs` contrôle ce qui se
+voit sans serveur : quotes et parenthèses, transactions refermées, FK dont la
+table cible existe, RLS activé partout, les 4 policies par table, aucune policy
+permissive ni sans `to authenticated`, `security definer` au `search_path`
+verrouillé, catégories du seed dans le `CHECK`, enchaînement des dates
+d'étapes, images en `.webp`. Chacun de ces contrôles a été vérifié en cassant
+volontairement le fichier correspondant. Un typage invalide ne se verra qu'à
+l'application.
+
+**Écart 1 — `items.favorite` ajouté.** Absent du contrat, mais L3 demande une
+étoile favori sur `ItemRow` et le design s'en sert pour choisir les 3 photos du
+bandeau d'étape. Sans la colonne, L3 se serait arrêté sur une migration.
+
+**Écart 2 — `currency` sur `flights` et `experiences`.** Le contrat ne la met
+que sur `items`. Un vol s'achète en euros, un item se paie en yens : sans
+devise sur les vols, le budget de L6 additionne deux monnaies et le total est
+faux sans que rien ne le signale. Défaut `EUR` sur les vols, `JPY` ailleurs.
+
+**Écart 3 — un trigger et 4 fonctions en plus des policies.** Une policy de
+`trip_members` qui interroge `trip_members` en SQL direct part en récursion
+infinie. Les prédicats passent donc par des fonctions `security definer`. Le
+trigger `trips_claim_creator`, lui, inscrit le créateur d'un voyage comme
+`owner` — sans quoi la future page « nouveau voyage » se bloquerait elle-même.
+Conséquence à connaître : l'insertion d'un voyage ne doit pas demander la ligne
+en retour (`.insert(row)` sans `.select()`), le détail est dans `0002_rls.sql`.
+
+**Écart 4 — les prix du seed sont inventés.** Le design ne portait aucun prix.
+Sept hôtels et six activités en ont reçu un, ordres de grandeur plausibles,
+pour que le budget de L6 ait quelque chose à additionner (370 800 ¥
+actuellement). À remplacer par les vrais montants.
+
+**À faire avant L2** : appliquer les trois fichiers depuis le SQL Editor, après
+avoir créé les deux comptes depuis **Authentication → Users** du dashboard — il
+n'y a pas encore d'écran de connexion dans l'app, ça ne peut pas se faire
+autrement. Le seed rattache le voyage aux comptes présents dans `auth.users` ;
+si la table est vide, RLS rend le voyage invisible et l'app affichera une page
+vide sans erreur. Marche à suivre détaillée dans
+[`supabase/README.md`](supabase/README.md).
 
 ---
 
@@ -562,6 +624,68 @@ STOP
 **Notes L7**
 - Les headers de cache sont déjà dans `nginx.conf`.
 - Images déjà optimisées : 251 Ko de WebP au lieu de 4,2 Mo de PNG, `dist` = 448 Ko.
+
+---
+
+## L8 — Séparer dev et prod
+
+```
+CONTEXTE
+Une seule base Supabase sert tout : .env.local en développement ET le secret
+GitHub du déploiement pointent le même projet (lwekjapsghprasnvoaxc).
+Conséquence : toute migration, tout seed, toute suppression accidentelle
+s'applique à la base que l'app déployée lit. seed.sql s'ouvre sur un
+`delete from public.trips where slug = 'japon-2026'` en cascade — le rejouer
+après une vraie saisie efface le voyage.
+
+Assumé jusqu'ici : tant que la base est quasi vide, il n'y a rien à perdre.
+Ça cesse d'être vrai dès que la prépa réelle est saisie.
+
+OBJECTIF
+Une base de développement distincte de la base de production, et une procédure
+écrite pour promouvoir une migration de l'une à l'autre.
+
+CONTRAT
+Deux voies, à trancher AVANT d'implémenter :
+  (a) base locale — CLI Supabase + Docker. Ni l'un ni l'autre n'est installé
+      sur la machine. Base jetable, hors ligne, reset instantané.
+  (b) second projet Supabase « dev » — le plan gratuit en autorise deux.
+      Rien à installer, mais un projet gratuit inactif finit par être mis en
+      pause, et il faut le réveiller avant de travailler.
+- .env.local pointe la base de DEV. Le secret GitHub VITE_SUPABASE_URL reste
+  sur la PROD. Aucun identifiant commité, .env.local reste gitignoré.
+- Les migrations s'appliquent d'abord sur dev, ensuite sur prod. La procédure
+  de promotion est écrite dans supabase/README.md, avec l'ordre des fichiers.
+- Rien d'automatique : ni la CI ni le déploiement ne touchent à une base.
+- npm run sql:check reste le seul contrôle avant application.
+
+BOUCLE
+1. Compare (a) et (b) en un tableau court : ce qu'il faut installer, ce que
+   ça coûte à l'usage, ce qui casse si on l'oublie. Attends mon arbitrage.
+2. Mets en place la voie retenue.
+3. Applique 0001, 0002 puis seed.sql sur la base de dev.
+4. Vérifie : `npm run dev` affiche les 7 étapes du seed depuis la base de dev.
+5. Vérifie que la base de prod n'a pas bougé (compte des lignes inchangé).
+6. Documente dans supabase/README.md : quelle base est laquelle, comment on
+   promeut une migration, comment on repart de zéro sur dev.
+
+CRITÈRE D'ARRÊT
+L'app locale lit la base de dev, la prod est intacte, la procédure est écrite.
+
+STOP
+- Ne touche pas au projet de production : ni migration, ni seed, ni suppression.
+- Ne commite aucun identifiant, aucune URL de projet hors .env.example.
+- N'ajoute pas d'étape CI qui appliquerait des migrations. Elles restent
+  manuelles, c'est ce qui empêche un push malheureux de toucher la base.
+```
+
+**Notes L8**
+- À faire avant que la prépa réelle ne soit saisie — après, une erreur coûte
+  de la donnée qu'aucun seed ne peut reconstituer.
+- Le plan gratuit Supabase met en pause un projet inactif. Deux projets = deux
+  à surveiller. Voir « Points de vigilance transverses ».
+- L'ordre dans le découpage est indicatif : ce lot peut être avancé à tout
+  moment, il ne dépend que de L1.
 
 ---
 
