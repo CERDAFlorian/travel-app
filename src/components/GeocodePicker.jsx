@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { geocode, parseCoordinates } from '@/lib/geocode.js';
 import { haversine, formatDistance, MAX_DISTANCE_FROM_STEP_KM } from '@/lib/geo.js';
-import { setCoordinates } from '@/lib/mutations.js';
 import './GeocodePicker.scss';
 
 // Sélecteur de coordonnées.
@@ -10,7 +9,18 @@ import './GeocodePicker.scss';
 // japonais sont ambigus — « Daisho-in » rend un temple à Miyajima et un autre
 // dans la préfecture de Nara — et Nominatim ne le signale pas. On montre les
 // candidats, on laisse choisir.
-export default function GeocodePicker({ item, step, tripTitle, onDone, onCancel }) {
+// `reference` sert au contrôle de cohérence : c'est le point par rapport
+// auquel on juge qu'un candidat est aberrant. Pour un item, c'est le centre de
+// son étape. Pour une étape elle-même, il n'y a rien à comparer — on passe
+// null et le contrôle se tait.
+export default function GeocodePicker({
+  title,
+  stepName,
+  tripTitle,
+  reference,
+  onSave,
+  onCancel,
+}) {
   const [candidates, setCandidates] = useState(null);
   const [searching, setSearching] = useState(true);
   const [error, setError] = useState(null);
@@ -21,7 +31,7 @@ export default function GeocodePicker({ item, step, tripTitle, onDone, onCancel 
   useEffect(() => {
     let alive = true;
 
-    geocode(item.title, step.name, tripTitle)
+    geocode(title, stepName, tripTitle)
       .then((results) => {
         if (alive) setCandidates(results);
       })
@@ -35,19 +45,15 @@ export default function GeocodePicker({ item, step, tripTitle, onDone, onCancel 
     return () => {
       alive = false;
     };
-  }, [item.title, step.name, tripTitle]);
+  }, [title, stepName, tripTitle]);
 
-  const stepCenter =
-    step.lat != null && step.lng != null ? { lat: Number(step.lat), lng: Number(step.lng) } : null;
-
-  const distanceOf = (point) => (stepCenter ? haversine(stepCenter, point) : null);
+  const distanceOf = (point) => (reference ? haversine(reference, point) : null);
 
   async function commit(point, geocoded) {
     setSaving(true);
     setError(null);
     try {
-      await setCoordinates(item.id, point, { geocoded });
-      await onDone();
+      await onSave(point, geocoded);
     } catch (failure) {
       setError(failure.message);
       setSaving(false);
@@ -82,7 +88,7 @@ export default function GeocodePicker({ item, step, tripTitle, onDone, onCancel 
       <div className="geocode geocode--warning" role="alert">
         <p className="geocode__warning">
           Ce point est à <strong>{formatDistance(pending.distance)}</strong> du centre de{' '}
-          {step.name}. C'est probablement le mauvais lieu — les noms romanisés ont
+          {stepName}. C'est probablement le mauvais lieu — les noms romanisés ont
           souvent des homonymes.
         </p>
         <div className="geocode__actions">

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { CATEGORIES } from '@/lib/categories.js';
 import { formatStepDates } from '@/lib/dates.js';
+import { setStepCoordinates } from '@/lib/mutations.js';
+import GeocodePicker from './GeocodePicker.jsx';
 import PhotoStrip from './PhotoStrip.jsx';
 import CategoryAccordion from './CategoryAccordion.jsx';
 import './StepCard.scss';
@@ -36,10 +38,12 @@ export default function StepCard({
   leg,
   onSelect,
   onRemove,
+  onNights,
   onChanged,
 }) {
   const [confirming, setConfirming] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const [locating, setLocating] = useState(false);
 
   // La confirmation retombe seule après trois secondes : retirer une étape
   // emporte ses items et ses liaisons, il n'y a pas de corbeille.
@@ -99,10 +103,76 @@ export default function StepCard({
         <div className="step__head">
           <h2 className="step__name">{step.name}</h2>
           <span className="step__dates">{formatStepDates(step.date_start, step.date_end)}</span>
+          {/* Les nuits pilotent tout l'enchaînement : changer une nuit ici
+              décale les dates de toutes les étapes suivantes. */}
           <span className="step__nights">
+            {!readOnly && onNights && (
+              <button
+                type="button"
+                className="step__nights-step"
+                title="Une nuit de moins"
+                disabled={step.nights === 0}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onNights(step.id, step.nights - 1);
+                }}
+              >
+                −<span className="sr-only">Une nuit de moins</span>
+              </button>
+            )}
             {step.nights} {step.nights > 1 ? 'nuits' : 'nuit'}
+            {!readOnly && onNights && (
+              <button
+                type="button"
+                className="step__nights-step"
+                title="Une nuit de plus"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onNights(step.id, step.nights + 1);
+                }}
+              >
+                +<span className="sr-only">Une nuit de plus</span>
+              </button>
+            )}
           </span>
         </div>
+
+        {/* Une étape ajoutée depuis l'app n'a pas de coordonnées : elle
+            n'apparaît ni sur la carte, ni comme ancre de ses items. Le bouton
+            ne s'affiche donc que tant qu'elle n'est pas située. */}
+        {!readOnly && step.lat == null && (
+          <div className="step__locate-row">
+            <button
+              type="button"
+              className="step__locate"
+              onClick={(event) => {
+                event.stopPropagation();
+                setLocating((value) => !value);
+              }}
+            >
+              Situer sur la carte
+            </button>
+          </div>
+        )}
+
+        {locating && (
+          <div onClick={(event) => event.stopPropagation()}>
+            <GeocodePicker
+              title={step.name}
+              stepName={null}
+              tripTitle={tripTitle}
+              // Aucune référence : une étape EST la référence, il n'y a rien
+              // à quoi comparer sa distance.
+              reference={null}
+              onCancel={() => setLocating(false)}
+              onSave={async (point) => {
+                await setStepCoordinates(step.id, point);
+                await onChanged();
+                setLocating(false);
+              }}
+            />
+          </div>
+        )}
 
         <PhotoStrip items={step.items} stepName={step.name.split(' ')[0]} />
 

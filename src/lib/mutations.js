@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase.js';
 import { fail } from '@/lib/errors.js';
+import { addDays, datesToUpdate, tripEndDate } from '@/lib/itinerary.js';
 
 // Écritures.
 //
@@ -83,6 +84,84 @@ export async function revokeShareToken(tripId) {
   if (error) fail(error, 'Révocation du lien de partage');
 }
 
+// Réaligne positions et dates sur l'ordre voulu.
+//
+// Appelée après toute modification de structure : ajout, retrait, changement
+// du nombre de nuits. C'est elle qui garantit qu'un itinéraire reste un
+// enchaînement — sans elle, retirer une étape laissait un trou de deux jours
+// et les numéros sautaient de 2 à 4.
+//
+// On n'écrit que ce qui a changé. Sur sept étapes, ajouter une nuit au milieu
+// en déplace quatre, pas sept.
+async function persistItinerary(trip, orderedSteps) {
+  for (const [index, step] of orderedSteps.entries()) {
+    const position = index + 1;
+    if (step.position === position) continue;
+    const { error } = await supabase.from('steps').update({ position }).eq('id', step.id);
+    if (error) fail(error, 'Renumérotation des étapes');
+  }
+
+  for (const dates of datesToUpdate(trip.startDate, orderedSteps)) {
+    const { error } = await supabase
+      .from('steps')
+      .update({ date_start: dates.date_start, date_end: dates.date_end })
+      .eq('id', dates.id);
+    if (error) fail(error, 'Recalcul des dates');
+  }
+
+  // La fin du voyage suit la dernière étape, sinon l'en-tête annoncerait une
+  // période qui ne correspond plus à ce qu'on lit en dessous.
+  const end = tripEndDate(trip.startDate, orderedSteps);
+  if (end !== trip.endDate) {
+    const { error } = await supabase.from('trips').update({ end_date: end }).eq('id', trip.id);
+    if (error) fail(error, 'Mise à jour de la fin du voyage');
+  }
+}
+
+// Ajoute une étape à la fin de l'itinéraire.
+//
+// Ses dates sont déterministes : elle commence là où le voyage s'arrêtait.
+// Les coordonnées restent NULL — la ville n'apparaîtra sur la carte qu'une
+// fois localisée, et le bouton du rail sert à ça.
+export async function addStep(trip, { name, nights }) {
+  const start = tripEndDate(trip.startDate, trip.steps);
+
+  const { error } = await supabase.from('steps').insert({
+    trip_id: trip.id,
+    position: trip.steps.length + 1,
+    name: name.trim(),
+    nights,
+    date_start: start,
+    date_end: addDays(start, nights),
+  });
+  if (error) fail(error, "Ajout de l'étape");
+
+  const { error: endError } = await supabase
+    .from('trips')
+    .update({ end_date: addDays(start, nights) })
+    .eq('id', trip.id);
+  if (endError) fail(endError, 'Mise à jour de la fin du voyage');
+}
+
+// Change le nombre de nuits d'une étape, et décale tout ce qui suit.
+export async function setStepNights(trip, stepId, nights) {
+  if (nights < 0) return;
+
+  const { error } = await supabase.from('steps').update({ nights }).eq('id', stepId);
+  if (error) fail(error, 'Modification des nuits');
+
+  await persistItinerary(
+    trip,
+    trip.steps.map((step) => (step.id === stepId ? { ...step, nights } : step)),
+  );
+}
+
+// Coordonnées d'une étape, posées depuis le géocodage.
+export async function setStepCoordinates(stepId, { lat, lng }) {
+  const { error } = await supabase.from('steps').update({ lat, lng }).eq('id', stepId);
+  if (error) fail(error, 'Enregistrement des coordonnées');
+}
+
 // Retire une étape de l'itinéraire.
 //
 // La suppression emporte en cascade les items de l'étape et les liaisons qui
@@ -91,29 +170,16 @@ export async function revokeShareToken(tripId) {
 // DEUX liaisons qui l'encadraient, sans en créer une entre ses voisines. On ne
 // peut pas deviner la durée d'un trajet qui n'a jamais été fait.
 //
-// Les dates des étapes restantes ne sont pas recalculées non plus : elles sont
-// saisies, pas dérivées, et rien dans l'app ne permet encore de les modifier.
-// Un trou apparaîtra donc dans l'enchaînement. À reprendre le jour où l'édition
-// des dates existera.
-export async function removeStep(stepId, orderedSteps) {
+// Les dates, elles, sont recalculées : `persistItinerary` recolle la chaîne
+// pour qu'aucun trou n'apparaisse entre les étapes voisines.
+export async function removeStep(trip, stepId) {
   const { error } = await supabase.from('steps').delete().eq('id', stepId);
   if (error) fail(error, "Suppression de l'étape");
 
-  // Renumérotation : sans elle, les étapes s'afficheraient 1, 2, 4, 5. Aucune
-  // contrainte d'unicité sur (trip_id, position), donc pas de collision
-  // possible pendant la mise à jour.
-  const remaining = orderedSteps.filter((step) => step.id !== stepId);
-
-  for (const [index, step] of remaining.entries()) {
-    const position = index + 1;
-    if (step.position === position) continue;
-
-    const { error: renumber } = await supabase
-      .from('steps')
-      .update({ position })
-      .eq('id', step.id);
-    if (renumber) fail(renumber, 'Renumérotation des étapes');
-  }
+  await persistItinerary(
+    trip,
+    trip.steps.filter((step) => step.id !== stepId),
+  );
 }
 
 // --- Vols -------------------------------------------------------------------

@@ -1,0 +1,67 @@
+@use '../theme/mixins';
+
+.add-step {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: clamp(10px, 1.1vw, 14px);
+  border: 1px dashed var(--border-strong);
+  border-radius: 14px;
+  background: var(--surface-sunken);
+
+  &__title {
+    font-size: clamp(11px, 1.1vw, 13px);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  &__name,
+  &__nights {
+    padding: 4px 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: 7px;
+    background: var(--surface-raised);
+    color: var(--text);
+    font: inherit;
+    // 16 px minimum : en dessous, Safari iOS zoome au focus et ne dézoome pas.
+    font-size: var(--fs-md);
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  &__name { flex: 1; min-width: 150px; }
+  &__nights { width: 66px; }
+
+  &__submit {
+    padding: 4px 13px;
+    border: 1px solid var(--border-strong);
+    border-radius: 7px;
+    background: var(--surface-warm);
+    color: var(--accent);
+    font: inherit;
+    font-size: clamp(12.5px, 1.25vw, 15px);
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover { border-color: var(--accent); }
+    &:focus-visible { @include mixins.focus-ring; }
+    &:disabled { opacity: 0.6; cursor: progress; }
+  }
+
+  &__hint {
+    flex-basis: 100%;
+    margin: 0;
+    font-size: clamp(11.5px, 1.2vw, 14px);
+    font-style: italic;
+    color: var(--text-soft);
+  }
+
+  &__error {
+    flex-basis: 100%;
+    margin: 0;
+    color: var(--danger);
+    font-size: var(--fs-xs);
+  }
+}

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { priceInEuros } from '@/lib/currency.js';
 import { haversine, formatDistance, MAX_DISTANCE_FROM_STEP_KM } from '@/lib/geo.js';
 import { imageFor } from '@/lib/photos.js';
-import { deleteItem, setFavorite, updateItem } from '@/lib/mutations.js';
+import { deleteItem, setCoordinates, setFavorite, updateItem } from '@/lib/mutations.js';
 import GeocodePicker from './GeocodePicker.jsx';
 import './ItemRow.scss';
 
@@ -220,11 +220,17 @@ export default function ItemRow({ item, step, tripTitle, readOnly, onChanged }) 
 
       {locating && (
         <GeocodePicker
-          item={item}
-          step={step}
+          title={item.title}
+          stepName={step.name}
           tripTitle={tripTitle}
+          reference={
+            step.lat != null && step.lng != null
+              ? { lat: Number(step.lat), lng: Number(step.lng) }
+              : null
+          }
           onCancel={() => setLocating(false)}
-          onDone={async () => {
+          onSave={async (point, geocoded) => {
+            await setCoordinates(item.id, point, { geocoded });
             await onChanged();
             setLocating(false);
           }}

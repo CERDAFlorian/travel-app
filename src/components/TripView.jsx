@@ -10,7 +10,8 @@ import HeroBanner from '@/components/HeroBanner.jsx';
 import Experiences from '@/components/Experiences.jsx';
 import BudgetPanel from '@/components/BudgetPanel.jsx';
 import ShareLink from '@/components/ShareLink.jsx';
-import { removeStep } from '@/lib/mutations.js';
+import AddStep from '@/components/AddStep.jsx';
+import { addStep, removeStep, setStepNights } from '@/lib/mutations.js';
 import './TripView.scss';
 
 // L'itinéraire, mis en page comme le design.
@@ -45,10 +46,26 @@ export default function TripView({
 
   const handleRemoveStep = useCallback(
     async (stepId) => {
-      await removeStep(stepId, trip.steps);
+      await removeStep(trip, stepId);
       await onChanged();
     },
-    [trip.steps, onChanged],
+    [trip, onChanged],
+  );
+
+  const handleNights = useCallback(
+    async (stepId, nights) => {
+      await setStepNights(trip, stepId, nights);
+      await onChanged();
+    },
+    [trip, onChanged],
+  );
+
+  const handleAddStep = useCallback(
+    async (values) => {
+      await addStep(trip, values);
+      await onChanged();
+    },
+    [trip, onChanged],
   );
 
   // Le trajet est rattaché à l'étape de départ : il se lit en pied de la carte
@@ -97,11 +114,14 @@ export default function TripView({
               leg={legByFromStep.get(step.id)}
               onSelect={setSelectedStepId}
               onRemove={handleRemoveStep}
+              onNights={handleNights}
               // Après chaque écriture on resynchronise le voyage entier plutôt
               // que de rapiécer le cache : une seule source de vérité.
               onChanged={onChanged}
             />
           ))}
+
+          {!readOnly && <AddStep onAdd={handleAddStep} />}
         </section>
 
         <aside className="trip__aside">
