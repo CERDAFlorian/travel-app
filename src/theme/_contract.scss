@@ -15,10 +15,19 @@
 $required: (
   // Fonds
   bg, surface, surface-raised, overlay,
+  // Fonds secondaires — panneaux encastrés, fonds d'action, emplacements vides.
+  // Ajoutés en reprenant le design à l'identique : il en utilise cinq nuances
+  // chaudes distinctes, les réduire à `surface` aplatissait la hiérarchie.
+  surface-sunken, surface-warm, surface-tint,
   // Texte
   text, text-heading, muted, text-invert,
+  // Annotation italique, plus sombre que `muted` sans être du corps de texte.
+  text-soft,
   // Accent principal
   accent, accent-hover, accent-contrast, accent-soft,
+  // Accent assombri : petites capitales sur fond clair, où l'accent pur manque
+  // de contraste.
+  accent-deep,
   // Accent secondaire
   accent-2, accent-2-soft,
   // Traits

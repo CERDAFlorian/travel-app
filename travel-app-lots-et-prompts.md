@@ -831,6 +831,63 @@ l'épreuve qu'une fois une trentaine d'items géocodés.
 
 ---
 
+**Reprise du design à l'identique — 19 septembre 2026.** Relecture complète du
+`.dc.html` et correction des écarts. Ce passage absorbe l'essentiel de L6 :
+les vols, les expériences et le budget sont des sections du design, pas un lot
+séparé.
+
+**Corrigé côté mise en page** — grille à deux colonnes (`auto-fit`,
+`minmax(min(100%, 430px), 1fr)`) avec la carte en `aside` **collant**, alors que
+j'avais tout empilé en une colonne. Le bandeau pagode revient à sa place, après
+la carte et avant les expériences : il sépare la préparation de l'inspiration.
+
+**Corrigé côté en-tête** — titre en capitales `clamp(40px, 6.2vw, 86px)`, décor
+qui déborde volontairement (`left: -18px`), marges asymétriques qui lui
+réservent la place, pastilles alignées à droite sur la ligne du titre.
+
+**Corrigé côté étape** — rail avec disque numéroté et filet dégradé, pilule des
+nuits, bandeau photo à cartouche rouge pleine (et non un dégradé), ligne de
+trajet en pied, en-tête d'accordéon avec le **total de la catégorie**.
+
+**Corrigé côté item** — tout sur UNE ligne : vignette 44×31, pastille, nom,
+note, pilule `Plan ↗` / `Maps ↗` selon la plateforme, étoile, pilule
+LOCALISER, champ prix, ✕. J'en avais fait deux lignes.
+
+**Ajouté** — `FlightsPanel`, `Experiences`, `BudgetPanel`, `TravelTimes`,
+`TripHeader`, `HeroBanner`.
+
+**Cinq jetons de thème en plus** — `surface-sunken`, `surface-warm`,
+`surface-tint`, `text-soft`, `accent-deep`. Le design emploie cinq nuances
+chaudes distinctes ; les réduire à `surface` aplatissait la hiérarchie. Ajoutés
+au contrat et aux deux thèmes, donc aucun hex en dur dans un composant.
+
+**Le budget totalise par devise.** Le design additionne `flightsSum` (euros) et
+les totaux d'items (yens) en un seul nombre. C'est le défaut anticipé en L1, qui
+avait justifié la colonne `currency` sur `flights`. On affiche
+« 370 800 ¥ + 890 € » plutôt qu'un chiffre sans unité. Aucune conversion : il
+faudrait un taux, donc un appel réseau et une décision sur sa fraîcheur.
+
+**Non repris, et pourquoi** — les commandes du canvas qui n'ont pas de mutation
+derrière : réordonner une étape (▲▼), la retirer, « Ajouter une ville »,
+« Réinitialiser l'itinéraire », ajouter ou supprimer un vol, le champ prix des
+vols, « Localiser les lieux » en masse (interdit par le STOP de L4), et le
+dépôt d'image par glisser (fonction du canvas, pas du web). Même raison qu'en
+L3 pour le bouton supprimer : un geste qui ne fait rien s'apprend quand même.
+Ces actions demandent des mutations sur `steps` et `flights` qu'aucun lot ne
+couvre encore.
+
+**Le nombre de voyageurs vit en état local**, par défaut 2 : `trips` ne le porte
+pas, et l'ajouter demanderait une migration pour une valeur qui ne sert qu'au
+budget.
+
+**Trouvé au passage** — `index.html` charge Playfair Display et EB Garamond
+depuis Google Fonts. Hors ligne, au premier affichage, les deux polices
+retombent sur Georgia. L7 devra soit les précacher, soit les héberger — la
+seconde option est plus sûre, un service worker ne contrôle pas ce qu'un tiers
+renvoie.
+
+---
+
 ## L6 — Vols, trajets, expériences, budget
 
 ```

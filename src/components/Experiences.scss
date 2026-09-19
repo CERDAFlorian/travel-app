@@ -1,0 +1,86 @@
+.experiences {
+  padding: 0 clamp(16px, 3vw, 44px) clamp(22px, 2.6vw, 34px);
+
+  &__head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: clamp(10px, 1.2vw, 16px);
+  }
+
+  &__rule {
+    flex: 1;
+    height: 1px;
+
+    &--left  { background: linear-gradient(90deg, transparent, var(--border-strong)); }
+    &--right { background: linear-gradient(90deg, var(--border-strong), transparent); }
+  }
+
+  &__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(17px, 2vw, 26px);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-align: center;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+    gap: clamp(10px, 1.4vw, 18px);
+  }
+}
+
+.experience {
+  overflow: hidden;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+
+  &__image {
+    width: 100%;
+    height: clamp(96px, 11vw, 150px);
+    background-color: var(--surface-tint);
+    background-size: cover;
+    background-position: center;
+  }
+
+  &__body {
+    padding: clamp(9px, 1vw, 14px);
+    text-align: center;
+  }
+
+  &__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(15px, 1.6vw, 20px);
+    color: var(--accent);
+  }
+
+  &__divider {
+    display: block;
+    width: 46px;
+    height: 1px;
+    margin: 6px auto;
+    background: var(--border-strong);
+  }
+
+  &__text {
+    margin: 0;
+    font-size: clamp(12.5px, 1.3vw, 16px);
+    line-height: 1.4;
+    color: var(--text);
+  }
+
+  &__where {
+    margin-top: 7px;
+    font-size: clamp(10.5px, 1.1vw, 13px);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+}

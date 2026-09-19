@@ -19,6 +19,10 @@ $line:       #dfe3e6;
 $line-dark:  #c6ccd2;
 $line-light: #eceff1;
 $grey:       #6a737d;
+$grey-soft:  #56606a;
+$paper-3:    #f1f3f5; // panneaux encastrés
+$paper-4:    #e8ecef; // fonds d'action
+$paper-5:    #eef1f3; // emplacements vides
 $blue:       #2f5d8c;
 $blue-dark:  #234869;
 $teal:       #3d6b66;
@@ -28,16 +32,21 @@ $theme: contract.validate('neutral', (
   surface:         $paper-1,
   surface-raised:  $paper-2,
   overlay:         rgba($ink, 0.55),
+  surface-sunken:  $paper-3,
+  surface-warm:    $paper-4,
+  surface-tint:    $paper-5,
 
   text:            $ink,
   text-heading:    $ink-strong,
   muted:           $grey,
   text-invert:     $paper-2,
+  text-soft:       $grey-soft,
 
   accent:          $blue,
   accent-hover:    $blue-dark,
   accent-contrast: $paper-2,
   accent-soft:     rgba($blue, 0.10),
+  accent-deep:     $blue-dark,
 
   accent-2:        $teal,
   accent-2-soft:   rgba($teal, 0.12),

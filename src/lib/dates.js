@@ -101,3 +101,14 @@ export function formatPrice(amount, currency = 'JPY') {
     }
   }
 }
+
+// « Du 7 nov. au 26 nov. 2026 » — la forme de l'en-tête dans le design.
+// L'année n'apparaît qu'une fois, à la fin : un voyage ne chevauche pas deux
+// années dans la pratique, et la répéter alourdit une ligne déjà dense.
+export function formatTripRange(startIso, endIso) {
+  const start = parse(startIso);
+  const end = parse(endIso);
+  if (!start || !end) return formatPeriod(startIso, endIso);
+
+  return `Du ${DAY_MONTH.format(start)} au ${DAY_MONTH.format(end)} ${end.getFullYear()}`;
+}

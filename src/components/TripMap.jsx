@@ -237,7 +237,7 @@ export default function TripMap({ trip, selectedStepId, onSelectStep }) {
   );
 
   return (
-    <section className="map" aria-label="Carte de l'itinéraire">
+    <div className="map">
       <div className="map__frame">
         <svg
           ref={svgRef}
@@ -300,7 +300,7 @@ export default function TripMap({ trip, selectedStepId, onSelectStep }) {
           </li>
         ))}
       </ul>
-    </section>
+    </div>
   );
 }
 

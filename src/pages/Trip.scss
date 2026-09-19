@@ -1,92 +1,89 @@
 @use '../theme/mixins';
 
 .trip {
-  display: grid;
-  align-content: start;
-  gap: var(--sp-5);
-  width: min(100%, var(--page-max));
-  margin-inline: auto;
-  padding: var(--sp-5) var(--page-pad) var(--sp-7);
-
-  &__head {
-    position: relative;
-    display: grid;
-    gap: var(--sp-1);
-    // Laisse la place au décor sans que le titre passe dessous.
-    padding-top: var(--sp-2);
-  }
-
-  // Momiji et Fuji, aux deux coins du bandeau. Purement ornementaux : ils se
-  // retirent sous 480 px, où chaque pixel compte et où ils écraseraient le
-  // titre au lieu de l'encadrer.
-  &__deco {
-    position: absolute;
-    top: 0;
-    width: 88px;
-    height: auto;
-    opacity: 0.85;
-    pointer-events: none;
-    user-select: none;
-    display: none;
-
-    @include mixins.from('sm') {
-      display: block;
-    }
-
-    &--left  { left: 0; }
-    &--right { right: 0; }
-  }
+  min-height: 100svh;
+  background: var(--bg);
 
   &__back {
-    justify-self: start;
-    margin-bottom: var(--sp-4);
-    padding: var(--sp-2) var(--sp-3);
-    border: 1px solid var(--border);
+    position: absolute;
+    left: var(--sp-3);
+    top: var(--sp-3);
+    z-index: var(--z-sticky);
+    padding: var(--sp-1) var(--sp-3);
+    border: 1px solid var(--border-strong);
     border-radius: var(--radius-pill);
     background: var(--surface);
     color: var(--text);
-    font: inherit;
-    font-size: var(--fs-sm);
+    font-size: var(--fs-xs);
     text-decoration: none;
-    cursor: pointer;
-    // Au-dessus du décor, sinon le momiji intercepte le clic au coin gauche.
-    position: relative;
-    z-index: var(--z-base);
 
-    &:hover { border-color: var(--border-strong); }
+    &:hover { border-color: var(--accent); color: var(--accent); }
     &:focus-visible { @include mixins.focus-ring; }
   }
 
-  &__title {
-    margin: 0;
+  &__sync {
+    padding: var(--sp-2) clamp(16px, 3vw, 44px) 0;
   }
 
-  &__subtitle {
-    margin: 0;
-    color: var(--muted);
-  }
-
-  &__hero {
-    overflow: hidden;
-    border-radius: var(--radius-lg);
-    // Ratio fixe : la hauteur est connue avant que l'image n'arrive, la page
-    // ne saute pas au chargement.
-    aspect-ratio: 16 / 7;
-    background: var(--accent-soft);
-  }
-
-  &__hero-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
+  // La grille du design : deux colonnes dès que chacune peut tenir 430 px,
+  // une seule en dessous. Aucun point de rupture à maintenir.
+  &__main {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 430px), 1fr));
+    gap: clamp(16px, 2vw, 28px);
+    padding: clamp(14px, 2vw, 26px) clamp(16px, 3vw, 44px) clamp(20px, 2.4vw, 32px);
   }
 
   &__steps {
-    display: grid;
-    gap: var(--sp-4);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(10px, 1.2vw, 15px);
+    min-width: 0;
+  }
+
+  &__aside {
+    min-width: 0;
+  }
+
+  // Collante : en faisant défiler une liste de sept étapes, la carte reste
+  // sous les yeux. C'est ce qui rend la sélection croisée utile.
+  &__map-card {
+    position: sticky;
+    top: 12px;
+    padding: clamp(11px, 1.2vw, 16px);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+  }
+
+  &__map-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--sp-3);
+    margin-bottom: var(--sp-2);
+  }
+
+  &__map-title {
     margin: 0;
-    padding: 0;
-    list-style: none;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(17px, 1.8vw, 24px);
+    color: var(--accent);
+  }
+
+  &__map-hint {
+    font-size: clamp(11.5px, 1.2vw, 14.5px);
+    font-style: italic;
+    color: var(--text-soft);
+  }
+
+  &__foot {
+    padding: clamp(12px, 1.6vw, 20px) clamp(16px, 3vw, 44px) clamp(30px, 3.4vw, 46px);
+    border-top: 1px solid var(--border-soft);
+    font-size: clamp(13px, 1.4vw, 18px);
+    font-style: italic;
+    color: var(--text-soft);
+    text-align: center;
   }
 }

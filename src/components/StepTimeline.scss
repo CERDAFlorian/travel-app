@@ -2,55 +2,34 @@
 
 .timeline {
   display: flex;
-  gap: var(--sp-2);
-  margin: var(--sp-4) 0 0;
-  padding: 0;
-  list-style: none;
-  // Sous 480 px, sept segments proportionnels deviennent illisibles : la frise
-  // défile horizontalement plutôt que de se comprimer.
-  overflow-x: auto;
-  scrollbar-width: thin;
-
-  &__cell {
-    flex-basis: 0;
-    min-width: 96px;
-  }
+  gap: 4px;
+  align-items: stretch;
 
   &__segment {
-    display: flex;
-    gap: var(--sp-1);
-    align-items: baseline;
-    justify-content: center;
-    width: 100%;
-    padding: var(--sp-2) var(--sp-3);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--accent-soft);
-    color: var(--text);
+    flex-basis: 0;
+    min-width: 0;
+    padding: 6px 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    background: var(--surface-tint);
+    color: var(--text-soft);
     font: inherit;
-    font-size: var(--fs-xs);
-    letter-spacing: 0.06em;
+    font-size: clamp(10px, 1.05vw, 13.5px);
+    letter-spacing: 0.04em;
     text-transform: uppercase;
+    // L'ellipse plutôt que le retour à la ligne : les segments doivent garder
+    // la même hauteur pour que la frise reste une barre.
+    overflow: hidden;
     white-space: nowrap;
+    text-overflow: ellipsis;
     cursor: pointer;
-    transition: background var(--dur-fast) var(--ease-out);
 
-    &:hover { border-color: var(--accent); }
     &:focus-visible { @include mixins.focus-ring; }
 
     &[data-selected] {
-      border-color: var(--accent);
       background: var(--accent);
       color: var(--accent-contrast);
+      border-color: var(--accent);
     }
-  }
-
-  &__name {
-    @include mixins.truncate;
-  }
-
-  &__nights {
-    flex: none;
-    opacity: 0.75;
   }
 }

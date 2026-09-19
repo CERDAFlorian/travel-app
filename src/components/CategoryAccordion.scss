@@ -1,26 +1,17 @@
 @use '../theme/mixins';
 
-.accordion {
-  border-top: 1px solid var(--border-soft);
-
-  &--empty {
-    display: flex;
-    gap: var(--sp-3);
-    align-items: center;
-    padding: var(--sp-3) 0;
-    color: var(--muted);
-    opacity: 0.55;
-  }
+.cat {
+  border-bottom: 1px dotted var(--border-strong);
 
   &__head {
     display: flex;
-    gap: var(--sp-3);
     align-items: center;
+    gap: var(--sp-2);
     width: 100%;
-    padding: var(--sp-3) 0;
+    padding: 5px 2px;
     border: 0;
     background: none;
-    color: var(--text);
+    color: inherit;
     font: inherit;
     text-align: left;
     cursor: pointer;
@@ -32,7 +23,7 @@
     flex: none;
     width: 9px;
     height: 9px;
-    border-radius: var(--radius-pill);
+    border-radius: 50%;
     background: var(--cat-note);
 
     &[data-cat='hotel']      { background: var(--cat-hotel); }
@@ -40,49 +31,97 @@
     &[data-cat='restaurant'] { background: var(--cat-restaurant); }
     &[data-cat='shopping']   { background: var(--cat-shopping); }
     &[data-cat='lieu']       { background: var(--cat-lieu); }
-    &[data-cat='note']       { background: var(--cat-note); }
   }
 
   &__label {
-    flex: 1;
-    font-size: var(--fs-xs);
-    font-weight: 600;
-    letter-spacing: 0.08em;
+    font-size: clamp(12.5px, 1.3vw, 16px);
+    letter-spacing: 0.05em;
     text-transform: uppercase;
+    color: var(--text-heading);
   }
 
   &__count {
-    flex: none;
-    min-width: 22px;
-    padding: 2px var(--sp-2);
-    border-radius: var(--radius-pill);
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-size: var(--fs-xs);
-    font-variant-numeric: tabular-nums;
-    text-align: center;
+    font-size: clamp(11px, 1.15vw, 13.5px);
+    font-style: italic;
+    color: var(--muted);
   }
 
-  &__chevron {
-    flex: none;
-    color: var(--muted);
-    font-size: var(--fs-lg);
-    line-height: 1;
-    transition: transform var(--dur-fast) var(--ease-out);
+  // Le total pousse le chevron à droite : on voit où part l'argent sans
+  // déplier une seule catégorie.
+  &__total {
+    margin-left: auto;
+    font-size: clamp(11.5px, 1.2vw, 14.5px);
+    font-style: italic;
+    color: var(--accent);
+    white-space: nowrap;
+  }
 
-    &[data-open] {
-      transform: rotate(90deg);
-    }
+  &__caret {
+    font-size: clamp(11px, 1.15vw, 13.5px);
+    color: var(--muted);
   }
 
   &__panel {
-    margin: 0 0 var(--sp-3);
-    padding-left: var(--sp-5);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 2px 2px 9px 17px;
+    animation: softin 0.22s ease both;
   }
 
   &__items {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
     margin: 0;
     padding: 0;
     list-style: none;
   }
+
+  &__add {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    margin-top: 2px;
+  }
+
+  &__add-title,
+  &__add-price {
+    padding: 4px 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: 7px;
+    background: var(--surface-raised);
+    color: var(--text);
+    font: inherit;
+    // 16 px minimum : en dessous, Safari iOS zoome sur le champ au focus et ne
+    // dézoome jamais.
+    font-size: var(--fs-md);
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  &__add-title { flex: 1; min-width: 120px; }
+  &__add-price { width: 74px; }
+
+  &__add-submit {
+    padding: 3px 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: 7px;
+    background: var(--surface-warm);
+    color: var(--accent);
+    font: inherit;
+    font-size: clamp(12px, 1.25vw, 15px);
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:focus-visible { @include mixins.focus-ring; }
+    &:disabled { opacity: 0.6; cursor: progress; }
+  }
+}
+
+// Apparition douce du panneau, reprise du design.
+@keyframes softin {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
 }

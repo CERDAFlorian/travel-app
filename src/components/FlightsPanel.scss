@@ -1,0 +1,116 @@
+.flights {
+  padding: clamp(14px, 1.8vw, 22px) clamp(16px, 3vw, 44px) 0;
+
+  &__card {
+    padding: clamp(11px, 1.2vw, 16px);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+  }
+
+  &__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--sp-3);
+    margin-bottom: var(--sp-3);
+  }
+
+  &__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(16px, 1.7vw, 23px);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  &__hint {
+    font-size: clamp(11.5px, 1.2vw, 14.5px);
+    font-style: italic;
+    color: var(--text-soft);
+  }
+
+  &__total {
+    margin-left: auto;
+    font-size: clamp(12.5px, 1.3vw, 16px);
+    color: var(--text-soft);
+
+    em { color: var(--accent); }
+  }
+
+  // auto-fit + minmax(min(100%, 270px)) : deux colonnes dès qu'il y a la place,
+  // une seule au téléphone, sans point de rupture à maintenir.
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr));
+    gap: clamp(8px, 1vw, 14px);
+  }
+}
+
+.flight {
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface-sunken);
+
+  &__top {
+    display: flex;
+    align-items: baseline;
+    gap: var(--sp-2);
+  }
+
+  &__label {
+    font-size: clamp(10.5px, 1.05vw, 12.5px);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  &__date {
+    font-size: clamp(11.5px, 1.2vw, 14px);
+    font-style: italic;
+    color: var(--text-soft);
+  }
+
+  &__route {
+    margin-top: 3px;
+    font-family: var(--font-display);
+    font-size: clamp(14.5px, 1.5vw, 19px);
+    color: var(--text);
+  }
+
+  &__bottom {
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+  }
+
+  &__number {
+    font-size: clamp(11.5px, 1.2vw, 14px);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  // Le filet pointillé du design : un dégradé répété plutôt qu'une bordure,
+  // parce qu'il doit s'étirer entre deux éléments de largeur variable.
+  &__rule {
+    flex: 1;
+    height: 1px;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--border-strong) 0 5px,
+      transparent 5px 10px
+    );
+  }
+
+  &__price {
+    font-size: clamp(12px, 1.25vw, 15px);
+    font-style: italic;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+}
