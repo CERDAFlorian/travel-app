@@ -14,7 +14,7 @@ Offline en **lecture seule**. Carte SVG unique zoomable, ancres géographiques +
 ## État du projet — 18 septembre 2026
 
 Branche de travail : `dev`. `main` est en retard, la fusion se fera par PR.
-**L0 à L5 sont terminés.** L6 est le prochain.
+**L0 à L7 sont terminés.** Reste L8 — séparer la base de dev de la base de prod.
 
 ⚠️ **Départ le 7 novembre 2026 — sept semaines.** L5 et L6 pèsent environ trois
 jours de travail. L7 (PWA, service worker) est le lot qui rend l'app utilisable
@@ -224,7 +224,7 @@ Colle un prompt, laisse la boucle tourner, vérifie, commit, passe au suivant. N
 | ~~**L4**~~ | ~~Édition items + LOCALISER (Nominatim) + Haversine~~ | ✅ fait | Prépa autonome dans l'app |
 | ~~**L5**~~ | ~~Carte SVG : pan/zoom, ancres, labels déportés, filtres tags~~ | ✅ fait | La pièce maîtresse |
 | **L6** | Vols, trajets, expériences, budget | 1 j | Périmètre complet |
-| **L7** | PWA, précache, bouton sync, QA mobile | 1 j | Prêt pour le voyage |
+| ~~**L7**~~ | ~~PWA, précache, bouton sync, QA mobile~~ | ✅ fait | Prêt pour le voyage |
 | **L8** | Séparer la base de dev de la base de prod | 0,5 j | On peut casser sans risque |
 
 **Cible réaliste jour 1 : L0 → L3.**
@@ -971,6 +971,44 @@ STOP
 **Notes L7**
 - Les headers de cache sont déjà dans `nginx.conf`.
 - Images déjà optimisées : 251 Ko de WebP au lieu de 4,2 Mo de PNG, `dist` = 448 Ko.
+
+---
+
+**L7 — fait le 19 septembre 2026.** `vite-plugin-pwa`, manifest, précache de
+**48 fichiers (1,09 Mo)**, bouton de préparation, en-têtes de cache complétés,
+procédure « avant de partir » dans le README.
+
+**Les polices sont rapatriées.** `index.html` les chargeait depuis Google
+Fonts : en mode avion toute la typographie retombait sur Georgia. Un service
+worker ne peut pas garantir ce que renvoie un tiers, l'hébergement local était
+la seule réponse sûre. `scripts/build-fonts.mjs` récupère le sous-ensemble
+latin — 7 fontes, 298 Ko.
+
+**L'icône ne représente pas le Japon.** Trois étapes reliées par un trajet, sur
+le bleu du thème `neutral`. Un mont Fuji aurait marqué toute l'app comme
+japonaise, alors que la charte pays ne vaut qu'à l'intérieur d'un voyage.
+`scripts/build-icons.mjs` encode les PNG à la main — la machine n'avait ni
+rastériseur SVG ni Pillow, et une dépendance graphique pour quatre fichiers
+générés une fois était disproportionnée.
+
+**Un bug de précache attrapé au build** : les icônes étaient inscrites deux
+fois, par `includeAssets` puis par le manifest, avec des révisions
+différentes — Workbox refuse l'installation dans ce cas. `globIgnores` règle
+le doublon. Vérifié : 48 entrées, 48 uniques.
+
+**Aucun cache d'exécution n'est déclaré**, et c'est délibéré. Les appels
+Supabase doivent toucher le réseau ou échouer franchement : c'est IndexedDB qui
+porte la donnée hors ligne, pas le service worker. Nominatim non plus — le
+STOP du contrat, et géocoder hors ligne n'a aucun sens.
+
+**`nginx.conf` complété** : `registerSW.js` en `no-cache`, le runtime Workbox
+hashé en `immutable`, polices à 30 jours et images à 7 — ces deux-là ne sont
+pas hashées, `immutable` les figerait un an après une régénération.
+
+**Reste à vérifier sur appareil réel**, et c'est le critère d'arrêt : installer
+depuis Safari, mode avion, fermer complètement l'app, rouvrir. Le service
+worker n'existe pas en `npm run dev` ; il faut `npm run preview` ou le site
+déployé.
 
 ---
 

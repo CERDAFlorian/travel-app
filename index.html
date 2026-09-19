@@ -2,12 +2,26 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9B%A9%EF%B8%8F%3C/text%3E%3C/svg%3E">
-  <title>Japon — Itinéraire interactif</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <!-- Le titre porte l'application, pas un voyage : elle en accueillera d'autres. -->
+  <title>Itinéraire</title>
+  <meta name="description" content="Préparation et consultation hors ligne d'itinéraires de voyage.">
+
+  <!-- Teinte de la barre d'état au lancement. C'est la charte de l'app, pas
+       celle d'un pays : un voyage au Maroc ne doit pas la changer. -->
+  <meta name="theme-color" content="#2f5d8c">
+
+  <!-- iOS ignore les icônes du manifest pour l'écran d'accueil et lit ce lien. -->
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="icon" href="/icon-192.png" sizes="192x192">
+
+  <!-- Polices hébergées en local. Chargées depuis Google Fonts, elles
+       retombaient sur Georgia en mode avion : un service worker ne peut pas
+       garantir ce que renvoie un tiers. Voir scripts/build-fonts.mjs. -->
+  <link rel="preload" href="/fonts/playfair-display-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/eb-garamond-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/fonts/fonts.css">
 </head>
 <body>
   <div id="root"></div>
