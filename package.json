@@ -9,7 +9,9 @@
     "preview": "vite preview",
     "img": "node scripts/optimize-images.mjs",
     "img:check": "node scripts/optimize-images.mjs --check",
-    "sql:check": "node scripts/check-sql.mjs"
+    "sql:check": "node scripts/check-sql.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",
@@ -20,6 +22,7 @@
   "devDependencies": {
     "@vitejs/plugin-react": "^6.1.0",
     "sass": "^1.103.1",
-    "vite": "^8.2.2"
+    "vite": "^8.2.2",
+    "vitest": "^4.1.11"
   }
 }

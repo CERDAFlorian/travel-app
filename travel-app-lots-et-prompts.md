@@ -44,10 +44,22 @@ quoi lire. Les fichiers de `supabase/` restent la source de vérité : toute
 ```sh
 npm run dev          # serveur de développement
 npm run build        # build production
+npm test             # suite unitaire Vitest (tourne en CI)
+npm run test:watch   # la même, en continu
 npm run img          # compresse design/img/*.png → public/img/*.webp
 npm run img:check    # vérifie sans compresser (tourne en CI)
 npm run sql:check    # cohérence schéma / RLS / seed (tourne en CI)
 ```
+
+**Tests unitaires** — 105 cas sur la logique pure : `geo`, `geocode`, `photos`,
+`dates`, `errors`. Ils figent ce qui avait été vérifié à la main lot après lot
+et qui n'était pas rejouable : les 42,87 km Kyoto → Osaka contre les 39 km
+erronés du contrat, les huit formes acceptées de coordonnées collées,
+l'espacement de 1,1 s imposé par Nominatim, l'ordre de composition d'un bandeau
+photo, la classification réseau / auth / serveur. Deux d'entre eux sont des
+garde-fous d'intégrité : ils échouent si une image de `PHOTO_LIB` n'existe ni
+dans `public/img/` ni dans la liste des absentes, et si une image déclarée
+absente a finalement été exportée.
 
 ### Décisions prises
 
