@@ -1,0 +1,214 @@
+@use '../theme/mixins';
+
+.map {
+  &__frame {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+  }
+
+  &__svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    // Indispensable : sans ça, iOS intercepte le glisser pour faire défiler la
+    // page et le pinch pour zoomer le document. La carte ne recevrait qu'une
+    // partie des gestes.
+    touch-action: none;
+    cursor: grab;
+
+    &:active { cursor: grabbing; }
+  }
+
+  &__land {
+    fill: var(--map-land);
+    stroke: var(--map-land-line);
+    // Sans vector-effect, le trait de côte s'épaissirait avec le zoom jusqu'à
+    // manger les petites îles.
+    stroke-width: 0.9;
+    vector-effect: non-scaling-stroke;
+  }
+
+  // Les liaisons d'une ville à l'autre : l'itinéraire lui-même.
+  &__legs path {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2;
+    stroke-dasharray: 7 6;
+    stroke-linecap: round;
+    opacity: 0.6;
+    vector-effect: non-scaling-stroke;
+  }
+
+  // Le rattachement d'un lieu à sa ville, dans la couleur de sa catégorie.
+  &__links line {
+    stroke: var(--cat-note);
+    stroke-width: 1.1;
+    stroke-dasharray: 3 4;
+    opacity: 0.55;
+    vector-effect: non-scaling-stroke;
+
+    &[data-cat='hotel']      { stroke: var(--cat-hotel); }
+    &[data-cat='activite']   { stroke: var(--cat-activite); }
+    &[data-cat='restaurant'] { stroke: var(--cat-restaurant); }
+    &[data-cat='shopping']   { stroke: var(--cat-shopping); }
+    &[data-cat='lieu']       { stroke: var(--cat-lieu); }
+  }
+
+  // Pastille creuse, cerclée de la couleur de sa catégorie. Le remplissage
+  // plein la rendrait illisible quand six se touchent autour d'une ville.
+  &__dot {
+    fill: var(--map-sea);
+    stroke: var(--cat-note);
+    stroke-width: 2.2;
+
+    &[data-cat='hotel']      { stroke: var(--cat-hotel); }
+    &[data-cat='activite']   { stroke: var(--cat-activite); }
+    &[data-cat='restaurant'] { stroke: var(--cat-restaurant); }
+    &[data-cat='shopping']   { stroke: var(--cat-shopping); }
+    &[data-cat='lieu']       { stroke: var(--cat-lieu); }
+  }
+
+  // Le pointillé relie un label déporté à son ancre. Sans lui, un label posé à
+  // trente pixels de son point devient impossible à rattacher.
+  &__leader {
+    stroke: var(--border-strong);
+    stroke-width: 1;
+    stroke-dasharray: 2 2;
+  }
+
+  &__pin {
+    cursor: pointer;
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  &__pin-disc {
+    fill: var(--accent);
+    stroke: var(--bg);
+    stroke-width: 2.5;
+  }
+
+  &__halo {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1.6;
+    opacity: 0.45;
+  }
+
+  &__badge {
+    fill: var(--accent-contrast);
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 700;
+    pointer-events: none;
+  }
+
+  &__step-label {
+    fill: var(--text-heading);
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    paint-order: stroke;
+    stroke: var(--bg);
+    stroke-width: 3;
+    pointer-events: none;
+  }
+
+  // paint-order + contour de la couleur du fond : le texte reste lisible
+  // par-dessus le trait de côte et les pointillés, sans cartouche opaque.
+  &__item-label {
+    fill: var(--text);
+    font-family: var(--font-body);
+    font-size: 12px;
+    paint-order: stroke;
+    stroke: var(--bg);
+    stroke-width: 3;
+    pointer-events: none;
+  }
+
+  &__zoom {
+    position: absolute;
+    top: var(--sp-2);
+    right: var(--sp-2);
+    display: grid;
+    gap: var(--sp-1);
+
+    button {
+      width: 30px;
+      height: 30px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      background: var(--surface-raised);
+      color: var(--text);
+      font: inherit;
+      font-size: var(--fs-md);
+      line-height: 1;
+      cursor: pointer;
+
+      &:hover { border-color: var(--accent); }
+      &:focus-visible { @include mixins.focus-ring; }
+    }
+  }
+
+  &__hint {
+    position: absolute;
+    left: var(--sp-3);
+    bottom: var(--sp-2);
+    margin: 0;
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    pointer-events: none;
+  }
+
+  &__filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  // Légende du design : pastille de 11 px, pilule chaude. Éteinte, elle
+  // s'atténue mais garde sa couleur — on voit ce qu'on a masqué, et de quelle
+  // couleur il reviendra.
+  &__filter {
+    display: inline-flex;
+    gap: 7px;
+    align-items: center;
+    padding: 3px 11px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--surface-sunken);
+    color: var(--text-heading);
+    font: inherit;
+    font-size: clamp(11px, 1.15vw, 14px);
+    cursor: pointer;
+
+    &::before {
+      content: '';
+      width: 11px;
+      height: 11px;
+      border-radius: var(--radius-pill);
+      background: var(--accent);
+    }
+
+    &[data-cat='hotel']::before      { background: var(--cat-hotel); }
+    &[data-cat='activite']::before   { background: var(--cat-activite); }
+    &[data-cat='restaurant']::before { background: var(--cat-restaurant); }
+    &[data-cat='shopping']::before   { background: var(--cat-shopping); }
+    &[data-cat='lieu']::before       { background: var(--cat-lieu); }
+
+    &:not([data-on]) {
+      background: transparent;
+      color: var(--muted);
+      opacity: 0.55;
+    }
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+}

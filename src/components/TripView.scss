@@ -1,0 +1,113 @@
+@use '../theme/mixins';
+
+.trip {
+  min-height: 100svh;
+  background: var(--bg);
+
+  &__back {
+    position: absolute;
+    left: var(--sp-3);
+    top: var(--sp-3);
+    z-index: var(--z-sticky);
+    padding: var(--sp-1) var(--sp-3);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    color: var(--text);
+    font-size: var(--fs-xs);
+    text-decoration: none;
+
+    &:hover { border-color: var(--accent); color: var(--accent); }
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  // Bandeau de service : fraîcheur de la donnée à gauche, partage à droite.
+  &__strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--sp-2) clamp(16px, 3vw, 44px) 0;
+  }
+
+  // Bandeau de la vue partagée : il remplace le retour « Mes voyages », qui
+  // ne mènerait nulle part pour qui n'a pas de compte.
+  &__shared {
+    position: absolute;
+    left: var(--sp-3);
+    top: var(--sp-3);
+    z-index: var(--z-sticky);
+    margin: 0;
+    padding: var(--sp-1) var(--sp-3);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  // La grille du design : deux colonnes dès que chacune peut tenir 430 px,
+  // une seule en dessous. Aucun point de rupture à maintenir.
+  &__main {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 430px), 1fr));
+    gap: clamp(16px, 2vw, 28px);
+    padding: clamp(14px, 2vw, 26px) clamp(16px, 3vw, 44px) clamp(20px, 2.4vw, 32px);
+  }
+
+  &__steps {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(10px, 1.2vw, 15px);
+    min-width: 0;
+  }
+
+  &__aside {
+    min-width: 0;
+  }
+
+  // Collante : en faisant défiler une liste de sept étapes, la carte reste
+  // sous les yeux. C'est ce qui rend la sélection croisée utile.
+  &__map-card {
+    position: sticky;
+    top: 12px;
+    padding: clamp(11px, 1.2vw, 16px);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+  }
+
+  &__map-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--sp-3);
+    margin-bottom: var(--sp-2);
+  }
+
+  &__map-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(17px, 1.8vw, 24px);
+    color: var(--accent);
+  }
+
+  &__map-hint {
+    font-size: clamp(11.5px, 1.2vw, 14.5px);
+    font-style: italic;
+    color: var(--text-soft);
+  }
+
+  &__foot {
+    padding: clamp(12px, 1.6vw, 20px) clamp(16px, 3vw, 44px) clamp(30px, 3.4vw, 46px);
+    border-top: 1px solid var(--border-soft);
+    font-size: clamp(13px, 1.4vw, 18px);
+    font-style: italic;
+    color: var(--text-soft);
+    text-align: center;
+  }
+}

@@ -65,3 +65,20 @@ export async function clearCoordinates(id) {
     .eq('id', id);
   if (error) fail(error, 'Effacement des coordonnées');
 }
+
+// Lien de partage.
+//
+// Un UUID tiré par le navigateur : 122 bits, on ne tombe pas dessus par
+// hasard. Le régénérer révoque le lien précédent — c'est le seul moyen de
+// reprendre la main sur une URL déjà envoyée.
+export async function createShareToken(tripId) {
+  const token = crypto.randomUUID();
+  const { error } = await supabase.from('trips').update({ share_token: token }).eq('id', tripId);
+  if (error) fail(error, 'Création du lien de partage');
+  return token;
+}
+
+export async function revokeShareToken(tripId) {
+  const { error } = await supabase.from('trips').update({ share_token: null }).eq('id', tripId);
+  if (error) fail(error, 'Révocation du lien de partage');
+}

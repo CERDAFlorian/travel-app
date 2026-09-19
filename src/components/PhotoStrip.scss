@@ -1,55 +1,94 @@
 .photo-strip {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--sp-2);
-  margin: 0;
+  gap: 6px;
+  margin: 9px 0 0;
   padding: 0;
   list-style: none;
 
   &__tile {
-    position: relative;
-    // Réserve la place avant le chargement : sans ratio fixe, les sept bandeaux
-    // feraient sauter la page à mesure que les images arrivent.
-    aspect-ratio: 4 / 3;
     overflow: hidden;
-    border-radius: var(--radius-md);
-    background: var(--accent-soft);
-
-    &[data-empty] {
-      display: grid;
-      place-items: center;
-      border: 1px dashed var(--border-strong);
-      background: var(--surface);
-    }
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    background: var(--surface-tint);
   }
 
-  &__img {
+  &__img,
+  &__slot {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
+    height: clamp(70px, 8vw, 108px);
+    background-color: var(--surface-tint);
+    background-size: cover;
+    background-position: center;
   }
 
-  &__fallback {
+  &__slot {
+    position: relative;
+    display: grid;
+    place-items: center;
     padding: var(--sp-2);
-    color: var(--muted);
+    // Hachures : l'emplacement se lit comme une place à remplir, pas comme une
+    // image qui aurait échoué à charger.
+    background: repeating-linear-gradient(
+      45deg,
+      var(--surface) 0 8px,
+      var(--surface-tint) 8px 16px
+    );
+  }
+
+  &__slot-name {
     font-size: var(--fs-xs);
+    color: var(--muted);
     text-align: center;
   }
 
-  // Légende posée sur la photo. Le dégradé garantit la lisibilité quelle que
-  // soit l'image dessous — un simple texte blanc disparaît sur un ciel clair.
-  &__caption {
+  &__search {
     position: absolute;
-    inset: auto 0 0 0;
-    padding: var(--sp-4) var(--sp-2) var(--sp-2);
-    background: linear-gradient(to top, rgb(0 0 0 / 65%), transparent);
-    color: #fff;
-    font-size: var(--fs-xs);
-    line-height: var(--lh-tight);
+    right: 4px;
+    top: 4px;
+    padding: 1px 7px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    color: var(--accent);
+    font-size: 9.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
 
-    .photo-strip__tile[data-empty] & {
-      display: none;
-    }
+  // Cartouche pleine, pas un dégradé : le design pose une bande rouge sous
+  // l'image. Elle tient la légende lisible quelle que soit la photo.
+  &__caption {
+    display: block;
+    padding: 3px 5px;
+    background: var(--accent);
+    color: var(--accent-contrast);
+    font-size: clamp(8.5px, 0.82vw, 10.5px);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: clamp(56px, 6vw, 74px);
+    margin-top: 9px;
+    border: 1px dashed var(--border-strong);
+    border-radius: 8px;
+    background: repeating-linear-gradient(
+      45deg,
+      var(--surface) 0 8px,
+      var(--surface-tint) 8px 16px
+    );
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
   }
 }

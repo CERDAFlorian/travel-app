@@ -105,6 +105,7 @@ function checkTransaction(stripped, file) {
 const files = {
   schema: 'supabase/migrations/0001_schema.sql',
   rls: 'supabase/migrations/0002_rls.sql',
+  share: 'supabase/migrations/0003_partage.sql',
   seed: 'supabase/seed.sql',
 };
 
@@ -119,7 +120,7 @@ for (const [key, rel] of Object.entries(files)) {
   checkTransaction(clean[key], rel);
 }
 
-if (Object.keys(clean).length === 3) {
+if (Object.keys(clean).length === Object.keys(files).length) {
   // --- Schéma ---------------------------------------------------------------
 
   const tables = [...clean.schema.matchAll(/create table (?:if not exists )?public\.(\w+)/gi)].map((m) => m[1]);
@@ -162,6 +163,48 @@ if (Object.keys(clean).length === 3) {
   for (const [, name, body] of policies) {
     if (!/\bto authenticated\b/i.test(body)) fail(files.rls, `policy ${name} : pas de « to authenticated »`);
   }
+  // --- Partage --------------------------------------------------------------
+  //
+  // Le lien de partage est la seule porte ouverte à `anon`. Trois propriétés
+  // le tiennent, et chacune se casse d'une ligne distraite.
+
+  // 1. `anon` ne doit JAMAIS recevoir de droit de table. Tout l'intérêt du
+  //    passage par fonction est là : la clé publique ne lit rien directement.
+  for (const m of clean.share.matchAll(/grant\s+([^;]*?)\s+on\s+(?!function)([^;]*?)\s+to\s+([^;]+);/gi)) {
+    if (/\banon\b/i.test(m[3])) {
+      fail(files.share, `grant de table à anon : « ${m[0].trim().slice(0, 70)}… ». Le partage doit passer par la fonction.`);
+    }
+  }
+
+  // 2. La fonction doit être SECURITY DEFINER au search_path verrouillé —
+  //    sinon elle est soit inutile, soit dangereuse.
+  // `strip` vide les corps $$…$$ : on lit le texte brut, en-tête et corps
+  // compris, puisque c'est justement le corps qui porte le filtre.
+  const shareFn = raw.share.match(
+    /create or replace function public\.trip_by_share_token[\s\S]*?\bas\s+\$\$/i,
+  );
+  if (!shareFn) fail(files.share, 'fonction trip_by_share_token absente');
+  else {
+    if (!/security definer/i.test(shareFn[0])) {
+      fail(files.share, 'trip_by_share_token doit être SECURITY DEFINER, sinon RLS la rend muette pour anon');
+    }
+    if (!/set search_path\s*=\s*''/i.test(shareFn[0])) {
+      fail(files.share, "trip_by_share_token : SECURITY DEFINER sans « set search_path = '' »");
+    }
+  }
+
+  // 3. Le filtre sur le jeton est le contrôle d'accès. Sans lui, la fonction
+  //    rendrait n'importe quel voyage à n'importe qui.
+  if (!/where\s+t\.share_token\s*=\s*p_token/i.test(raw.share)) {
+    fail(files.share, 'trip_by_share_token ne filtre pas sur le jeton : elle exposerait tous les voyages');
+  }
+
+  // 4. Le droit d'exécution doit être retiré à `public` avant d'être accordé
+  //    nommément : `public` couvre tout rôle présent et à venir.
+  if (!/revoke execute on function public\.trip_by_share_token\(uuid\) from public/i.test(clean.share)) {
+    fail(files.share, "le droit d'exécution n'est pas retiré à `public` avant d'être accordé");
+  }
+
   // Les fonctions SECURITY DEFINER doivent verrouiller leur search_path.
   const fns = [...clean.rls.matchAll(/create (?:or replace )?function public\.(\w+)([\s\S]*?)as\s/gi)];
   for (const [, name, head] of fns) {

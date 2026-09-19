@@ -1,24 +1,40 @@
 import { useState } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { useSession } from '@/hooks/useSession.js';
 import { useTrips } from '@/hooks/useTrips.js';
 import Login from '@/pages/Login.jsx';
 import Trips from '@/pages/Trips.jsx';
 import Trip from '@/pages/Trip.jsx';
+import SharedTrip from '@/pages/SharedTrip.jsx';
 import './App.scss';
 
+function SharedTripRoute() {
+  const { token } = useParams();
+  return <SharedTrip token={token} />;
+}
+
+// Le partage est branché AVANT tout le reste, et c'est le point important :
+// cette branche ne monte ni `useSession` ni `useTrips`. Un ami sans compte ne
+// déclenche donc aucune requête qui lui serait refusée, et ne peut pas croiser
+// l'écran de connexion.
 export default function App() {
+  return (
+    <Routes>
+      <Route path="/partage/:token" element={<SharedTripRoute />} />
+      <Route path="*" element={<PrivateApp />} />
+    </Routes>
+  );
+}
+
+function PrivateApp() {
   const { user, loading: sessionLoading, readOnly, signIn, signOut } = useSession();
   const trips = useTrips();
 
   // Connexion demandée depuis l'app alors qu'on a déjà du cache : jeton
   // expiré, ou changement de compte. Sans cet état, être déconnecté AVEC du
-  // cache était sans issue — l'app s'affichait en lecture et aucun écran ne
-  // permettait de se reconnecter.
+  // cache était sans issue.
   const [loginRequested, setLoginRequested] = useState(false);
 
-  // On attend la session ET la première lecture du cache. Les deux sont des
-  // opérations locales de quelques millisecondes.
   if (sessionLoading || trips.loading) {
     return <main className="app-boot" aria-busy="true" />;
   }
@@ -30,19 +46,13 @@ export default function App() {
   // C'est la règle centrale du projet : le rendu n'est pas conditionné à
   // l'authentification. Le jeton expire en une heure et son renouvellement
   // passe par le réseau ; hors ligne au Japon, `user` est null alors que
-  // l'itinéraire est là, complet, dans IndexedDB. Écrire `if (!user)` ici
-  // renverrait sur un formulaire de connexion impossible à valider.
-  //
-  // La connexion n'est pas non plus une route : une redirection vers
-  // /connexion aurait le même effet, en pire, parce qu'elle changerait l'URL.
+  // l'itinéraire est là, complet, dans IndexedDB.
   const hasCache = (trips.trips?.length ?? 0) > 0;
 
   if (!user && (!hasCache || loginRequested)) {
     return (
       <Login
         onSignIn={signIn}
-        // Échappatoire : tant qu'il y a du cache, on doit pouvoir refermer le
-        // formulaire et continuer à lire son itinéraire.
         onDismiss={hasCache ? () => setLoginRequested(false) : null}
       />
     );

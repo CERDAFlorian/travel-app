@@ -1,0 +1,35 @@
+@use '../theme/mixins';
+
+.timeline {
+  display: flex;
+  gap: 4px;
+  align-items: stretch;
+
+  &__segment {
+    flex-basis: 0;
+    min-width: 0;
+    padding: 6px 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    background: var(--surface-tint);
+    color: var(--text-soft);
+    font: inherit;
+    font-size: clamp(10px, 1.05vw, 13.5px);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    // L'ellipse plutôt que le retour à la ligne : les segments doivent garder
+    // la même hauteur pour que la frise reste une barre.
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    cursor: pointer;
+
+    &:focus-visible { @include mixins.focus-ring; }
+
+    &[data-selected] {
+      background: var(--accent);
+      color: var(--accent-contrast);
+      border-color: var(--accent);
+    }
+  }
+}

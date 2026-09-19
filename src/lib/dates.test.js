@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { formatPeriod, formatPrice, formatSince, formatStepDates } from './dates.js';
+import { formatPeriod, formatSince, formatStepDates, formatTripRange } from './dates.js';
 
 // fr-FR sépare les milliers par une espace fine insécable (U+202F) et colle
 // l'unité avec une insécable (U+00A0). On normalise pour que les assertions
@@ -46,27 +46,6 @@ describe('formatStepDates', () => {
   });
 });
 
-describe('formatPrice', () => {
-  // Sans currencyDisplay narrowSymbol, fr-FR rend « 4 500 JPY » — correct mais
-  // illisible dans une liste de trente lignes.
-  it('affiche le yen en symbole, sans décimale', () => {
-    expect(plain(formatPrice(4500, 'JPY'))).toBe('4 500 ¥');
-    expect(plain(formatPrice(34000, 'JPY'))).toBe('34 000 ¥');
-  });
-
-  it('garde les centimes en euros', () => {
-    expect(plain(formatPrice(1250.5, 'EUR'))).toBe('1 250,50 €');
-  });
-
-  // Zéro est un prix — « gratuit ». Absent veut dire « on ne sait pas ». Les
-  // confondre fausserait le budget de L6 sans que rien ne le signale.
-  it('distingue zéro d’un prix absent', () => {
-    expect(plain(formatPrice(0, 'JPY'))).toBe('0 ¥');
-    expect(formatPrice(null, 'JPY')).toBeNull();
-    expect(formatPrice(undefined, 'JPY')).toBeNull();
-  });
-});
-
 describe('formatSince', () => {
   it.each([
     [30 * 1000, "à l'instant"],
@@ -86,5 +65,15 @@ describe('formatSince', () => {
 
   it('rend null sans horodatage', () => {
     expect(formatSince(null)).toBeNull();
+  });
+});
+
+describe('formatTripRange', () => {
+  it("n'écrit l'année qu'une fois, à la fin", () => {
+    expect(plain(formatTripRange('2026-11-07', '2026-11-26'))).toBe('Du 7 nov. au 26 nov. 2026');
+  });
+
+  it('retombe sur formatPeriod si une date manque', () => {
+    expect(plain(formatTripRange(null, '2026-11-26'))).toBe(plain(formatPeriod(null, '2026-11-26')));
   });
 });

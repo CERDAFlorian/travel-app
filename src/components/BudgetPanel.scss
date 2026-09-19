@@ -1,0 +1,172 @@
+@use '../theme/mixins';
+
+.budget {
+  padding: 0 clamp(16px, 3vw, 44px) clamp(24px, 2.8vw, 36px);
+
+  &__card {
+    padding: clamp(12px, 1.4vw, 20px);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+  }
+
+  &__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--sp-3);
+    margin-bottom: clamp(10px, 1.2vw, 14px);
+  }
+
+  &__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(17px, 2vw, 26px);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  &__hint {
+    font-size: clamp(11.5px, 1.2vw, 14.5px);
+    font-style: italic;
+    color: var(--text-soft);
+  }
+
+  &__travelers {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    font-size: clamp(12px, 1.25vw, 15px);
+    color: var(--text-soft);
+
+    input {
+      width: 58px;
+      padding: 3px 7px;
+      border: 1px solid var(--border-strong);
+      border-radius: 7px;
+      background: var(--surface-raised);
+      color: var(--text);
+      font: inherit;
+      font-size: clamp(12px, 1.25vw, 15px);
+
+      &:focus-visible { @include mixins.focus-ring; }
+    }
+  }
+
+  &__gauge {
+    display: flex;
+    height: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    background: var(--surface-tint);
+  }
+
+  &__slice {
+    flex-basis: 0;
+    background: var(--accent);
+
+    &[data-cat='hotel']    { background: var(--cat-hotel); }
+    &[data-cat='activite'] { background: var(--cat-activite); }
+    &[data-cat='lieu']     { background: var(--cat-lieu); }
+  }
+
+  &__rows {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+    gap: clamp(8px, 1vw, 16px);
+    margin-top: clamp(10px, 1.2vw, 14px);
+  }
+
+  &__row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--sp-2);
+    padding: 4px 2px;
+    border-bottom: 1px dotted var(--border);
+  }
+
+  &__dot {
+    flex: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+
+    &[data-cat='hotel']    { background: var(--cat-hotel); }
+    &[data-cat='activite'] { background: var(--cat-activite); }
+    &[data-cat='lieu']     { background: var(--cat-lieu); }
+  }
+
+  &__label { font-size: clamp(12.5px, 1.3vw, 16px); }
+
+  &__count {
+    font-size: clamp(11px, 1.1vw, 13px);
+    font-style: italic;
+    color: var(--muted);
+  }
+
+  &__rule {
+    flex: 1;
+    min-width: 8px;
+    height: 1px;
+    background: repeating-linear-gradient(90deg, var(--border-strong) 0 5px, transparent 5px 10px);
+  }
+
+  &__amount {
+    font-size: clamp(12.5px, 1.3vw, 16px);
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  &__totals {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: clamp(12px, 2vw, 30px);
+    margin-top: clamp(12px, 1.4vw, 18px);
+    padding-top: clamp(10px, 1.2vw, 14px);
+    border-top: 1px solid var(--border);
+  }
+
+  &__caption {
+    font-size: clamp(10.5px, 1.1vw, 13px);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  &__grand {
+    font-family: var(--font-display);
+    font-size: clamp(26px, 3.4vw, 46px);
+    line-height: 1.05;
+    color: var(--accent);
+  }
+
+  &__sub {
+    font-family: var(--font-display);
+    font-size: clamp(19px, 2.2vw, 30px);
+    line-height: 1.1;
+    color: var(--text);
+  }
+
+  &__note {
+    margin: 0 0 0 auto;
+    max-width: 320px;
+    font-size: clamp(11.5px, 1.2vw, 14.5px);
+    font-style: italic;
+    color: var(--text-soft);
+  }
+}
+
+.budget__rate {
+  display: block;
+  margin-top: 4px;
+  font-style: normal;
+  font-size: var(--fs-xs);
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}

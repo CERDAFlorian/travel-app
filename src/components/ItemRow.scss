@@ -1,99 +1,112 @@
 @use '../theme/mixins';
 
-.item-row {
-  padding: var(--sp-3) 0;
-  border-top: 1px solid var(--border-soft);
-
-  &:first-child {
-    border-top: 0;
+.item {
+  &__line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 7px;
+    padding: 3px 5px;
+    border-radius: 8px;
   }
 
-  &__main {
-    display: flex;
-    gap: var(--sp-3);
-    align-items: baseline;
+  &__thumb {
+    flex: none;
+    width: 44px;
+    height: 31px;
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    background-color: var(--surface-tint);
+    background-size: cover;
+    background-position: center;
   }
 
   // Les 6 couleurs de catégorie sont invariantes : les mêmes pour tous les
-  // voyages, hors contrat de thème. C'est le fil conducteur visuel de l'app.
+  // voyages, hors contrat de thème.
   &__dot {
     flex: none;
-    width: 9px;
-    height: 9px;
-    border-radius: var(--radius-pill);
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
     background: var(--cat-note);
-    transform: translateY(-1px);
 
     &[data-cat='hotel']      { background: var(--cat-hotel); }
     &[data-cat='activite']   { background: var(--cat-activite); }
     &[data-cat='restaurant'] { background: var(--cat-restaurant); }
     &[data-cat='shopping']   { background: var(--cat-shopping); }
     &[data-cat='lieu']       { background: var(--cat-lieu); }
-    &[data-cat='note']       { background: var(--cat-note); }
   }
 
-  // min-width: 0 — sans ça, un titre long refuse de se contracter et pousse le
-  // prix hors de l'écran à 375 px.
-  &__body {
-    display: grid;
-    gap: 2px;
+  &__name {
+    font-size: clamp(12.5px, 1.3vw, 16px);
+    color: var(--text);
+
+    // Le soulignement pointillé au survol est le seul indice que le nom est
+    // modifiable : un bouton de plus ferait déborder la ligne.
+    &[data-editable] {
+      cursor: text;
+
+      &:hover { text-decoration: underline dotted var(--border-strong); }
+    }
+  }
+
+  &__edit {
     flex: 1;
-    min-width: 0;
+    min-width: 120px;
+    padding: 2px 6px;
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    background: var(--surface-raised);
+    color: var(--text);
+    font: inherit;
+    font-size: var(--fs-md);
+
+    &:focus-visible { @include mixins.focus-ring; }
   }
 
-  &__title  { font-size: var(--fs-sm); }
-  &__notes  { color: var(--muted); font-size: var(--fs-xs); }
+  &__meta {
+    font-size: clamp(11px, 1.15vw, 13.5px);
+    font-style: italic;
+    color: var(--text-soft);
+  }
+
+  &__map {
+    padding: 1px 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    color: var(--text-soft);
+    font-size: clamp(10.5px, 1.05vw, 12.5px);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-decoration: none;
+    white-space: nowrap;
+
+    &:hover { border-color: var(--accent); color: var(--accent); }
+    &:focus-visible { @include mixins.focus-ring; }
+  }
 
   // Coordonnées incohérentes avec l'étape : presque toujours un homonyme
-  // attrapé par le géocodage. Visible sans ouvrir quoi que ce soit.
+  // attrapé par le géocodage.
   &__far {
-    flex: none;
     color: var(--danger);
     font-size: var(--fs-xs);
     white-space: nowrap;
   }
 
-  &__price {
-    flex: none;
-    font-size: var(--fs-sm);
-    font-variant-numeric: tabular-nums;
-  }
-
-  &__plan {
-    flex: none;
-    display: inline-flex;
-    align-items: center;
-    min-height: 32px;
-    padding: var(--sp-1) var(--sp-3);
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-pill);
-    color: var(--accent);
-    font-size: var(--fs-xs);
-    text-decoration: none;
-
-    &:hover { border-color: var(--accent); }
-    &:focus-visible { @include mixins.focus-ring; }
-  }
-
-  // Deuxième ligne, décalée sous la pastille. Les outils d'édition ne doivent
-  // pas se disputer la largeur avec le titre et le prix : à 375 px, l'un des
-  // deux finirait tronqué.
   &__tools {
+    margin-left: auto;
     display: flex;
-    flex-wrap: wrap;
-    gap: var(--sp-2);
     align-items: center;
-    margin-top: var(--sp-2);
-    padding-left: calc(9px + var(--sp-3));
+    gap: 6px;
   }
 
   &__star {
-    padding: 0 var(--sp-1);
+    padding: 0;
     border: 0;
     background: none;
     color: var(--muted);
     font: inherit;
-    font-size: var(--fs-md);
+    font-size: 14px;
     line-height: 1;
     cursor: pointer;
 
@@ -102,45 +115,77 @@
     &:disabled { opacity: 0.5; }
   }
 
-  &__tool {
-    padding: var(--sp-1) var(--sp-2);
-    border: 1px solid var(--border-soft);
-    border-radius: var(--radius-sm);
+  // Pilule bleutée, distincte des tons chauds de la page : localiser est une
+  // action technique, pas une décision de voyage.
+  &__locate {
+    padding: 1px 8px;
+    border: 1px dashed var(--info);
+    border-radius: var(--radius-pill);
     background: none;
-    color: var(--muted);
+    color: var(--info);
     font: inherit;
-    font-size: var(--fs-xs);
+    font-size: clamp(10.5px, 1.05vw, 12.5px);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
     cursor: pointer;
 
-    &:hover { border-color: var(--border-strong); color: var(--text); }
-    &:focus-visible { @include mixins.focus-ring; }
-    &:disabled { opacity: 0.5; cursor: progress; }
-
-    // Item déjà localisé : l'action reste disponible pour corriger, mais
-    // l'état se lit sans cliquer.
-    &[data-located] {
+    &[data-on] {
+      border-style: solid;
       border-color: var(--ok);
       color: var(--ok);
     }
 
-    &--danger:hover { border-color: var(--danger); color: var(--danger); }
+    &:focus-visible { @include mixins.focus-ring; }
+    &:disabled { opacity: 0.5; cursor: progress; }
+  }
 
-    // Armé : la confirmation retombe seule après trois secondes.
+  &__price {
+    width: 74px;
+    padding: 2px 6px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface-raised);
+    color: var(--accent);
+    font: inherit;
+    font-size: clamp(11.5px, 1.2vw, 14px);
+    font-style: italic;
+    text-align: right;
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  &__price-read {
+    font-size: clamp(11.5px, 1.2vw, 14px);
+    font-style: italic;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__delete {
+    padding: 0 3px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: 12.5px;
+    cursor: pointer;
+
+    &:hover { color: var(--danger); }
+    &:focus-visible { @include mixins.focus-ring; }
+
     &[data-armed] {
-      border-color: var(--danger);
+      padding: 1px 7px;
       background: var(--danger);
       color: var(--text-invert);
+      font-size: var(--fs-xs);
     }
   }
 
   &__error {
-    margin: var(--sp-2) 0 0;
-    padding-left: calc(9px + var(--sp-3));
+    margin: 2px 0 4px 17px;
     color: var(--danger);
     font-size: var(--fs-xs);
-  }
-
-  &--editing {
-    padding-block: 0;
   }
 }

@@ -1,0 +1,20 @@
+.dead-link {
+  display: grid;
+  place-content: center;
+  gap: var(--sp-3);
+  min-height: 100svh;
+  padding: var(--sp-6) var(--page-pad);
+  text-align: center;
+
+  &__title {
+    margin: 0;
+    font-family: var(--font-display);
+    color: var(--accent);
+  }
+
+  &__text {
+    margin: 0 auto;
+    max-width: 44ch;
+    color: var(--muted);
+  }
+}

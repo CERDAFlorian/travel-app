@@ -72,32 +72,13 @@ export function formatStepDates(startIso, endIso) {
     : `${DAY_MONTH.format(start)} – ${DAY_MONTH.format(end)}`;
 }
 
-// Un prix dans sa devise.
-//
-// Deux réglages qui changent la lecture :
-//
-// `narrowSymbol` — sans lui, `fr-FR` rend « 4 500 JPY » là où on attend
-// « 4 500 ¥ ». Le code ISO est correct mais illisible d'un coup d'œil dans une
-// liste de trente lignes. L'euro des vols y gagne aussi : « 1 250,50 € ».
-//
-// Zéro décimale pour le yen — il n'a pas de subdivision, « 34 000,00 ¥ » est
-// une faute de sens, pas une préférence d'affichage.
-//
-// Le repli n'est pas décoratif : `narrowSymbol` lève une RangeError sur les
-// moteurs antérieurs à Safari 14.1, et un prix illisible vaut mieux qu'un écran
-// blanc.
-export function formatPrice(amount, currency = 'JPY') {
-  if (amount === null || amount === undefined) return null;
+// « Du 7 nov. au 26 nov. 2026 » — la forme de l'en-tête dans le design.
+// L'année n'apparaît qu'une fois, à la fin : un voyage ne chevauche pas deux
+// années dans la pratique, et la répéter alourdit une ligne déjà dense.
+export function formatTripRange(startIso, endIso) {
+  const start = parse(startIso);
+  const end = parse(endIso);
+  if (!start || !end) return formatPeriod(startIso, endIso);
 
-  const options = { style: 'currency', currency, maximumFractionDigits: currency === 'JPY' ? 0 : 2 };
-
-  try {
-    return new Intl.NumberFormat('fr-FR', { ...options, currencyDisplay: 'narrowSymbol' }).format(amount);
-  } catch {
-    try {
-      return new Intl.NumberFormat('fr-FR', options).format(amount);
-    } catch {
-      return `${amount} ${currency}`;
-    }
-  }
+  return `Du ${DAY_MONTH.format(start)} au ${DAY_MONTH.format(end)} ${end.getFullYear()}`;
 }

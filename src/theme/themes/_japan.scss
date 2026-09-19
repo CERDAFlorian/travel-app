@@ -10,6 +10,15 @@ $vermillon-d: #6d1418;
 $creme:       #f8ecd9; // washi
 $creme-clair: #fdf6e9;
 $creme-pur:   #fffdf7;
+$creme-ombre: #f8eed9; // panneaux encastrés
+$creme-chaud: #f6e3c4; // fonds d'action
+$creme-teint: #efe0c4; // segments, emplacements photo vides
+$brou:        #8a6c47; // annotations italiques
+$vermillon-p: #7a2027; // petites capitales
+$mer:         #fbf3e3; // centre de la mer
+$mer-bord:    #f3e5cd; // bord de la mer
+$terre:       #dfdcbc; // terres émergées
+$cote:        #b6a476; // trait de côte
 $paille:      #e0caa2;
 $paille-fonce:#d9bd8c;
 $paille-clair:#e6d2ab;
@@ -24,16 +33,21 @@ $theme: contract.validate('japan', (
   surface:         $creme-clair,
   surface-raised:  $creme-pur,
   overlay:         rgba($sumi, 0.55),
+  surface-sunken:  $creme-ombre,
+  surface-warm:    $creme-chaud,
+  surface-tint:    $creme-teint,
 
   text:            $sumi,
   text-heading:    $sumi-deep,
   muted:           $or-terni,
   text-invert:     $creme-clair,
+  text-soft:       $brou,
 
   accent:          $vermillon,
   accent-hover:    $vermillon-d,
   accent-contrast: $creme-clair,
   accent-soft:     rgba($vermillon, 0.10),
+  accent-deep:     $vermillon-p,
 
   accent-2:        $sauge,
   accent-2-soft:   rgba($sauge, 0.12),
@@ -46,6 +60,11 @@ $theme: contract.validate('japan', (
   warn:            $kaki,
   danger:          $vermillon,
   info:            $indigo,
+
+  map-sea:         $mer,
+  map-sea-edge:    $mer-bord,
+  map-land:        $terre,
+  map-land-line:   $cote,
 
   font-display:    ('Playfair Display', Georgia, serif),
   font-body:       ('EB Garamond', Georgia, serif),

@@ -1,0 +1,40 @@
+.travel-times {
+  margin-top: clamp(10px, 1.2vw, 15px);
+  padding: clamp(9px, 1vw, 13px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-sunken);
+
+  &__title {
+    margin: 0 0 6px;
+    font-size: clamp(11.5px, 1.15vw, 14px);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-align: center;
+  }
+
+  &__row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--sp-2);
+    padding: 3px 0;
+    border-bottom: 1px dotted var(--border-strong);
+  }
+
+  &__label { font-size: clamp(12.5px, 1.3vw, 16px); }
+
+  &__rule {
+    flex: 1;
+    min-width: 10px;
+    height: 1px;
+    background: repeating-linear-gradient(90deg, var(--border-strong) 0 5px, transparent 5px 10px);
+  }
+
+  &__time {
+    font-size: clamp(12.5px, 1.3vw, 16px);
+    font-style: italic;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+}
