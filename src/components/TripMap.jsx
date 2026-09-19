@@ -261,11 +261,15 @@ export default function TripMap({ trip, selectedStepId, onSelectStep }) {
   const distanceBetween = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
   function onPointerDown(event) {
-    svgRef.current.setPointerCapture(event.pointerId);
     pointers.current.set(event.pointerId, toViewBox(event.clientX, event.clientY));
     // On retient le point d'appui en coordonnées écran : le déplacement
     // perçu par la main ne dépend pas du zoom de la carte.
-    drag.current = { x: event.clientX, y: event.clientY, moved: 0 };
+    //
+    // PAS de setPointerCapture ici. La capture redirige l'événement `click`
+    // vers l'élément capturant : les épingles recevaient le focus mais jamais
+    // le clic, et aucune sélection ne partait. On ne capture qu'au moment où
+    // le geste devient un glisser — voir onPointerMove.
+    drag.current = { x: event.clientX, y: event.clientY, moved: 0, captured: false };
     if (pointers.current.size === 2) {
       const [a, b] = [...pointers.current.values()];
       pinchStart.current = { distance: distanceBetween(a, b), k: view.k };
@@ -283,6 +287,14 @@ export default function TripMap({ trip, selectedStepId, onSelectStep }) {
       const travelled =
         Math.abs(event.clientX - drag.current.x) + Math.abs(event.clientY - drag.current.y);
       drag.current.moved = Math.max(drag.current.moved, travelled);
+
+      // À partir d'ici c'est un glisser : on capture, pour continuer à suivre
+      // le pointeur même s'il sort du cadre de la carte. Le clic est de toute
+      // façon perdu, puisqu'on ne cliquait pas.
+      if (!drag.current.captured && drag.current.moved > DRAG_SLOP_PX) {
+        svgRef.current.setPointerCapture(event.pointerId);
+        drag.current.captured = true;
+      }
     }
 
     if (pointers.current.size === 2 && pinchStart.current) {
@@ -311,6 +323,9 @@ export default function TripMap({ trip, selectedStepId, onSelectStep }) {
   function onPointerUp(event) {
     pointers.current.delete(event.pointerId);
     if (pointers.current.size < 2) pinchStart.current = null;
+    if (drag.current?.captured && svgRef.current?.hasPointerCapture(event.pointerId)) {
+      svgRef.current.releasePointerCapture(event.pointerId);
+    }
   }
 
   // useCallback n'est pas décoratif ici : une fonction recréée à chaque rendu
@@ -480,20 +495,17 @@ const Markers = memo(function Markers({ layout, tier, k, onSelect }) {
         );
       })}
 
+      {/* Les épingles ne sont ni focusables ni des `role="button"` : l'anneau
+          de focus du navigateur encadrait la boîte entière du groupe, pastille
+          ET libellé, ce qui barrait la carte d'un rectangle bleu au moindre
+          clic. La sélection d'étape reste accessible au clavier par la frise,
+          faite de vrais boutons — inutile de la dupliquer sur un dessin. */}
       {layout.pins.map((pin) => (
         <g
           key={pin.group.key}
           className="map__pin"
           transform={`translate(${pin.cx / tier} ${pin.cy / tier}) scale(${counter})`}
           onClick={() => onSelect(pin.group)}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault();
-              onSelect(pin.group);
-            }
-          }}
         >
           <line className="map__leader" x1="0" y1="0" x2={pin.dx} y2={pin.dy} />
           <text className="map__step-label" x={pin.dx} y={pin.dy} textAnchor={pin.anchor}>

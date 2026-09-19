@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { CATEGORIES } from '@/lib/categories.js';
 import { formatStepDates } from '@/lib/dates.js';
 import PhotoStrip from './PhotoStrip.jsx';
@@ -27,7 +28,27 @@ function formatDuration(minutes) {
 // Le rail porte le numéro puis un filet dégradé qui descend vers l'étape
 // suivante. C'est lui qui fait lire la colonne comme un itinéraire plutôt que
 // comme une liste de cartes indépendantes.
-export default function StepCard({ step, tripTitle, readOnly, selected, leg, onSelect, onChanged }) {
+export default function StepCard({
+  step,
+  tripTitle,
+  readOnly,
+  selected,
+  leg,
+  onSelect,
+  onRemove,
+  onChanged,
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const [removing, setRemoving] = useState(false);
+
+  // La confirmation retombe seule après trois secondes : retirer une étape
+  // emporte ses items et ses liaisons, il n'y a pas de corbeille.
+  useEffect(() => {
+    if (!confirming) return undefined;
+    const timer = setTimeout(() => setConfirming(false), 3000);
+    return () => clearTimeout(timer);
+  }, [confirming]);
+
   const itemsByCategory = new Map(CATEGORIES.map(({ key }) => [key, []]));
   for (const item of step.items) {
     itemsByCategory.get(item.category)?.push(item);
@@ -44,6 +65,33 @@ export default function StepCard({ step, tripTitle, readOnly, selected, leg, onS
     >
       <div className="step__rail">
         <div className="step__number">{step.position}</div>
+
+        {!readOnly && onRemove && (
+          <button
+            type="button"
+            className="step__remove"
+            data-armed={confirming || undefined}
+            disabled={removing}
+            title={confirming ? 'Confirmer le retrait' : 'Retirer cette étape'}
+            onClick={(event) => {
+              // Sans ça, le clic remonte à l'article et sélectionne l'étape
+              // qu'on est en train de supprimer.
+              event.stopPropagation();
+              if (!confirming) {
+                setConfirming(true);
+                return;
+              }
+              setRemoving(true);
+              onRemove(step.id).finally(() => setRemoving(false));
+            }}
+          >
+            {confirming ? '⚠' : '✕'}
+            <span className="sr-only">
+              {confirming ? `Confirmer le retrait de ${step.name}` : `Retirer ${step.name}`}
+            </span>
+          </button>
+        )}
+
         <div className="step__thread" aria-hidden="true" />
       </div>
 

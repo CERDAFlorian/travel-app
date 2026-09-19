@@ -82,3 +82,36 @@ export async function revokeShareToken(tripId) {
   const { error } = await supabase.from('trips').update({ share_token: null }).eq('id', tripId);
   if (error) fail(error, 'Révocation du lien de partage');
 }
+
+// Retire une étape de l'itinéraire.
+//
+// La suppression emporte en cascade les items de l'étape et les liaisons qui
+// la touchent — c'est le schéma qui s'en charge (`on delete cascade`), pas ce
+// code. Conséquence à connaître : retirer une étape du milieu supprime les
+// DEUX liaisons qui l'encadraient, sans en créer une entre ses voisines. On ne
+// peut pas deviner la durée d'un trajet qui n'a jamais été fait.
+//
+// Les dates des étapes restantes ne sont pas recalculées non plus : elles sont
+// saisies, pas dérivées, et rien dans l'app ne permet encore de les modifier.
+// Un trou apparaîtra donc dans l'enchaînement. À reprendre le jour où l'édition
+// des dates existera.
+export async function removeStep(stepId, orderedSteps) {
+  const { error } = await supabase.from('steps').delete().eq('id', stepId);
+  if (error) fail(error, "Suppression de l'étape");
+
+  // Renumérotation : sans elle, les étapes s'afficheraient 1, 2, 4, 5. Aucune
+  // contrainte d'unicité sur (trip_id, position), donc pas de collision
+  // possible pendant la mise à jour.
+  const remaining = orderedSteps.filter((step) => step.id !== stepId);
+
+  for (const [index, step] of remaining.entries()) {
+    const position = index + 1;
+    if (step.position === position) continue;
+
+    const { error: renumber } = await supabase
+      .from('steps')
+      .update({ position })
+      .eq('id', step.id);
+    if (renumber) fail(renumber, 'Renumérotation des étapes');
+  }
+}

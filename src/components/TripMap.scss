@@ -80,8 +80,6 @@
 
   &__pin {
     cursor: pointer;
-
-    &:focus-visible { @include mixins.focus-ring; }
   }
 
   &__pin-disc {

@@ -122,3 +122,25 @@
     color: var(--accent);
   }
 }
+
+// Retrait d'une étape. Discret par défaut — le geste emporte les items et les
+// liaisons —, franc une fois armé.
+.step__remove {
+  padding: 0 var(--sp-1);
+  border: 0;
+  background: none;
+  color: var(--border-strong);
+  font: inherit;
+  font-size: var(--fs-sm);
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover { color: var(--danger); }
+
+  &[data-armed] {
+    color: var(--danger);
+    font-size: var(--fs-md);
+  }
+
+  &:disabled { opacity: 0.5; cursor: progress; }
+}

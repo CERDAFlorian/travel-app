@@ -10,6 +10,7 @@ import HeroBanner from '@/components/HeroBanner.jsx';
 import Experiences from '@/components/Experiences.jsx';
 import BudgetPanel from '@/components/BudgetPanel.jsx';
 import ShareLink from '@/components/ShareLink.jsx';
+import { removeStep } from '@/lib/mutations.js';
 import './TripView.scss';
 
 // L'itinéraire, mis en page comme le design.
@@ -41,6 +42,14 @@ export default function TripView({
     if (!stepId) return;
     document.getElementById(`step-${stepId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, []);
+
+  const handleRemoveStep = useCallback(
+    async (stepId) => {
+      await removeStep(stepId, trip.steps);
+      await onChanged();
+    },
+    [trip.steps, onChanged],
+  );
 
   // Le trajet est rattaché à l'étape de départ : il se lit en pied de la carte
   // qu'on vient de finir, au moment où l'on se demande comment rejoindre la
@@ -87,6 +96,7 @@ export default function TripView({
               selected={step.id === selectedStepId}
               leg={legByFromStep.get(step.id)}
               onSelect={setSelectedStepId}
+              onRemove={handleRemoveStep}
               // Après chaque écriture on resynchronise le voyage entier plutôt
               // que de rapiécer le cache : une seule source de vérité.
               onChanged={onChanged}
