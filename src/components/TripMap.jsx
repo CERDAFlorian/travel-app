@@ -20,6 +20,14 @@ const RING_START_DEG = -104;
 const RING_STEP_DEG = 43;
 const RING_RADII = [19, 26, 33];
 
+// Au-delà de ce déplacement, en pixels écran, on considère qu'on a fait
+// glisser la carte et non cliqué. Valeur du design.
+//
+// Le seuil compte : trop bas, le tremblement normal de la main annule tous les
+// clics — une épingle devient impossible à sélectionner à la souris comme au
+// doigt. La mesure se fait depuis le point d'appui, pas d'une image à l'autre.
+const DRAG_SLOP_PX = 6;
+
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
 // Le fond doit toujours couvrir le cadre : sans cette contrainte, un glisser
@@ -60,7 +68,7 @@ export default function TripMap({ trip, selectedStepId, onSelectStep }) {
   const svgRef = useRef(null);
   const pointers = useRef(new Map());
   const pinchStart = useRef(null);
-  const dragged = useRef(false);
+  const drag = useRef(null);
 
   const toggle = (key) =>
     setFilters((current) => {
@@ -255,7 +263,9 @@ export default function TripMap({ trip, selectedStepId, onSelectStep }) {
   function onPointerDown(event) {
     svgRef.current.setPointerCapture(event.pointerId);
     pointers.current.set(event.pointerId, toViewBox(event.clientX, event.clientY));
-    dragged.current = false;
+    // On retient le point d'appui en coordonnées écran : le déplacement
+    // perçu par la main ne dépend pas du zoom de la carte.
+    drag.current = { x: event.clientX, y: event.clientY, moved: 0 };
     if (pointers.current.size === 2) {
       const [a, b] = [...pointers.current.values()];
       pinchStart.current = { distance: distanceBetween(a, b), k: view.k };
@@ -269,12 +279,17 @@ export default function TripMap({ trip, selectedStepId, onSelectStep }) {
     const current = toViewBox(event.clientX, event.clientY);
     pointers.current.set(event.pointerId, current);
 
+    if (drag.current) {
+      const travelled =
+        Math.abs(event.clientX - drag.current.x) + Math.abs(event.clientY - drag.current.y);
+      drag.current.moved = Math.max(drag.current.moved, travelled);
+    }
+
     if (pointers.current.size === 2 && pinchStart.current) {
       const [a, b] = [...pointers.current.values()];
       const ratio = distanceBetween(a, b) / pinchStart.current.distance;
       const target = clamp(pinchStart.current.k * ratio, MIN_ZOOM, MAX_ZOOM);
       const midpoint = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-      dragged.current = true;
       setView((v) => {
         const factor = target / v.k;
         return clampView({
@@ -289,7 +304,6 @@ export default function TripMap({ trip, selectedStepId, onSelectStep }) {
     if (pointers.current.size === 1) {
       const dx = current.x - previous.x;
       const dy = current.y - previous.y;
-      if (Math.abs(dx) + Math.abs(dy) > 0.5) dragged.current = true;
       setView((v) => clampView({ ...v, x: v.x + dx, y: v.y + dy }));
     }
   }
@@ -299,14 +313,13 @@ export default function TripMap({ trip, selectedStepId, onSelectStep }) {
     if (pointers.current.size < 2) pinchStart.current = null;
   }
 
-  // Un glisser qui se termine sur une épingle ne doit pas la sélectionner :
-  // on déplaçait la carte, on ne cliquait pas.
-  //
   // useCallback n'est pas décoratif ici : une fonction recréée à chaque rendu
   // invaliderait la mémoïsation de <Markers> et annulerait tout le bénéfice.
   const selectGroup = useCallback(
     (group) => {
-      if (dragged.current) return;
+      // Un glisser qui se termine sur une épingle ne la sélectionne pas : on
+      // déplaçait la carte. En deçà du seuil, c'est un clic.
+      if (drag.current && drag.current.moved > DRAG_SLOP_PX) return;
       const index = group.steps.findIndex((step) => step.id === selectedStepId);
       // Sur une épingle groupée — Tokyo, étapes 1 et 7 — les clics successifs
       // passent d'une étape à l'autre, puis désélectionnent.
