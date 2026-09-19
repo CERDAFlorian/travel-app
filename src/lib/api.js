@@ -74,9 +74,11 @@ function normalizeTrip(data) {
     endDate: data.end_date,
     shareToken: data.share_token ?? null,
     steps,
-    // L'aller avant le retour, quelle que soit la date de saisie.
+    // Par date : avec des vols intérieurs, « aller avant retour » ne suffit
+    // plus à ordonner un trajet Paris → Tokyo → Fukuoka → Tokyo → Paris.
+    // Un vol sans date passe en fin de liste plutôt que de s'intercaler.
     flights: [...(data.flights ?? [])].sort((a, b) =>
-      a.direction === b.direction ? 0 : a.direction === 'aller' ? -1 : 1,
+      (a.date ?? '9999').localeCompare(b.date ?? '9999'),
     ),
     legs: data.legs ?? [],
     experiences: [...(data.experiences ?? [])].sort(byPosition),

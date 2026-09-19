@@ -115,3 +115,35 @@ export async function removeStep(stepId, orderedSteps) {
     if (renumber) fail(renumber, 'Renumérotation des étapes');
   }
 }
+
+// --- Vols -------------------------------------------------------------------
+//
+// Un voyage en compte souvent plus de deux : aller, sauts intérieurs, retour.
+// La direction « interieur » a été ouverte en base par 0004_vols.sql.
+
+export async function addFlight({ tripId, direction, fromCode, toCode, date, airline, flightNo, price }) {
+  const { error } = await supabase.from('flights').insert({
+    trip_id: tripId,
+    direction,
+    // Les codes IATA sont contraints à trois majuscules par le schéma : on
+    // normalise ici plutôt que de laisser l'insertion échouer sur une saisie
+    // en minuscules, qui est le cas courant.
+    from_code: fromCode ? fromCode.trim().toUpperCase() : null,
+    to_code: toCode ? toCode.trim().toUpperCase() : null,
+    date: date || null,
+    airline: airline || null,
+    flight_no: flightNo || null,
+    price: price ?? null,
+  });
+  if (error) fail(error, 'Ajout du vol');
+}
+
+export async function updateFlight(id, patch) {
+  const { error } = await supabase.from('flights').update(patch).eq('id', id);
+  if (error) fail(error, 'Modification du vol');
+}
+
+export async function deleteFlight(id) {
+  const { error } = await supabase.from('flights').delete().eq('id', id);
+  if (error) fail(error, 'Suppression du vol');
+}

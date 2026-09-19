@@ -83,7 +83,7 @@ export default function TripView({
         <ShareLink trip={trip} readOnly={readOnly} onChanged={onChanged} />
       </div>
 
-      <FlightsPanel flights={trip.flights} />
+      <FlightsPanel trip={trip} readOnly={readOnly} onChanged={onChanged} />
 
       <main className="trip__main">
         <section className="trip__steps">

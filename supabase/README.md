@@ -8,7 +8,8 @@ automatiquement : ni le repo, ni la CI, ni le déploiement ne parlent à Supabas
 | 1 | `migrations/0001_schema.sql` | 7 tables, contraintes, index, droits | oui, sans effet si déjà passé |
 | 2 | `migrations/0002_rls.sql` | fonctions d'accès, trigger, policies | oui, tout est en `create or replace` / `drop … if exists` |
 | 3 | `migrations/0003_partage.sql` | jeton de partage + fonction de lecture publique | oui |
-| 4 | `seed.sql` | le voyage Japon | oui, **il écrase le voyage `japon-2026`** |
+| 4 | `migrations/0004_vols.sql` | ouvre la direction « interieur » sur les vols | oui |
+| 5 | `seed.sql` | le voyage Japon | oui, **il écrase le voyage `japon-2026`** |
 
 ## Application — pas à pas
 
@@ -215,6 +216,12 @@ comme repli si une étape doit un jour être forcée à un endroit précis.
 **`steps.images`** — `NULL` partout dans le seed. Le bandeau photo de L3 se
 compose par mots-clés du titre d'item (voir `design/README.md`). La colonne
 sert de surcharge quand l'appariement automatique ne donne rien de bon.
+
+**Directions de vol.** `aller` · `retour` · `interieur`. La troisième a été
+ouverte par 0004 : un voyage compte souvent plus de deux vols, et un saut
+Tokyo–Fukuoka n'est ni un aller ni un retour. C'est précisément pour cette
+raison que L1 avait choisi un `CHECK` sur du `text` plutôt qu'un `ENUM` —
+faire évoluer la liste tient en deux lignes.
 
 **Devises.** `items` par défaut en `JPY`, `flights` en `EUR`. Sans devise sur
 les vols, le budget de L6 additionnerait des euros et des yens.
