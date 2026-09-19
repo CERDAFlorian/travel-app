@@ -49,3 +49,11 @@
     border-bottom: 1px solid var(--border-soft);
   }
 }
+
+// Étape sélectionnée depuis la carte ou la frise. Le liseré d'accent suffit :
+// un fond différent ferait ressortir une carte au détriment de la lecture
+// continue de l'itinéraire.
+.step-card[data-selected] {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-md);
+}

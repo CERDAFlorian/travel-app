@@ -9,14 +9,16 @@ import './StepCard.scss';
 // Les catégories sont toujours les 6, dans le même ordre, même vides. Un
 // affichage qui n'en montrerait que trois sur une étape et cinq sur une autre
 // obligerait à relire la liste à chaque fois pour savoir ce qui manque.
-export default function StepCard({ step, tripTitle, readOnly, onChanged }) {
+export default function StepCard({ step, tripTitle, readOnly, selected, onChanged }) {
   const itemsByCategory = new Map(CATEGORIES.map(({ key }) => [key, []]));
   for (const item of step.items) {
     itemsByCategory.get(item.category)?.push(item);
   }
 
   return (
-    <li className="step-card">
+    // L'id sert d'ancre de défilement quand on sélectionne depuis la carte
+    // ou la frise.
+    <li className="step-card" id={`step-${step.id}`} data-selected={selected || undefined}>
       <header className="step-card__head">
         <span className="step-card__number" aria-hidden="true">
           {step.position}

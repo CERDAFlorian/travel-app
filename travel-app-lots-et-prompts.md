@@ -14,7 +14,7 @@ Offline en **lecture seule**. Carte SVG unique zoomable, ancres géographiques +
 ## État du projet — 18 septembre 2026
 
 Branche de travail : `dev`. `main` est en retard, la fusion se fera par PR.
-**L0 à L4 sont terminés — l'app est utilisable et la prépa se fait dedans.** L5 est le prochain.
+**L0 à L5 sont terminés.** L6 est le prochain.
 
 ⚠️ **Départ le 7 novembre 2026 — sept semaines.** L5 et L6 pèsent environ trois
 jours de travail. L7 (PWA, service worker) est le lot qui rend l'app utilisable
@@ -222,7 +222,7 @@ Colle un prompt, laisse la boucle tourner, vérifie, commit, passe au suivant. N
 | ~~**L2**~~ | ~~Couche données + cache IndexedDB + hook `useTrip`~~ | ✅ fait | L'app lit online et offline |
 | ~~**L3**~~ | ~~Shell + étapes + catégories + items (lecture)~~ | ✅ fait | **App utilisable** |
 | ~~**L4**~~ | ~~Édition items + LOCALISER (Nominatim) + Haversine~~ | ✅ fait | Prépa autonome dans l'app |
-| **L5** | Carte SVG : pan/zoom, ancres, labels déportés, filtres tags | 2 j | La pièce maîtresse |
+| ~~**L5**~~ | ~~Carte SVG : pan/zoom, ancres, labels déportés, filtres tags~~ | ✅ fait | La pièce maîtresse |
 | **L6** | Vols, trajets, expériences, budget | 1 j | Périmètre complet |
 | **L7** | PWA, précache, bouton sync, QA mobile | 1 j | Prêt pour le voyage |
 | **L8** | Séparer la base de dev de la base de prod | 0,5 j | On peut casser sans risque |
@@ -776,6 +776,58 @@ STOP
 
 **Notes L5** — lire l'encadré « Écarts » en haut du document avant de commencer.
 Le contrat décrit une carte différente de celle qui existe.
+
+---
+
+**L5 — fait le 19 septembre 2026.** Carte, frise et pastilles. Le contrat
+décrivait une carte qui n'existe pas ; voici ce qui a été fait à la place.
+
+Livré : `scripts/build-map.mjs` (générateur), `src/data/japan-geometry.js`
+(généré, 9,9 Ko), `lib/projection.js`, `lib/labels.js`, `TripMap`,
+`StepTimeline`, `TripStats`.
+
+**Le fond de carte est embarqué.** C'était le point bloquant signalé dans les
+écarts : le design télécharge `world-atlas` depuis un CDN au montage, donc hors
+ligne au Japon la carte ne s'affiche pas. `scripts/build-map.mjs` récupère la
+géométrie une fois, extrait le Japon, la projette et écrit un chemin SVG
+statique. Sa sortie est commitée : `npm run build` n'a jamais besoin de réseau.
+Résolution 50m (110m donnait 65 points pour tout le pays, illisible), îlots hors
+cadre écartés — 21 anneaux gardés sur 34, 796 points, 9,9 Ko.
+
+**Aucune dépendance ajoutée.** Le décodage TopoJSON et la projection de
+Mercator tiennent en trente lignes dans le script ; `d3-geo` et
+`topojson-client` pour un calcul exécuté une fois n'en valaient pas le prix.
+
+**`src/data/city-bounds.js` n'a pas été créé.** Le contrat prévoyait un
+calibrage manuel par ville, justifié pour un SVG dessiné à la main. Avec une
+vraie projection, `lat`/`lng` suffisent. C'est l'écart déjà anticipé en tête de
+document.
+
+**Pas de `d3-force` non plus.** Le contrat le demandait pour le déport des
+labels ; l'algorithme du design — neuf positions candidates, la première sans
+collision gagne — est déterministe et coûte quelques microsecondes, là où
+`d3-force` est stochastique et itératif. Surtout, il est parfaitement cachable
+par palier de zoom, ce que le même contrat exige par ailleurs. Les deux
+exigences étaient contradictoires ; j'ai gardé celle sur la performance.
+
+**Paliers 1, 2, 4, 8.** Le placement est calculé dans l'espace écran du palier
+et mis en cache. Les libellés étant contre-échelonnés, leur empreinte en unités
+carte rétrécit quand on zoome : placer au palier inférieur est donc
+conservateur, les labels ne peuvent que s'écarter davantage à l'intérieur d'un
+palier, jamais se rapprocher.
+
+**Le calque des marqueurs est isolé et mémoïsé.** Pendant un glisser, seul le
+`transform` du `<g>` parent change ; React saute entièrement le sous-arbre des
+cinquante marqueurs.
+
+**Épingles groupées.** Tokyo est l'étape 1 ET l'étape 7, aux mêmes coordonnées.
+Une seule épingle, badge « 1·7 », et les clics successifs passent d'une étape à
+l'autre puis désélectionnent.
+
+**Reste à vérifier sur appareil réel** — le pinch, et la lisibilité de Kyoto et
+Tokyo à zoom fort. Ce dernier critère n'est pas évaluable en l'état : seuls 7
+items portent des coordonnées. Le déport des labels ne sera réellement mis à
+l'épreuve qu'une fois une trentaine d'items géocodés.
 
 ---
 

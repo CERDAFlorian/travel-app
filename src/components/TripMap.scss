@@ -1,0 +1,191 @@
+@use '../theme/mixins';
+
+.map {
+  display: grid;
+  gap: var(--sp-3);
+
+  &__frame {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+  }
+
+  &__svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    // Indispensable : sans ça, iOS intercepte le glisser pour faire défiler la
+    // page et le pinch pour zoomer le document. La carte ne recevrait qu'une
+    // partie des gestes.
+    touch-action: none;
+    cursor: grab;
+
+    &:active { cursor: grabbing; }
+  }
+
+  &__land {
+    fill: var(--accent-soft);
+    stroke: var(--border-strong);
+    // Contre-échelonné par le zoom : sans vector-effect, le trait de côte
+    // s'épaissirait jusqu'à manger les îles.
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+
+  &__dot {
+    fill: var(--cat-note);
+    stroke: var(--surface);
+    stroke-width: 1.5;
+
+    &[data-cat='hotel']      { fill: var(--cat-hotel); }
+    &[data-cat='activite']   { fill: var(--cat-activite); }
+    &[data-cat='restaurant'] { fill: var(--cat-restaurant); }
+    &[data-cat='shopping']   { fill: var(--cat-shopping); }
+    &[data-cat='lieu']       { fill: var(--cat-lieu); }
+  }
+
+  // Le pointillé relie un label déporté à son ancre. Sans lui, un label posé à
+  // trente pixels de son point devient impossible à rattacher.
+  &__leader {
+    stroke: var(--border-strong);
+    stroke-width: 1;
+    stroke-dasharray: 2 2;
+  }
+
+  &__pin {
+    cursor: pointer;
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  &__pin-disc {
+    fill: var(--accent);
+    stroke: var(--bg);
+    stroke-width: 2.5;
+  }
+
+  &__halo {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1.6;
+    opacity: 0.45;
+  }
+
+  &__badge {
+    fill: var(--accent-contrast);
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 700;
+    pointer-events: none;
+  }
+
+  &__step-label {
+    fill: var(--text-heading);
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    paint-order: stroke;
+    stroke: var(--bg);
+    stroke-width: 3;
+    pointer-events: none;
+  }
+
+  // paint-order + contour de la couleur du fond : le texte reste lisible
+  // par-dessus le trait de côte et les pointillés, sans cartouche opaque.
+  &__item-label {
+    fill: var(--text);
+    font-family: var(--font-body);
+    font-size: 12px;
+    paint-order: stroke;
+    stroke: var(--bg);
+    stroke-width: 3;
+    pointer-events: none;
+  }
+
+  &__zoom {
+    position: absolute;
+    top: var(--sp-2);
+    right: var(--sp-2);
+    display: grid;
+    gap: var(--sp-1);
+
+    button {
+      width: 30px;
+      height: 30px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      background: var(--surface-raised);
+      color: var(--text);
+      font: inherit;
+      font-size: var(--fs-md);
+      line-height: 1;
+      cursor: pointer;
+
+      &:hover { border-color: var(--accent); }
+      &:focus-visible { @include mixins.focus-ring; }
+    }
+  }
+
+  &__hint {
+    position: absolute;
+    left: var(--sp-3);
+    bottom: var(--sp-2);
+    margin: 0;
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    pointer-events: none;
+  }
+
+  &__filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  // Éteint, le filtre garde sa couleur de catégorie en bordure : on voit ce
+  // qu'on a masqué, et de quelle couleur il reviendra.
+  &__filter {
+    display: flex;
+    gap: var(--sp-2);
+    align-items: center;
+    padding: var(--sp-1) var(--sp-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: var(--fs-xs);
+    cursor: pointer;
+
+    &::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: var(--radius-pill);
+      background: var(--accent);
+    }
+
+    &[data-cat='hotel']::before      { background: var(--cat-hotel); }
+    &[data-cat='activite']::before   { background: var(--cat-activite); }
+    &[data-cat='restaurant']::before { background: var(--cat-restaurant); }
+    &[data-cat='shopping']::before   { background: var(--cat-shopping); }
+    &[data-cat='lieu']::before       { background: var(--cat-lieu); }
+
+    &[data-on] {
+      border-color: var(--border-strong);
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    &:not([data-on])::before { opacity: 0.35; }
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+}
