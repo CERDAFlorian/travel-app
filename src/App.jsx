@@ -8,7 +8,7 @@ import Trip from '@/pages/Trip.jsx';
 import './App.scss';
 
 export default function App() {
-  const { user, loading: sessionLoading, signIn, signOut } = useSession();
+  const { user, loading: sessionLoading, readOnly, signIn, signOut } = useSession();
   const trips = useTrips();
 
   // Connexion demandée depuis l'app alors qu'on a déjà du cache : jeton
@@ -69,7 +69,7 @@ export default function App() {
       />
       <Route
         path="/voyage/:slug"
-        element={<Trip onRequestLogin={user ? null : requestLogin} />}
+        element={<Trip onRequestLogin={user ? null : requestLogin} readOnly={readOnly} />}
       />
       {/* replace : une URL inconnue ne doit pas s'empiler dans l'historique,
           sinon le bouton retour y ramène en boucle. */}

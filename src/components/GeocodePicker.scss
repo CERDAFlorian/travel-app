@@ -1,0 +1,129 @@
+@use '../theme/mixins';
+
+.geocode {
+  display: grid;
+  gap: var(--sp-3);
+  margin: var(--sp-2) 0 var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+
+  &--warning {
+    border-color: var(--danger);
+  }
+
+  &__status,
+  &__warning,
+  &__error {
+    margin: 0;
+    font-size: var(--fs-sm);
+  }
+
+  &__status { color: var(--muted); }
+  &__error   { color: var(--danger); }
+  &__warning { color: var(--text); }
+
+  &__list {
+    display: grid;
+    gap: var(--sp-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__candidate {
+    display: grid;
+    gap: 2px;
+    width: 100%;
+    padding: var(--sp-2) var(--sp-3);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover { border-color: var(--accent); }
+    &:focus-visible { @include mixins.focus-ring; }
+    &:disabled { opacity: 0.5; cursor: progress; }
+
+    // Un candidat trop loin reste cliquable — il peut être le bon, un ryokan
+    // en montagne par exemple — mais il ne doit pas passer inaperçu.
+    &[data-far] {
+      border-color: var(--danger);
+    }
+  }
+
+  &__label {
+    font-size: var(--fs-sm);
+  }
+
+  &__meta {
+    color: var(--muted);
+    font-size: var(--fs-xs);
+  }
+
+  &__manual {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    align-items: center;
+  }
+
+  &__input {
+    flex: 1 1 160px;
+    min-width: 0;
+    padding: var(--sp-2) var(--sp-3);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-size: var(--fs-md);
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  &__submit,
+  &__confirm {
+    flex: none;
+    padding: var(--sp-2) var(--sp-3);
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: var(--accent);
+    color: var(--accent-contrast);
+    font: inherit;
+    font-size: var(--fs-sm);
+    cursor: pointer;
+
+    &:focus-visible { @include mixins.focus-ring; }
+    &:disabled { opacity: 0.6; cursor: progress; }
+  }
+
+  &__confirm {
+    background: var(--danger);
+  }
+
+  &__cancel {
+    flex: none;
+    padding: 0 var(--sp-2);
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: var(--fs-sm);
+    text-decoration: underline;
+    cursor: pointer;
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    align-items: center;
+  }
+}

@@ -1,5 +1,7 @@
 import { useId, useState } from 'react';
+import { addItem } from '@/lib/mutations.js';
 import ItemRow from './ItemRow.jsx';
+import ItemForm from './ItemForm.jsx';
 import './CategoryAccordion.scss';
 
 // Une catégorie d'une étape, repliable.
@@ -8,15 +10,23 @@ import './CategoryAccordion.scss';
 // un voyage en ouvrant la catégorie qu'on cherche, pas en faisant défiler les
 // six. Sur les 48 items du Japon, tout déplier d'emblée ferait de Tokyo un mur
 // de texte à 375 px.
-//
-// Une catégorie vide n'est pas un bouton : elle reste affichée — son absence
-// ferait douter de l'existence de la catégorie — mais ne s'ouvre pas.
-export default function CategoryAccordion({ category, items }) {
+export default function CategoryAccordion({
+  category,
+  items,
+  step,
+  tripTitle,
+  readOnly,
+  onChanged,
+}) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
-  const empty = items.length === 0;
 
-  if (empty) {
+  // Une catégorie vide reste une catégorie : son absence ferait douter qu'elle
+  // existe. En lecture seule elle n'est qu'un libellé ; dès qu'on peut écrire,
+  // elle s'ouvre — c'est le seul endroit d'où ajouter le premier item.
+  const inert = items.length === 0 && readOnly;
+
+  if (inert) {
     return (
       <div className="accordion accordion--empty">
         <span className="accordion__label">{category.label}</span>
@@ -24,6 +34,12 @@ export default function CategoryAccordion({ category, items }) {
       </div>
     );
   }
+
+  // Les positions sont propres à l'étape, toutes catégories confondues : on
+  // prend la suite de la plus grande plutôt que de recommencer à 1 par
+  // catégorie, ce qui créerait des doublons à l'échelle de l'étape.
+  const nextPosition =
+    step.items.reduce((max, current) => Math.max(max, current.position ?? 0), 0) + 1;
 
   return (
     <div className="accordion">
@@ -45,11 +61,34 @@ export default function CategoryAccordion({ category, items }) {
       {/* Démonté quand replié plutôt que masqué en CSS : sept étapes × six
           catégories, c'est 48 lignes qu'on évite de garder dans le DOM. */}
       {open && (
-        <ul className="accordion__panel" id={panelId}>
-          {items.map((item) => (
-            <ItemRow key={item.id} item={item} />
-          ))}
-        </ul>
+        <div className="accordion__panel" id={panelId}>
+          <ul className="accordion__items">
+            {items.map((item) => (
+              <ItemRow
+                key={item.id}
+                item={item}
+                step={step}
+                tripTitle={tripTitle}
+                readOnly={readOnly}
+                onChanged={onChanged}
+              />
+            ))}
+          </ul>
+
+          {!readOnly && (
+            <ItemForm
+              onSubmit={async (values) => {
+                await addItem({
+                  stepId: step.id,
+                  category: category.key,
+                  position: nextPosition,
+                  ...values,
+                });
+                await onChanged();
+              }}
+            />
+          )}
+        </div>
       )}
     </div>
   );

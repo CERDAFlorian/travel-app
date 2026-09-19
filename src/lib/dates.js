@@ -72,18 +72,32 @@ export function formatStepDates(startIso, endIso) {
     : `${DAY_MONTH.format(start)} – ${DAY_MONTH.format(end)}`;
 }
 
-// Un prix dans sa devise. Les montants sont entiers au Japon : le yen n'a pas
-// de subdivision, afficher « 34 000,00 ¥ » serait une faute de sens.
+// Un prix dans sa devise.
+//
+// Deux réglages qui changent la lecture :
+//
+// `narrowSymbol` — sans lui, `fr-FR` rend « 4 500 JPY » là où on attend
+// « 4 500 ¥ ». Le code ISO est correct mais illisible d'un coup d'œil dans une
+// liste de trente lignes. L'euro des vols y gagne aussi : « 1 250,50 € ».
+//
+// Zéro décimale pour le yen — il n'a pas de subdivision, « 34 000,00 ¥ » est
+// une faute de sens, pas une préférence d'affichage.
+//
+// Le repli n'est pas décoratif : `narrowSymbol` lève une RangeError sur les
+// moteurs antérieurs à Safari 14.1, et un prix illisible vaut mieux qu'un écran
+// blanc.
 export function formatPrice(amount, currency = 'JPY') {
   if (amount === null || amount === undefined) return null;
 
+  const options = { style: 'currency', currency, maximumFractionDigits: currency === 'JPY' ? 0 : 2 };
+
   try {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency,
-      maximumFractionDigits: currency === 'JPY' ? 0 : 2,
-    }).format(amount);
+    return new Intl.NumberFormat('fr-FR', { ...options, currencyDisplay: 'narrowSymbol' }).format(amount);
   } catch {
-    return `${amount} ${currency}`;
+    try {
+      return new Intl.NumberFormat('fr-FR', options).format(amount);
+    } catch {
+      return `${amount} ${currency}`;
+    }
   }
 }
