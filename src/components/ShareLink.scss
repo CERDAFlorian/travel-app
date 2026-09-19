@@ -1,0 +1,55 @@
+@use '../theme/mixins';
+
+.share {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+
+  &__url {
+    flex: 1 1 240px;
+    min-width: 0;
+    padding: 3px 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: 7px;
+    background: var(--surface-raised);
+    color: var(--text-soft);
+    font: inherit;
+    font-size: var(--fs-xs);
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  &__action {
+    flex: none;
+    padding: 3px 11px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--surface-warm);
+    color: var(--accent);
+    font: inherit;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover { border-color: var(--accent); }
+    &:focus-visible { @include mixins.focus-ring; }
+    &:disabled { opacity: 0.6; cursor: progress; }
+
+    &--danger {
+      background: transparent;
+      color: var(--danger);
+      border-color: var(--border);
+
+      &:hover { border-color: var(--danger); }
+    }
+  }
+
+  &__error {
+    flex-basis: 100%;
+    color: var(--danger);
+    font-size: var(--fs-xs);
+  }
+}

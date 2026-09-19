@@ -7,7 +7,8 @@ automatiquement : ni le repo, ni la CI, ni le déploiement ne parlent à Supabas
 |---|---|---|---|
 | 1 | `migrations/0001_schema.sql` | 7 tables, contraintes, index, droits | oui, sans effet si déjà passé |
 | 2 | `migrations/0002_rls.sql` | fonctions d'accès, trigger, policies | oui, tout est en `create or replace` / `drop … if exists` |
-| 3 | `seed.sql` | le voyage Japon | oui, **il écrase le voyage `japon-2026`** |
+| 3 | `migrations/0003_partage.sql` | jeton de partage + fonction de lecture publique | oui |
+| 4 | `seed.sql` | le voyage Japon | oui, **il écrase le voyage `japon-2026`** |
 
 ## Application — pas à pas
 
@@ -130,6 +131,36 @@ set local request.jwt.claims = '{"sub":"<un user_id de auth.users>"}';
 select count(*) from public.items;   -- 48 si membre, 0 sinon
 reset role;
 ```
+
+## Partage en lecture seule
+
+Un ami sans compte peut consulter un voyage depuis une URL, et rien d'autre.
+
+`anon` ne reçoit **aucun droit de table** : le `revoke all … from anon` de
+0001 reste entier. L'accès passe par une seule fonction `security definer`,
+`trip_by_share_token(uuid)`, qui ne rend le voyage que si le jeton présenté
+correspond à `trips.share_token`. Un voyage non partagé a un jeton `NULL`, et
+`NULL = NULL` est faux : il reste invisible même si l'appelant passe `NULL`.
+
+Le jeton est un UUID — 122 bits, on ne tombe pas dessus par hasard. C'est ce
+qui permet de se passer d'un drapeau « public », dont l'URL serait le slug,
+devinable en trois essais.
+
+L'app gère le geste depuis la page du voyage : **Créer un lien de partage**,
+**Copier**, **Révoquer**. Régénérer le jeton révoque le lien précédent — c'est
+la seule reprise en main possible sur une URL déjà envoyée.
+
+En SQL, si besoin :
+
+```sql
+update public.trips set share_token = gen_random_uuid() where slug = 'japon-2026';  -- créer/renouveler
+update public.trips set share_token = null              where slug = 'japon-2026';  -- révoquer
+select slug, share_token from public.trips where slug = 'japon-2026';               -- relire
+```
+
+**Ce que le lien expose** : tout ce que voit le propriétaire, prix compris. Pour
+masquer le budget, retirer `price` et `currency` des `jsonb_build_object` de la
+fonction — les panneaux correspondants se videront d'eux-mêmes.
 
 ## Modèle d'accès
 

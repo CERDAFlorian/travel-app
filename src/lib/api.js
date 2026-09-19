@@ -40,7 +40,7 @@ export async function fetchTrips() {
 }
 
 const TRIP_SELECT = `
-  id, slug, title, subtitle, start_date, end_date, theme,
+  id, slug, title, subtitle, start_date, end_date, theme, share_token,
   steps (
     id, position, name, date_start, date_end, nights, lat, lng, images,
     items (
@@ -53,14 +53,10 @@ const TRIP_SELECT = `
   experiences ( id, position, title, description, image, price, currency, url, favorite )
 `;
 
-export async function fetchTrip(slug) {
-  const { data, error } = await supabase
-    .from('trips')
-    .select(TRIP_SELECT)
-    .eq('slug', slug)
-    .maybeSingle();
-
-  if (error) fail(error, `Chargement du voyage « ${slug} »`);
+// Une seule mise en forme pour les deux sources : la requête PostgREST du
+// propriétaire et la fonction de partage rendent la même structure. Sans ce
+// normaliseur commun, la vue partagée finirait par diverger sans qu'on le voie.
+function normalizeTrip(data) {
   if (!data) return null;
 
   const steps = [...(data.steps ?? [])].sort(byPosition).map((step) => ({
@@ -76,6 +72,7 @@ export async function fetchTrip(slug) {
     subtitle: data.subtitle,
     startDate: data.start_date,
     endDate: data.end_date,
+    shareToken: data.share_token ?? null,
     steps,
     // L'aller avant le retour, quelle que soit la date de saisie.
     flights: [...(data.flights ?? [])].sort((a, b) =>
@@ -84,4 +81,29 @@ export async function fetchTrip(slug) {
     legs: data.legs ?? [],
     experiences: [...(data.experiences ?? [])].sort(byPosition),
   };
+}
+
+export async function fetchTrip(slug) {
+  const { data, error } = await supabase
+    .from('trips')
+    .select(TRIP_SELECT)
+    .eq('slug', slug)
+    .maybeSingle();
+
+  if (error) fail(error, `Chargement du voyage « ${slug} »`);
+  return normalizeTrip(data);
+}
+
+// Lecture par lien de partage.
+//
+// Passe par une fonction `security definer` : `anon` n'a aucun droit sur les
+// tables, et la clé publique seule ne lit toujours rien. C'est le jeton, et lui
+// seul, qui ouvre la porte. Voir supabase/migrations/0003_partage.sql.
+export async function fetchSharedTrip(token) {
+  const { data, error } = await supabase.rpc('trip_by_share_token', { p_token: token });
+
+  if (error) fail(error, 'Chargement du voyage partagé');
+  // Jeton inconnu ou lien révoqué : la fonction ne rend rien. On ne distingue
+  // pas les deux cas — le dire renseignerait qui essaie des jetons au hasard.
+  return normalizeTrip(data);
 }

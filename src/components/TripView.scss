@@ -21,8 +21,32 @@
     &:focus-visible { @include mixins.focus-ring; }
   }
 
-  &__sync {
+  // Bandeau de service : fraîcheur de la donnée à gauche, partage à droite.
+  &__strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+    align-items: center;
+    justify-content: space-between;
     padding: var(--sp-2) clamp(16px, 3vw, 44px) 0;
+  }
+
+  // Bandeau de la vue partagée : il remplace le retour « Mes voyages », qui
+  // ne mènerait nulle part pour qui n'a pas de compte.
+  &__shared {
+    position: absolute;
+    left: var(--sp-3);
+    top: var(--sp-3);
+    z-index: var(--z-sticky);
+    margin: 0;
+    padding: var(--sp-1) var(--sp-3);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
   }
 
   // La grille du design : deux colonnes dès que chacune peut tenir 430 px,
