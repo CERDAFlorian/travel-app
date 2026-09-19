@@ -9,7 +9,7 @@ import { categoryOf } from './categories.js';
 //
 // Les chemins pointent vers /img/*.webp : les PNG de design/img/ ne sont jamais
 // servis, `npm run img` les compresse vers public/img/.
-const PHOTO_LIB = [
+export const PHOTO_LIB = [
   [['asakusa', 'senso'], 'asakusa'],
   [['shibuya'], 'shibuya'],
   [['skytree'], 'skytree'],
@@ -49,7 +49,7 @@ const PHOTO_LIB = [
 // ici évite d'afficher une tuile cassée : l'item tombe sur le repli, comme s'il
 // n'avait pas de correspondance. Retirer une entrée de cette liste le jour où
 // le PNG arrive dans design/img/.
-const MISSING = new Set(['sushi', 'sumo', 'shirakawago2', 'narai', 'matcha', 'baguettes']);
+export const MISSING = new Set(['sushi', 'sumo', 'shirakawago2', 'narai', 'matcha', 'baguettes']);
 
 // Minuscules, accents retirés, tout ce qui n'est pas alphanumérique réduit à un
 // espace. « Pavillon d'or » et « pavillon d or » doivent matcher la même entrée.

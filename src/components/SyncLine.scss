@@ -9,18 +9,29 @@
   color: var(--muted);
   font-size: var(--fs-xs);
 
+  // La pastille porte l'état : verte quand tout va bien, ambre hors ligne,
+  // rouge quand le serveur refuse. La couleur ne dit jamais seule — le texte
+  // à côté l'énonce aussi, pour qui ne distingue pas ces teintes.
   &__dot {
+    flex: none;
     width: 8px;
     height: 8px;
     border-radius: var(--radius-pill);
-    background: var(--warn);
+
+    .sync[data-state='ok'] &      { background: var(--ok); }
+    .sync[data-state='offline'] & { background: var(--warn); }
+    .sync[data-state='error'] &   { background: var(--danger); }
   }
 
-  &__refresh {
+  &[data-state='error'] {
+    color: var(--danger);
+  }
+
+  &__action {
     padding: 0;
     border: 0;
     background: none;
-    color: var(--accent);
+    color: inherit;
     font: inherit;
     font-size: var(--fs-xs);
     text-decoration: underline;

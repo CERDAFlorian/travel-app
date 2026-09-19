@@ -14,9 +14,9 @@ Offline en **lecture seule**. Carte SVG unique zoomable, ancres géographiques +
 ## État du projet — 18 septembre 2026
 
 Branche de travail : `dev`. `main` est en retard, la fusion se fera par PR.
-**L0, L1, L1.5, L2 et L3 sont terminés — l'app est utilisable.** L4 est le prochain.
+**L0 à L4 sont terminés — l'app est utilisable et la prépa se fait dedans.** L5 est le prochain.
 
-⚠️ **Départ le 7 novembre 2026 — sept semaines.** L4 à L6 pèsent environ quatre
+⚠️ **Départ le 7 novembre 2026 — sept semaines.** L5 et L6 pèsent environ trois
 jours de travail. L7 (PWA, service worker) est le lot qui rend l'app utilisable
 sur place : s'il faut rogner, rogner sur L6, jamais sur L7.
 
@@ -44,10 +44,22 @@ quoi lire. Les fichiers de `supabase/` restent la source de vérité : toute
 ```sh
 npm run dev          # serveur de développement
 npm run build        # build production
+npm test             # suite unitaire Vitest (tourne en CI)
+npm run test:watch   # la même, en continu
 npm run img          # compresse design/img/*.png → public/img/*.webp
 npm run img:check    # vérifie sans compresser (tourne en CI)
 npm run sql:check    # cohérence schéma / RLS / seed (tourne en CI)
 ```
+
+**Tests unitaires** — 105 cas sur la logique pure : `geo`, `geocode`, `photos`,
+`dates`, `errors`. Ils figent ce qui avait été vérifié à la main lot après lot
+et qui n'était pas rejouable : les 42,87 km Kyoto → Osaka contre les 39 km
+erronés du contrat, les huit formes acceptées de coordonnées collées,
+l'espacement de 1,1 s imposé par Nominatim, l'ordre de composition d'un bandeau
+photo, la classification réseau / auth / serveur. Deux d'entre eux sont des
+garde-fous d'intégrité : ils échouent si une image de `PHOTO_LIB` n'existe ni
+dans `public/img/` ni dans la liste des absentes, et si une image déclarée
+absente a finalement été exportée.
 
 ### Décisions prises
 
@@ -209,7 +221,7 @@ Colle un prompt, laisse la boucle tourner, vérifie, commit, passe au suivant. N
 | ~~**L1.5**~~ | ~~Connexion, routeur, sélection de voyage~~ | ✅ fait | On entre dans l'app |
 | ~~**L2**~~ | ~~Couche données + cache IndexedDB + hook `useTrip`~~ | ✅ fait | L'app lit online et offline |
 | ~~**L3**~~ | ~~Shell + étapes + catégories + items (lecture)~~ | ✅ fait | **App utilisable** |
-| **L4** | Édition items + LOCALISER (Nominatim) + Haversine | 1,5 j | Prépa autonome dans l'app |
+| ~~**L4**~~ | ~~Édition items + LOCALISER (Nominatim) + Haversine~~ | ✅ fait | Prépa autonome dans l'app |
 | **L5** | Carte SVG : pan/zoom, ancres, labels déportés, filtres tags | 2 j | La pièce maîtresse |
 | **L6** | Vols, trajets, expériences, budget | 1 j | Périmètre complet |
 | **L7** | PWA, précache, bouton sync, QA mobile | 1 j | Prêt pour le voyage |
@@ -652,6 +664,56 @@ STOP
 - Pas de Google Geocoding API : clé à protéger, backend nécessaire, disproportionné.
 - Pas de géocodage en masse automatique au chargement.
 ```
+
+---
+
+**L4 — fait le 19 septembre 2026.** Ajout, édition, suppression, favori et
+géocodage vérifiés depuis l'app, persistance confirmée côté Supabase.
+
+Livré : `lib/geo.js`, `lib/geocode.js`, `lib/mutations.js`, `lib/errors.js`
+(extrait d'`api.js`, partagé avec les écritures), `ItemForm`, `GeocodePicker`,
+et un `ItemRow` qui porte désormais l'édition.
+
+**Correction du contrat — le cas de contrôle Kyoto → Osaka est faux.** Le
+contrat annonce ≈ 39 km ; la bonne valeur est **42,87 km**. Vérifiée par trois
+formules indépendantes (haversine, loi sphérique des cosinus, approximation
+plane) qui concordent à trois décimales, et par l'étalon Paris → Londres
+(343,4 km obtenus contre 343,5 de référence). Les 39 km sont la distance
+Kyoto–Shin-Ōsaka **par le rail**. Le code n'a pas été plié à l'attente erronée.
+
+**Correction du contrat — le `User-Agent` est impossible.** C'est un en-tête
+interdit dans un navigateur, `fetch` refuse de le définir. La politique de
+Nominatim accepte à défaut le `Referer`, envoyé automatiquement. La contrainte
+réellement tenable est l'espacement : mesuré à 1102 ms entre trois appels
+concurrents.
+
+**Vérifié contre l'API réelle** : `Kinkaku-ji, Kyoto, Japon` rend
+35,0395 / 135,7295 — 9 mètres de la valeur attendue — à 4,9 km du centre de
+Kyoto, type `amenity · place_of_worship`.
+
+**Écritures puis resynchronisation complète.** Pas de mise à jour optimiste du
+cache : après chaque écriture on recharge le voyage entier. 300 Ko sur le wifi
+de la maison, et une seule source de vérité — l'écran montre ce que la base
+contient, pas ce qu'on suppose y avoir écrit.
+
+**Le contrôle des 50 km bloque, et persiste.** Un candidat trop éloigné du
+centre de l'étape exige une confirmation explicite ; et l'avertissement reste
+affiché sur l'item enregistré, sinon un « Enregistrer quand même » redeviendrait
+invisible dès le sélecteur refermé. Deux items du seed le déclenchent
+légitimement : Distillerie Hakushu (125 km de Tokyo, détour sur la route) et
+Kōyasan (54 km d'Osaka, excursion à la journée).
+
+**Suppression** : pas de `confirm()` natif, le bouton s'arme en « Confirmer ? »
+et se désarme seul après trois secondes. Il n'y a pas de corbeille.
+
+**`formatPrice` utilise `currencyDisplay: 'narrowSymbol'`** — sans lui `fr-FR`
+rend « 4 500 JPY » au lieu de « 4 500 ¥ », illisible dans une liste de trente
+lignes. Repli en cascade : `narrowSymbol` lève sur les moteurs antérieurs à
+Safari 14.1.
+
+**Reste ouvert** — le chemin d'écriture authentifié n'est pas testable en
+automatique tant que L8 n'a pas séparé la base de dev de la base de prod :
+des tests d'intégration écriraient dans le vrai voyage.
 
 ---
 

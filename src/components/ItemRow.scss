@@ -1,14 +1,17 @@
 @use '../theme/mixins';
 
 .item-row {
-  display: flex;
-  gap: var(--sp-3);
-  align-items: baseline;
   padding: var(--sp-3) 0;
   border-top: 1px solid var(--border-soft);
 
   &:first-child {
     border-top: 0;
+  }
+
+  &__main {
+    display: flex;
+    gap: var(--sp-3);
+    align-items: baseline;
   }
 
   // Les 6 couleurs de catégorie sont invariantes : les mêmes pour tous les
@@ -19,7 +22,6 @@
     height: 9px;
     border-radius: var(--radius-pill);
     background: var(--cat-note);
-    // La pastille est alignée sur la ligne de base du titre, pas sur son haut.
     transform: translateY(-1px);
 
     &[data-cat='hotel']      { background: var(--cat-hotel); }
@@ -39,43 +41,106 @@
     min-width: 0;
   }
 
-  &__title {
-    font-size: var(--fs-sm);
-  }
+  &__title  { font-size: var(--fs-sm); }
+  &__notes  { color: var(--muted); font-size: var(--fs-xs); }
 
-  &__star {
-    margin-left: var(--sp-1);
-    color: var(--accent);
-  }
-
-  &__notes {
-    color: var(--muted);
+  // Coordonnées incohérentes avec l'étape : presque toujours un homonyme
+  // attrapé par le géocodage. Visible sans ouvrir quoi que ce soit.
+  &__far {
+    flex: none;
+    color: var(--danger);
     font-size: var(--fs-xs);
+    white-space: nowrap;
   }
 
-  // tabular-nums : les prix s'alignent chiffre à chiffre d'une ligne à l'autre.
   &__price {
     flex: none;
-    color: var(--text);
     font-size: var(--fs-sm);
     font-variant-numeric: tabular-nums;
   }
 
   &__plan {
     flex: none;
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
     padding: var(--sp-1) var(--sp-3);
     border: 1px solid var(--border-strong);
     border-radius: var(--radius-pill);
     color: var(--accent);
     font-size: var(--fs-xs);
     text-decoration: none;
-    // 44 px de haut au minimum : la cible tactile recommandée par Apple. Un
-    // lien de 20 px se rate une fois sur trois dans un train.
-    min-height: 32px;
-    display: inline-flex;
-    align-items: center;
 
     &:hover { border-color: var(--accent); }
     &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  // Deuxième ligne, décalée sous la pastille. Les outils d'édition ne doivent
+  // pas se disputer la largeur avec le titre et le prix : à 375 px, l'un des
+  // deux finirait tronqué.
+  &__tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    align-items: center;
+    margin-top: var(--sp-2);
+    padding-left: calc(9px + var(--sp-3));
+  }
+
+  &__star {
+    padding: 0 var(--sp-1);
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: var(--fs-md);
+    line-height: 1;
+    cursor: pointer;
+
+    &[data-on] { color: var(--accent); }
+    &:focus-visible { @include mixins.focus-ring; }
+    &:disabled { opacity: 0.5; }
+  }
+
+  &__tool {
+    padding: var(--sp-1) var(--sp-2);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: var(--fs-xs);
+    cursor: pointer;
+
+    &:hover { border-color: var(--border-strong); color: var(--text); }
+    &:focus-visible { @include mixins.focus-ring; }
+    &:disabled { opacity: 0.5; cursor: progress; }
+
+    // Item déjà localisé : l'action reste disponible pour corriger, mais
+    // l'état se lit sans cliquer.
+    &[data-located] {
+      border-color: var(--ok);
+      color: var(--ok);
+    }
+
+    &--danger:hover { border-color: var(--danger); color: var(--danger); }
+
+    // Armé : la confirmation retombe seule après trois secondes.
+    &[data-armed] {
+      border-color: var(--danger);
+      background: var(--danger);
+      color: var(--text-invert);
+    }
+  }
+
+  &__error {
+    margin: var(--sp-2) 0 0;
+    padding-left: calc(9px + var(--sp-3));
+    color: var(--danger);
+    font-size: var(--fs-xs);
+  }
+
+  &--editing {
+    padding-block: 0;
   }
 }

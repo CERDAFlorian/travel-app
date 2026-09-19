@@ -19,7 +19,7 @@ import { useOnline } from './useOnline.js';
 export function useCached(key, resource) {
   const online = useOnline();
   const [state, setState] = useState({ data: null, savedAt: null, loading: true });
-  const [syncFailed, setSyncFailed] = useState(false);
+  const [syncError, setSyncError] = useState(null);
 
   // Garde contre deux courses : le composant démonté, et le slug qui change
   // pendant qu'une requête est en vol. Sans ça, la réponse d'un voyage qu'on
@@ -44,13 +44,22 @@ export function useCached(key, resource) {
 
       if (aliveRef.current && keyRef.current === forKey) {
         setState({ data: fresh, savedAt, loading: false });
-        setSyncFailed(false);
+        setSyncError(null);
       }
       return true;
-    } catch {
+    } catch (error) {
       // Un fetch qui échoue n'efface jamais le cache : on garde à l'écran la
       // donnée qu'on a, et on signale seulement qu'elle n'est plus fraîche.
-      if (aliveRef.current && keyRef.current === forKey) setSyncFailed(true);
+      //
+      // On conserve la RAISON. Avaler l'erreur faisait passer un jeton périmé
+      // pour une coupure réseau : l'app affirmait « Hors ligne » à quelqu'un
+      // parfaitement connecté, et rien à l'écran ne permettait de comprendre.
+      if (aliveRef.current && keyRef.current === forKey) {
+        setSyncError({ kind: error?.kind ?? 'server', message: error?.message ?? String(error) });
+        // Trace complète en console : le message traduit dit quoi faire, celui
+        // de PostgREST dit quelle table ou quelle contrainte a refusé.
+        console.warn('[sync]', error);
+      }
       return false;
     }
   }, [key, resource]);
@@ -81,10 +90,12 @@ export function useCached(key, resource) {
     data: state.data,
     loading: state.loading,
     lastSync: state.savedAt,
-    // Deux causes, une seule conséquence pour l'UI : ce qui est affiché peut
-    // être périmé. Pas de réseau déclaré, ou un fetch qui a échoué malgré un
-    // réseau déclaré présent.
-    isOffline: !online || syncFailed,
+    // Vraiment hors ligne : le navigateur le déclare, ou le fetch a échoué
+    // faute de réseau. Un refus du serveur n'est PAS du hors-ligne — on est
+    // joignable, c'est la réponse qui ne convient pas.
+    isOffline: !online || syncError?.kind === 'network',
+    // { kind: 'network' | 'auth' | 'server', message } ou null.
+    syncError,
     refresh: sync,
   };
 }

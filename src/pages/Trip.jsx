@@ -12,9 +12,9 @@ import './Trip.scss';
 // Pas d'édition et pas de carte dans ce lot : L4 et L5. Le décor — momiji,
 // Fuji, pagode — vient du design ; ce sont des images purement ornementales,
 // donc `alt=""` et `aria-hidden`, pour qu'un lecteur d'écran ne les annonce pas.
-export default function Trip() {
+export default function Trip({ onRequestLogin, readOnly }) {
   const { slug } = useParams();
-  const { trip, loading, isOffline, lastSync, refresh } = useTrip(slug);
+  const { trip, loading, isOffline, syncError, lastSync, refresh } = useTrip(slug);
 
   // Le thème du pays vient de la donnée (trips.theme). Tant que le voyage n'est
   // pas chargé, on reste sur la charte de l'app plutôt que de garder celle du
@@ -40,7 +40,13 @@ export default function Trip() {
         <p className="eyebrow">{formatPeriod(trip.startDate, trip.endDate)}</p>
         <h1 className="trip__title">{trip.title}</h1>
         <p className="trip__subtitle">{trip.subtitle}</p>
-        <SyncLine isOffline={isOffline} lastSync={lastSync} onRefresh={refresh} />
+        <SyncLine
+          isOffline={isOffline}
+          syncError={syncError}
+          lastSync={lastSync}
+          onRefresh={refresh}
+          onSignIn={onRequestLogin}
+        />
       </header>
 
       <div className="trip__hero">
@@ -57,7 +63,17 @@ export default function Trip() {
 
       <ol className="trip__steps">
         {trip.steps.map((step) => (
-          <StepCard key={step.id} step={step} />
+          <StepCard
+            key={step.id}
+            step={step}
+            tripTitle={trip.title}
+            readOnly={readOnly}
+            // Après chaque écriture on resynchronise le voyage entier plutôt
+            // que de rapiécer le cache localement. 300 Ko sur le wifi de la
+            // maison, et surtout une seule source de vérité : l'écran montre
+            // ce que la base contient, pas ce qu'on suppose y avoir écrit.
+            onChanged={refresh}
+          />
         ))}
       </ol>
     </main>

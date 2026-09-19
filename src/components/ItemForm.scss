@@ -1,0 +1,73 @@
+@use '../theme/mixins';
+
+.item-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+  padding: var(--sp-3) 0;
+
+  &__title,
+  &__price {
+    padding: var(--sp-2) var(--sp-3);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    color: var(--text);
+    font: inherit;
+    // 16 px minimum : en dessous, Safari iOS zoome sur le champ au focus et
+    // ne dézoome jamais.
+    font-size: var(--fs-md);
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  // min-width: 0 pour que le champ accepte de rétrécir dans le flex à 375 px.
+  &__title {
+    flex: 1 1 140px;
+    min-width: 0;
+  }
+
+  &__price {
+    flex: 0 1 90px;
+    min-width: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__submit {
+    flex: none;
+    padding: var(--sp-2) var(--sp-4);
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: var(--accent);
+    color: var(--accent-contrast);
+    font: inherit;
+    font-size: var(--fs-sm);
+    cursor: pointer;
+
+    &:hover:not(:disabled) { background: var(--accent-hover); }
+    &:focus-visible { @include mixins.focus-ring; }
+    &:disabled { opacity: 0.6; cursor: progress; }
+  }
+
+  &__cancel {
+    flex: none;
+    padding: 0 var(--sp-2);
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: var(--fs-sm);
+    text-decoration: underline;
+    cursor: pointer;
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  &__error {
+    flex: 1 0 100%;
+    margin: 0;
+    color: var(--danger);
+    font-size: var(--fs-xs);
+  }
+}

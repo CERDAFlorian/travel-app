@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase.js';
+import { fail } from '@/lib/errors.js';
 
 // Accès réseau — lecture seule.
 //
@@ -14,10 +15,6 @@ import { supabase } from '@/lib/supabase.js';
 // imbriquée, mais la syntaxe est fragile et n'échoue pas bruyamment quand elle
 // est fausse : on récupérerait des étapes dans le désordre sans le voir.
 const byPosition = (a, b) => (a.position ?? 0) - (b.position ?? 0);
-
-function fail(error, what) {
-  throw new Error(`${what} : ${error.message}`);
-}
 
 export async function fetchTrips() {
   const { data, error } = await supabase
