@@ -17,7 +17,16 @@ const plural = (n, one, many) => `${n} ${n > 1 ? many : one}`;
 //
 // Pas de création de voyage pour l'instant : volontaire. Le formulaire viendra
 // avec le créateur d'itinéraires.
-export default function Trips({ trips, isOffline, lastSync, onRefresh, email, onSignOut }) {
+export default function Trips({
+  trips,
+  isOffline,
+  syncError,
+  lastSync,
+  onRefresh,
+  email,
+  onSignOut,
+  onRequestLogin,
+}) {
   useTheme(APP_THEME);
 
   const list = trips ?? [];
@@ -27,7 +36,13 @@ export default function Trips({ trips, isOffline, lastSync, onRefresh, email, on
       <header className="trips__head">
         <p className="eyebrow">Mes voyages</p>
         <h1 className="trips__title">{plural(list.length, 'voyage', 'voyages')}</h1>
-        <SyncLine isOffline={isOffline} lastSync={lastSync} onRefresh={onRefresh} />
+        <SyncLine
+          isOffline={isOffline}
+          syncError={syncError}
+          lastSync={lastSync}
+          onRefresh={onRefresh}
+          onSignIn={onRequestLogin}
+        />
       </header>
 
       {list.length === 0 ? (
@@ -60,10 +75,15 @@ export default function Trips({ trips, isOffline, lastSync, onRefresh, email, on
       )}
 
       <footer className="trips__foot">
-        <span className="trips__email">{email ?? 'Hors ligne · lecture seule'}</span>
+        <span className="trips__email">{email ?? 'Non connecté · lecture seule'}</span>
         {onSignOut && (
           <button className="trips__signout" type="button" onClick={onSignOut}>
             Déconnexion
+          </button>
+        )}
+        {onRequestLogin && (
+          <button className="trips__signout" type="button" onClick={onRequestLogin}>
+            Se connecter
           </button>
         )}
       </footer>

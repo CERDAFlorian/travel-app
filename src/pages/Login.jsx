@@ -11,7 +11,7 @@ import './Login.scss';
 // Pas d'inscription non plus, pour la même raison : l'app a deux utilisateurs
 // connus. Un formulaire de création de compte ouvrirait la porte à n'importe
 // qui, sans rien apporter.
-export default function Login({ onSignIn }) {
+export default function Login({ onSignIn, onDismiss }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
@@ -81,6 +81,15 @@ export default function Login({ onSignIn }) {
         <button className="login__submit" type="submit" disabled={busy}>
           {busy ? 'Connexion…' : 'Se connecter'}
         </button>
+
+        {/* Présent seulement quand il y a du cache à lire. Se connecter ne doit
+            jamais être un passage obligé : hors ligne, le formulaire ne peut
+            pas aboutir, et rester coincé devant serait le pire des scénarios. */}
+        {onDismiss && (
+          <button className="login__dismiss" type="button" onClick={onDismiss}>
+            Continuer sans me connecter
+          </button>
+        )}
       </form>
     </main>
   );

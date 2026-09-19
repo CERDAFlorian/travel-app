@@ -86,4 +86,17 @@
       cursor: progress;
     }
   }
+
+  &__dismiss {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: var(--fs-sm);
+    text-decoration: underline;
+    cursor: pointer;
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
 }

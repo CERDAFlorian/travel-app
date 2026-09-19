@@ -12,9 +12,9 @@ import './Trip.scss';
 // Pas d'édition et pas de carte dans ce lot : L4 et L5. Le décor — momiji,
 // Fuji, pagode — vient du design ; ce sont des images purement ornementales,
 // donc `alt=""` et `aria-hidden`, pour qu'un lecteur d'écran ne les annonce pas.
-export default function Trip() {
+export default function Trip({ onRequestLogin }) {
   const { slug } = useParams();
-  const { trip, loading, isOffline, lastSync, refresh } = useTrip(slug);
+  const { trip, loading, isOffline, syncError, lastSync, refresh } = useTrip(slug);
 
   // Le thème du pays vient de la donnée (trips.theme). Tant que le voyage n'est
   // pas chargé, on reste sur la charte de l'app plutôt que de garder celle du
@@ -40,7 +40,13 @@ export default function Trip() {
         <p className="eyebrow">{formatPeriod(trip.startDate, trip.endDate)}</p>
         <h1 className="trip__title">{trip.title}</h1>
         <p className="trip__subtitle">{trip.subtitle}</p>
-        <SyncLine isOffline={isOffline} lastSync={lastSync} onRefresh={refresh} />
+        <SyncLine
+          isOffline={isOffline}
+          syncError={syncError}
+          lastSync={lastSync}
+          onRefresh={refresh}
+          onSignIn={onRequestLogin}
+        />
       </header>
 
       <div className="trip__hero">
