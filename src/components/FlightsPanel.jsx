@@ -1,4 +1,5 @@
-import { formatPrice, formatStepDates } from '@/lib/dates.js';
+import { formatStepDates } from '@/lib/dates.js';
+import { formatEuros, priceInEuros, toEuros } from '@/lib/currency.js';
 import './FlightsPanel.scss';
 
 const DIRECTION = { aller: 'Aller', retour: 'Retour' };
@@ -13,16 +14,11 @@ const DIRECTION = { aller: 'Aller', retour: 'Retour' };
 export default function FlightsPanel({ flights }) {
   if (flights.length === 0) return null;
 
-  const totals = new Map();
-  for (const flight of flights) {
-    const price = Number(flight.price ?? 0);
-    if (price) totals.set(flight.currency ?? 'EUR', (totals.get(flight.currency ?? 'EUR') ?? 0) + price);
-  }
-
-  const total =
-    totals.size > 0
-      ? [...totals].map(([currency, amount]) => formatPrice(amount, currency)).join(' + ')
-      : 'à renseigner';
+  const sum = flights.reduce(
+    (amount, flight) => amount + (toEuros(flight.price, flight.currency ?? 'EUR') ?? 0),
+    0,
+  );
+  const total = sum > 0 ? formatEuros(sum) : 'à renseigner';
 
   return (
     <section className="flights">
@@ -53,7 +49,7 @@ export default function FlightsPanel({ flights }) {
                 </span>
                 <span className="flight__rule" aria-hidden="true" />
                 <span className="flight__price">
-                  {formatPrice(flight.price, flight.currency ?? 'EUR') ?? 'prix à venir'}
+                  {priceInEuros(flight.price, flight.currency ?? 'EUR') ?? 'prix à venir'}
                 </span>
               </div>
             </article>

@@ -9,7 +9,16 @@ const MIN_ZOOM = 1;
 const MAX_ZOOM = 12;
 // Au-delà, les noms d'items s'affichent. En deçà, seules les étapes sont
 // nommées : à vue d'ensemble, quarante libellés ne forment plus qu'une tache.
-const ITEM_LABEL_ZOOM = 3;
+// 2,1 est la valeur du design ; le contrat de L5 disait « palier 3 », mais on
+// reprend le design à l'identique.
+const ITEM_LABEL_ZOOM = 2.1;
+
+// Couronne des items sans coordonnées, autour de leur ville. Valeurs du design :
+// on démarre en haut à gauche et on avance de 43° par item, le rayon alternant
+// sur trois crans pour éviter que deux voisins se touchent.
+const RING_START_DEG = -104;
+const RING_STEP_DEG = 43;
+const RING_RADII = [19, 26, 33];
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
@@ -65,21 +74,87 @@ export default function TripMap({ trip, selectedStepId, onSelectStep }) {
 
   const stepGroups = useMemo(() => groupSteps(trip.steps), [trip.steps]);
 
+  // Chaque étape est ramenée à l'épingle de sa ville — Tokyo 1 et Tokyo 7
+  // partagent la même.
+  const anchorOfStep = useMemo(() => {
+    const map = new Map();
+    for (const group of stepGroups) {
+      for (const step of group.steps) map.set(step.id, group);
+    }
+    return map;
+  }, [stepGroups]);
+
+  // TOUS les items d'une catégorie géographique sont placés, pas seulement les
+  // géocodés. Sans coordonnées, l'item prend place sur une couronne autour de
+  // sa ville : c'est ce qui fait qu'on voit son itinéraire se remplir avant
+  // même d'avoir localisé quoi que ce soit. Le losange distingue ensuite un
+  // point réellement géocodé d'un point simplement rattaché à sa ville.
   const itemPoints = useMemo(() => {
     const points = [];
 
+    // Le compteur de couronne est tenu PAR VILLE, pas par étape. Tokyo est
+    // l'étape 1 et l'étape 7 : les deux séries partagent une épingle, et deux
+    // compteurs repartant de zéro les superposeraient exactement.
+    const ringCount = new Map();
+
     for (const step of trip.steps) {
+      const group = anchorOfStep.get(step.id);
+      const base = group?.point;
+
       for (const item of step.items) {
         if (!categoryOf(item.category)?.onMap) continue;
-        const point = projectPoint(item.lat, item.lng);
-        // Un item mal géocodé peut tomber hors du cadre. On ne le dessine pas
-        // dans le vide — l'avertissement des 50 km le signale déjà dans la liste.
-        if (!point || !isInsideMap(point, 10)) continue;
-        points.push({ id: item.id, title: item.title, category: item.category, stepId: step.id, point });
+
+        const own = projectPoint(item.lat, item.lng);
+        const common = { id: item.id, title: item.title, category: item.category, stepId: step.id, base };
+
+        // Un item mal géocodé peut tomber hors du cadre : on le rabat sur la
+        // couronne plutôt que de le dessiner dans le vide. L'avertissement des
+        // 50 km le signale déjà dans la liste.
+        if (own && isInsideMap(own, 10)) {
+          points.push({ ...common, point: own, geo: true });
+          continue;
+        }
+        if (!base) continue;
+
+        const ringIndex = ringCount.get(group.key) ?? 0;
+        ringCount.set(group.key, ringIndex + 1);
+
+        const angle = ((RING_START_DEG + ringIndex * RING_STEP_DEG) * Math.PI) / 180;
+        const radius = RING_RADII[ringIndex % RING_RADII.length];
+        points.push({
+          ...common,
+          point: { x: base.x + radius * Math.cos(angle), y: base.y + radius * Math.sin(angle) },
+          geo: false,
+        });
       }
     }
     return points;
-  }, [trip.steps]);
+  }, [trip.steps, anchorOfStep]);
+
+  // Les liaisons, en arcs d'une ville à l'autre. Le gauchissement alterne de
+  // part et d'autre pour que deux trajets successifs ne se superposent pas.
+  const legArcs = useMemo(() => {
+    const arcs = [];
+    let index = 0;
+
+    for (const leg of trip.legs) {
+      const from = anchorOfStep.get(leg.from_step)?.point;
+      const to = anchorOfStep.get(leg.to_step)?.point;
+      if (!from || !to) continue;
+
+      const bow = (index % 2 ? -1 : 1) * (0.1 + (index % 3) * 0.03);
+      const mx = (from.x + to.x) / 2;
+      const my = (from.y + to.y) / 2;
+      const dx = to.x - from.x;
+      const dy = to.y - from.y;
+      arcs.push({
+        id: leg.id,
+        d: `M ${from.x} ${from.y} Q ${mx - dy * bow} ${my + dx * bow} ${to.x} ${to.y}`,
+      });
+      index += 1;
+    }
+    return arcs;
+  }, [trip.legs, anchorOfStep]);
 
   const tier = zoomTier(view.k);
   const showItemLabels = view.k >= ITEM_LABEL_ZOOM;
@@ -115,16 +190,21 @@ export default function TripMap({ trip, selectedStepId, onSelectStep }) {
       return { ...pin, name, dx: placed.x - pin.cx, dy: placed.y - pin.cy, anchor: placed.anchor };
     });
 
+    // Un point géocodé est à sa vraie place : un libellé ne doit pas le
+    // recouvrir. Un point de couronne est déjà un arrangement, on accepte de
+    // le frôler plutôt que de repousser le libellé à l'autre bout.
+    const soft = [];
     const dots = visibleItems.map((item) => {
       const cx = item.point.x * tier;
       const cy = item.point.y * tier;
-      hard.push({ x1: cx - 6, x2: cx + 6, y1: cy - 6, y2: cy + 6 });
+      const box = { x1: cx - 6, x2: cx + 6, y1: cy - 6, y2: cy + 6 };
+      (item.geo ? hard : soft).push(box);
       return { ...item, cx, cy };
     });
 
     const itemLabels = showItemLabels
       ? dots.map((dot) => {
-          const placed = placeLabel(dot.cx, dot.cy, 5, dot.title, 12, hard);
+          const placed = placeLabel(dot.cx, dot.cy, 5, dot.title, 12, hard, soft);
           hard.push(placed.box);
           return { id: dot.id, dx: placed.x - dot.cx, dy: placed.y - dot.cy, anchor: placed.anchor, title: dot.title };
         })
@@ -250,8 +330,27 @@ export default function TripMap({ trip, selectedStepId, onSelectStep }) {
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
         >
+          {/* La mer ne bouge pas : elle est hors de la transformation, sinon
+              elle se déplacerait avec la carte et découvrirait le fond. */}
+          <defs>
+            <radialGradient id="map-sea" cx="50%" cy="45%" r="70%">
+              <stop offset="0%" stopColor="var(--map-sea)" />
+              <stop offset="100%" stopColor="var(--map-sea-edge)" />
+            </radialGradient>
+          </defs>
+          <rect x="0" y="0" width={MAP_WIDTH} height={MAP_HEIGHT} fill="url(#map-sea)" />
+
           <g transform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
             <path className="map__land" d={JAPAN_PATH} />
+
+            {/* L'itinéraire d'une ville à l'autre, en arcs. C'est ce qui fait
+                lire la carte comme un voyage et non comme un semis de points. */}
+            <g className="map__legs">
+              {legArcs.map((arc) => (
+                <path key={arc.id} d={arc.d} />
+              ))}
+            </g>
+
             <Markers layout={layout} tier={tier} k={view.k} onSelect={selectGroup} />
           </g>
         </svg>
@@ -313,8 +412,29 @@ export default function TripMap({ trip, selectedStepId, onSelectStep }) {
 const Markers = memo(function Markers({ layout, tier, k, onSelect }) {
   const counter = 1 / k;
 
+  // Les points se resserrent quand on dézoome : à vue d'ensemble, six pastilles
+  // de 6 px autour d'une même ville forment une bouillie.
+  const radius = k >= 1.6 ? 6 : 4.6;
+
   return (
     <>
+      {/* Le rattachement de chaque lieu à sa ville. Tracé dans l'espace carte,
+          donc il s'étire avec le zoom ; l'épaisseur, elle, ne bouge pas. */}
+      <g className="map__links">
+        {layout.dots.map((dot) =>
+          dot.base ? (
+            <line
+              key={dot.id}
+              data-cat={dot.category}
+              x1={dot.base.x}
+              y1={dot.base.y}
+              x2={dot.cx / tier}
+              y2={dot.cy / tier}
+            />
+          ) : null,
+        )}
+      </g>
+
       {layout.dots.map((dot) => {
         const label = layout.itemLabels.get(dot.id);
         return (
@@ -327,7 +447,22 @@ const Markers = memo(function Markers({ layout, tier, k, onSelect }) {
                 </text>
               </>
             )}
-            <circle className="map__dot" data-cat={dot.category} r="4" />
+            {/* Losange : coordonnées réelles. Cercle : simplement rattaché à sa
+                ville, en attente de géocodage. La forme dit l'état, sans
+                légende à lire. */}
+            {dot.geo ? (
+              <rect
+                className="map__dot"
+                data-cat={dot.category}
+                x={-radius}
+                y={-radius}
+                width={radius * 2}
+                height={radius * 2}
+                transform="rotate(45)"
+              />
+            ) : (
+              <circle className="map__dot" data-cat={dot.category} r={radius} />
+            )}
           </g>
         );
       })}

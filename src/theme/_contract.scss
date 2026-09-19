@@ -34,6 +34,9 @@ $required: (
   border, border-strong, border-soft,
   // États
   ok, warn, danger, info,
+  // Carte — la mer, la terre et le trait de côte appartiennent au pays :
+  // un voyage au Maroc voudra des tons désertiques là où le Japon est kaki.
+  map-sea, map-sea-edge, map-land, map-land-line,
   // Typographie
   font-display, font-body,
   // Formes

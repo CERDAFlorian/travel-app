@@ -161,3 +161,12 @@
     color: var(--text-soft);
   }
 }
+
+.budget__rate {
+  display: block;
+  margin-top: 4px;
+  font-style: normal;
+  font-size: var(--fs-xs);
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}

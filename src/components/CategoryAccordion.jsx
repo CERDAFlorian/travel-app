@@ -1,5 +1,6 @@
 import { useId, useState } from 'react';
-import { formatPrice } from '@/lib/dates.js';
+import { formatEuros } from '@/lib/currency.js';
+import { sumInEuros } from '@/lib/budget.js';
 import { addItem } from '@/lib/mutations.js';
 import ItemRow from './ItemRow.jsx';
 import './CategoryAccordion.scss';
@@ -23,17 +24,10 @@ export default function CategoryAccordion({ category, items, step, tripTitle, re
   const [busy, setBusy] = useState(false);
   const panelId = useId();
 
-  // Total de la catégorie, par devise. Le design l'affiche à droite de
-  // l'en-tête : c'est ce qui permet de voir où part l'argent sans déplier.
-  const sums = new Map();
-  for (const item of items) {
-    const amount = Number(item.price ?? 0);
-    if (amount) {
-      const currency = item.currency ?? 'JPY';
-      sums.set(currency, (sums.get(currency) ?? 0) + amount);
-    }
-  }
-  const total = [...sums.entries()].map(([c, amount]) => formatPrice(amount, c)).join(' + ');
+  // Total de la catégorie, en euros. Le design l'affiche à droite de l'en-tête :
+  // c'est ce qui permet de voir où part l'argent sans déplier.
+  const sum = sumInEuros(items);
+  const total = sum > 0 ? formatEuros(sum) : '';
 
   const nextPosition =
     step.items.reduce((max, current) => Math.max(max, current.position ?? 0), 0) + 1;
@@ -111,7 +105,7 @@ export default function CategoryAccordion({ category, items, step, tripTitle, re
                   type="text"
                   inputMode="numeric"
                   value={price}
-                  placeholder="prix"
+                  placeholder={category.key === 'hotel' || category.key === 'activite' || category.key === 'lieu' ? 'prix ¥' : 'prix'}
                   aria-label="Prix"
                   onChange={(event) => setPrice(event.target.value)}
                 />

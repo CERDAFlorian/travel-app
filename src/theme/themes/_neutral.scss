@@ -23,6 +23,10 @@ $grey-soft:  #56606a;
 $paper-3:    #f1f3f5; // panneaux encastrés
 $paper-4:    #e8ecef; // fonds d'action
 $paper-5:    #eef1f3; // emplacements vides
+$sea:        #eef3f6;
+$sea-edge:   #e2eaf0;
+$land:       #dfe4e2;
+$coast:      #9aa5a2;
 $blue:       #2f5d8c;
 $blue-dark:  #234869;
 $teal:       #3d6b66;
@@ -59,6 +63,11 @@ $theme: contract.validate('neutral', (
   warn:            #9a6a1b,
   danger:          #a32b2b,
   info:            $blue,
+
+  map-sea:         $sea,
+  map-sea-edge:    $sea-edge,
+  map-land:        $land,
+  map-land-line:   $coast,
 
   font-display:    (system-ui, -apple-system, 'Segoe UI', sans-serif),
   font-body:       (system-ui, -apple-system, 'Segoe UI', sans-serif),

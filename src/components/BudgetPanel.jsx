@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { BUDGET_HINT, buildBudget, divideTotals, formatTotals, gaugeShares } from '@/lib/budget.js';
+import { BUDGET_HINT, buildBudget } from '@/lib/budget.js';
+import { RATE_NOTE, formatEuros } from '@/lib/currency.js';
 import './BudgetPanel.scss';
 
 // Budget global.
@@ -10,7 +11,6 @@ import './BudgetPanel.scss';
 export default function BudgetPanel({ trip }) {
   const [travelers, setTravelers] = useState(2);
   const budget = buildBudget(trip);
-  const shares = gaugeShares(budget.rows);
 
   return (
     <section className="budget">
@@ -33,12 +33,13 @@ export default function BudgetPanel({ trip }) {
         {/* Jauge indicative : les parts comparent des montants bruts, sans
             conversion entre devises. C'est une proportion, pas une addition. */}
         <div className="budget__gauge">
-          {shares.map((slice) => (
+          {budget.rows.map((row) => (
             <span
-              key={slice.key}
+              key={row.key}
               className="budget__slice"
-              data-cat={slice.key}
-              style={{ flexGrow: slice.share }}
+              data-cat={row.key}
+              style={{ flexGrow: row.share }}
+              title={`${row.label} · ${formatEuros(row.amount)}`}
             />
           ))}
         </div>
@@ -52,7 +53,7 @@ export default function BudgetPanel({ trip }) {
                 {row.count} ligne{row.count > 1 ? 's' : ''}
               </span>
               <span className="budget__rule" aria-hidden="true" />
-              <span className="budget__amount">{formatTotals(row.sums)}</span>
+              <span className="budget__amount">{formatEuros(row.amount)}</span>
             </div>
           ))}
         </div>
@@ -60,17 +61,23 @@ export default function BudgetPanel({ trip }) {
         <div className="budget__totals">
           <div>
             <div className="budget__caption">Total du voyage</div>
-            <div className="budget__grand">{formatTotals(budget.totals)}</div>
+            <div className="budget__grand">{formatEuros(budget.total)}</div>
           </div>
           <div>
             <div className="budget__caption">Par voyageur</div>
-            <div className="budget__sub">{formatTotals(divideTotals(budget.totals, travelers))}</div>
+            <div className="budget__sub">{formatEuros(budget.total / travelers)}</div>
           </div>
           <div>
             <div className="budget__caption">Par nuit</div>
-            <div className="budget__sub">{formatTotals(divideTotals(budget.totals, budget.nights))}</div>
+            <div className="budget__sub">
+              {budget.nights > 0 ? formatEuros(budget.total / budget.nights) : "—"}
+            </div>
           </div>
-          <p className="budget__note">{budget.note}</p>
+          <p className="budget__note">
+            {budget.note}
+            {/* Le taux est affiché en clair : il est fixe, donc il vieillit. */}
+            <span className="budget__rate">{RATE_NOTE}</span>
+          </p>
         </div>
       </div>
     </section>

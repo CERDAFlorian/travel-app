@@ -861,11 +861,22 @@ LOCALISER, champ prix, ✕. J'en avais fait deux lignes.
 chaudes distinctes ; les réduire à `surface` aplatissait la hiérarchie. Ajoutés
 au contrat et aux deux thèmes, donc aucun hex en dur dans un composant.
 
-**Le budget totalise par devise.** Le design additionne `flightsSum` (euros) et
-les totaux d'items (yens) en un seul nombre. C'est le défaut anticipé en L1, qui
-avait justifié la colonne `currency` sur `flights`. On affiche
-« 370 800 ¥ + 890 € » plutôt qu'un chiffre sans unité. Aucune conversion : il
-faudrait un taux, donc un appel réseau et une décision sur sa fraîcheur.
+**Tous les tarifs sont affichés en euros.** Le design additionne `flightsSum`
+(euros) et les totaux d'items (yens) en un seul nombre, ce qui donne un chiffre
+sans unité — le défaut anticipé en L1, qui avait justifié la colonne `currency`
+sur `flights`. La solution est celle que prévoyait le contrat de L6 : une
+conversion à **taux constant**, assumée comme indicative, dans
+`src/lib/currency.js`. Pas d'API de change.
+
+La donnée reste stockée dans sa devise d'origine — un hôtel se paie en yens, et
+réécrire la base perdrait le montant qu'on présentera au comptoir. Seul
+l'affichage convertit ; la saisie garde la devise de la ligne, signalée par le
+placeholder (« prix ¥ »).
+
+⚠️ **Le taux vaut 1 € ≈ 165 ¥ et doit être revu avant le départ** : 10 % d'écart
+déplacent le total de plus de 200 €. Il est affiché en clair sous le budget pour
+qu'on n'oublie pas qu'il vieillit. Contrôle sur le seed : 370 800 ¥ → 2 247 €,
+soit 1 124 € par voyageur et 118 € la nuit.
 
 **Non repris, et pourquoi** — les commandes du canvas qui n'ont pas de mutation
 derrière : réordonner une étape (▲▼), la retirer, « Ajouter une ville »,

@@ -1,4 +1,4 @@
-import { formatPrice } from '@/lib/dates.js';
+import { priceInEuros } from '@/lib/currency.js';
 import './Experiences.scss';
 
 // « Expériences à vivre ».
@@ -24,7 +24,7 @@ export default function Experiences({ experiences }) {
         {experiences.map((experience) => {
           // La description du seed porte le lieu après un « · » final.
           const [text, where] = String(experience.description ?? '').split(' · ');
-          const price = formatPrice(experience.price, experience.currency ?? 'JPY');
+          const price = priceInEuros(experience.price, experience.currency ?? 'JPY');
 
           return (
             <article key={experience.id} className="experience">

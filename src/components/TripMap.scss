@@ -6,7 +6,6 @@
     overflow: hidden;
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    background: var(--surface);
   }
 
   &__svg {
@@ -23,24 +22,52 @@
   }
 
   &__land {
-    fill: var(--accent-soft);
-    stroke: var(--border-strong);
-    // Contre-échelonné par le zoom : sans vector-effect, le trait de côte
-    // s'épaissirait jusqu'à manger les îles.
-    stroke-width: 1;
+    fill: var(--map-land);
+    stroke: var(--map-land-line);
+    // Sans vector-effect, le trait de côte s'épaissirait avec le zoom jusqu'à
+    // manger les petites îles.
+    stroke-width: 0.9;
     vector-effect: non-scaling-stroke;
   }
 
-  &__dot {
-    fill: var(--cat-note);
-    stroke: var(--surface);
-    stroke-width: 1.5;
+  // Les liaisons d'une ville à l'autre : l'itinéraire lui-même.
+  &__legs path {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2;
+    stroke-dasharray: 7 6;
+    stroke-linecap: round;
+    opacity: 0.6;
+    vector-effect: non-scaling-stroke;
+  }
 
-    &[data-cat='hotel']      { fill: var(--cat-hotel); }
-    &[data-cat='activite']   { fill: var(--cat-activite); }
-    &[data-cat='restaurant'] { fill: var(--cat-restaurant); }
-    &[data-cat='shopping']   { fill: var(--cat-shopping); }
-    &[data-cat='lieu']       { fill: var(--cat-lieu); }
+  // Le rattachement d'un lieu à sa ville, dans la couleur de sa catégorie.
+  &__links line {
+    stroke: var(--cat-note);
+    stroke-width: 1.1;
+    stroke-dasharray: 3 4;
+    opacity: 0.55;
+    vector-effect: non-scaling-stroke;
+
+    &[data-cat='hotel']      { stroke: var(--cat-hotel); }
+    &[data-cat='activite']   { stroke: var(--cat-activite); }
+    &[data-cat='restaurant'] { stroke: var(--cat-restaurant); }
+    &[data-cat='shopping']   { stroke: var(--cat-shopping); }
+    &[data-cat='lieu']       { stroke: var(--cat-lieu); }
+  }
+
+  // Pastille creuse, cerclée de la couleur de sa catégorie. Le remplissage
+  // plein la rendrait illisible quand six se touchent autour d'une ville.
+  &__dot {
+    fill: var(--map-sea);
+    stroke: var(--cat-note);
+    stroke-width: 2.2;
+
+    &[data-cat='hotel']      { stroke: var(--cat-hotel); }
+    &[data-cat='activite']   { stroke: var(--cat-activite); }
+    &[data-cat='restaurant'] { stroke: var(--cat-restaurant); }
+    &[data-cat='shopping']   { stroke: var(--cat-shopping); }
+    &[data-cat='lieu']       { stroke: var(--cat-lieu); }
   }
 
   // Le pointillé relie un label déporté à son ancre. Sans lui, un label posé à

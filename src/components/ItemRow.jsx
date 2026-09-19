@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { formatPrice } from '@/lib/dates.js';
+import { priceInEuros } from '@/lib/currency.js';
 import { haversine, formatDistance, MAX_DISTANCE_FROM_STEP_KM } from '@/lib/geo.js';
 import { imageFor } from '@/lib/photos.js';
 import { deleteItem, setFavorite, updateItem } from '@/lib/mutations.js';
@@ -58,7 +58,9 @@ export default function ItemRow({ item, step, tripTitle, readOnly, onChanged }) 
   }
 
   const href = mapUrl(item);
-  const price = formatPrice(item.price, item.currency);
+  // Affiché en euros ; la saisie reste dans la devise d'origine — on tape le
+  // prix qu'on paiera au comptoir, on lit le budget dans sa propre monnaie.
+  const price = priceInEuros(item.price, item.currency);
   const located = item.lat !== null && item.lng !== null;
   const thumb = imageFor(item.title);
 
@@ -177,8 +179,9 @@ export default function ItemRow({ item, step, tripTitle, readOnly, onChanged }) 
                 type="text"
                 inputMode="numeric"
                 defaultValue={item.price ?? ''}
-                placeholder="prix"
-                aria-label={`Prix de ${item.title}`}
+                placeholder={item.currency === 'EUR' ? 'prix €' : 'prix ¥'}
+                title={`Saisie en ${item.currency ?? 'JPY'} — l'affichage est converti en euros`}
+                aria-label={`Prix de ${item.title} en ${item.currency ?? 'JPY'}`}
                 onBlur={(event) => {
                   const parsed = parsePrice(event.target.value);
                   if (parsed.error) {
