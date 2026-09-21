@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import { formatStepDates } from '@/lib/dates.js';
+import { formatDay, formatStepDates } from '@/lib/dates.js';
+import { flightArrival } from '@/lib/itinerary.js';
 import { formatEuros, priceInEuros, toEuros } from '@/lib/currency.js';
 import { addFlight, deleteFlight, updateFlight } from '@/lib/mutations.js';
+import ConfirmDialog from './ConfirmDialog.jsx';
 import './FlightsPanel.scss';
 
 const DIRECTIONS = [
@@ -19,6 +21,24 @@ function parsePrice(raw) {
   return Number.isFinite(value) && value >= 0 ? { value } : { error: true };
 }
 
+// Un vol qui atterrit le lendemain couvre deux dates. Sans décalage, il n'y en
+// a qu'une : « 7 – 7 nov. » afficherait un intervalle là où il n'y a qu'un jour.
+function flightDates(flight) {
+  if (!flight.date) return 'date à venir';
+  const offset = flight.arrival_offset_days ?? 0;
+  return offset === 0 ? formatDay(flight.date) : formatStepDates(flight.date, flightArrival(flight));
+}
+
+// Postgres rend un `time` en « HH:MM:SS ». Les secondes d'un horaire de vol
+// n'apprennent rien.
+const formatTime = (value) => (value ? String(value).slice(0, 5) : null);
+
+// « CDG → HEL → HND ». Les escales s'insèrent dans le trajet plutôt que de
+// s'afficher à part : c'est un seul vol, un seul billet.
+function routeOf(flight) {
+  return [flight.from_code ?? '???', ...(flight.stops ?? []), flight.to_code ?? '???'];
+}
+
 // « NH 216 » en un seul champ, comme dans le design : le premier mot est la
 // compagnie, le reste le numéro. Le saisir en deux champs séparés serait
 // fidèle au schéma et pénible à l'usage.
@@ -27,8 +47,11 @@ function splitFlightNumber(raw) {
   return { airline: airline || null, flightNo: rest.join(' ') || null };
 }
 
-export default function FlightsPanel({ trip, readOnly, onChanged }) {
+export default function FlightsPanel({ trip, itinerary, readOnly, onChanged }) {
   const flights = trip.flights;
+  // Le formulaire est replié par défaut : déplié en permanence, il occupait
+  // autant de place qu'un vol réel alors qu'on l'utilise trois fois par voyage.
+  const [adding, setAdding] = useState(false);
 
   const sum = flights.reduce(
     (amount, flight) => amount + (toEuros(flight.price, flight.currency ?? 'EUR') ?? 0),
@@ -43,39 +66,79 @@ export default function FlightsPanel({ trip, readOnly, onChanged }) {
       <div className="flights__card">
         <div className="flights__head">
           <h2 className="flights__title">Billets d'avion</h2>
-          <span className="flights__hint">aller, retour et vols intérieurs</span>
+          <span className="flights__hint">
+            le voyage commence à l'arrivée du vol aller
+          </span>
+
+          {/* Les deux vols bornent le séjour. Si les nuits planifiées ne
+              remplissent pas la fenêtre, on le dit — sans rien corriger
+              d'autorité : c'est une décision de voyage, pas une erreur. */}
+          <NightsGap gap={itinerary?.nightsGap} />
           <span className="flights__total">
             Total vols <em>{total}</em>
           </span>
+
+          {!readOnly && (
+            <button
+              type="button"
+              className="flights__add"
+              aria-expanded={adding}
+              onClick={() => setAdding((value) => !value)}
+            >
+              {adding ? 'Fermer' : '+ Ajouter un vol'}
+            </button>
+          )}
         </div>
 
         <div className="flights__grid">
           {flights.map((flight) => (
             <FlightCard
               key={flight.id}
+              trip={trip}
               flight={flight}
               readOnly={readOnly}
               onChanged={onChanged}
             />
           ))}
 
-          {!readOnly && <FlightForm tripId={trip.id} onChanged={onChanged} />}
         </div>
+
+        {!readOnly && adding && (
+          <FlightForm
+            trip={trip}
+            onChanged={onChanged}
+            onClose={() => setAdding(false)}
+          />
+        )}
       </div>
     </section>
   );
 }
 
-function FlightCard({ flight, readOnly, onChanged }) {
-  const [confirming, setConfirming] = useState(false);
+function NightsGap({ gap }) {
+  if (gap == null || gap === 0) return null;
+
+  const nights = Math.abs(gap);
+  const plural = nights > 1 ? 's' : '';
+
+  return (
+    <span className="flights__gap" data-over={gap < 0 || undefined}>
+      {gap > 0
+        ? `${nights} nuit${plural} encore à placer avant le vol retour`
+        : `${nights} nuit${plural} de trop : le séjour dépasse le vol retour`}
+    </span>
+  );
+}
+
+function FlightCard({ trip, flight, readOnly, onChanged }) {
+  const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (!confirming) return undefined;
-    const timer = setTimeout(() => setConfirming(false), 3000);
-    return () => clearTimeout(timer);
-  }, [confirming]);
+  const route = routeOf(flight);
+  const dep = formatTime(flight.dep);
+  const arr = formatTime(flight.arr);
+  const offset = flight.arrival_offset_days ?? 0;
 
   async function run(action) {
     setBusy(true);
@@ -94,33 +157,42 @@ function FlightCard({ flight, readOnly, onChanged }) {
     <article className="flight">
       <div className="flight__top">
         <span className="flight__label">{LABEL[flight.direction] ?? flight.direction}</span>
-        <span className="flight__date">
-          {flight.date ? formatStepDates(flight.date, flight.date) : 'date à venir'}
-        </span>
+        <span className="flight__date">{flightDates(flight)}</span>
 
         {!readOnly && (
           <button
             type="button"
             className="flight__delete"
-            data-armed={confirming || undefined}
             disabled={busy}
-            title={confirming ? 'Confirmer la suppression' : 'Supprimer ce vol'}
-            onClick={() => {
-              if (!confirming) {
-                setConfirming(true);
-                return;
-              }
-              run(() => deleteFlight(flight.id));
-            }}
+            title="Supprimer ce vol"
+            onClick={() => setAsking(true)}
           >
-            {confirming ? 'Confirmer ?' : '✕'}
+            ✕<span className="sr-only">Supprimer ce vol</span>
           </button>
         )}
       </div>
 
       <div className="flight__route">
-        {flight.from_code ?? '???'} → {flight.to_code ?? '???'}
+        {route.map((code, index) => (
+          <span key={`${code}-${index}`}>
+            {index > 0 && <span className="flight__arrow"> → </span>}
+            {/* Une escale se lit plus discrètement que les extrémités : on
+                part de CDG et on arrive à HND, Helsinki n'est qu'un passage. */}
+            <span data-stop={index > 0 && index < route.length - 1 ? '' : undefined}>{code}</span>
+          </span>
+        ))}
       </div>
+
+      {(dep || arr) && (
+        <div className="flight__times">
+          {dep ?? '--:--'} → {arr ?? '--:--'}
+          {offset !== 0 && (
+            <sup className="flight__offset" title={offsetTitle(offset)}>
+              {offset > 0 ? `+${offset}` : offset}
+            </sup>
+          )}
+        </div>
+      )}
 
       <div className="flight__bottom">
         <span className="flight__number">
@@ -147,7 +219,7 @@ function FlightCard({ flight, readOnly, onChanged }) {
                 return;
               }
               if (parsed.value !== (flight.price ?? null)) {
-                run(() => updateFlight(flight.id, { price: parsed.value }));
+                run(() => updateFlight(trip, flight.id, { price: parsed.value }));
               }
             }}
             onKeyDown={(event) => {
@@ -156,6 +228,23 @@ function FlightCard({ flight, readOnly, onChanged }) {
           />
         )}
       </div>
+
+      <ConfirmDialog
+        open={asking}
+        title="Supprimer ce vol ?"
+        busy={busy}
+        onCancel={() => setAsking(false)}
+        onConfirm={async () => {
+          await run(() => deleteFlight(trip, flight.id));
+          setAsking(false);
+        }}
+      >
+        <p>
+          <strong>{route.join(' → ')}</strong>
+          {flight.date ? `, le ${formatStepDates(flight.date, flight.date)}` : ''}.
+        </p>
+        <p>Cette action est définitive : il n'y a pas de corbeille.</p>
+      </ConfirmDialog>
 
       {error && (
         <p className="flight__error" role="alert">
@@ -166,26 +255,48 @@ function FlightCard({ flight, readOnly, onChanged }) {
   );
 }
 
-function FlightForm({ tripId, onChanged }) {
+function offsetTitle(offset) {
+  if (offset === 1) return 'Arrivée le lendemain';
+  if (offset === 2) return 'Arrivée le surlendemain';
+  if (offset === -1) return 'Arrivée la veille — ligne de changement de date';
+  return '';
+}
+
+function FlightForm({ trip, onChanged, onClose }) {
   const [direction, setDirection] = useState('aller');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  const [stops, setStops] = useState('');
   const [date, setDate] = useState('');
+  const [dep, setDep] = useState('');
+  const [arr, setArr] = useState('');
+  const [offset, setOffset] = useState(0);
   const [number, setNumber] = useState('');
   const [price, setPrice] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
+  const normalizeCode = (value) => value.trim().toUpperCase();
+
   async function submit(event) {
     event.preventDefault();
     if (busy) return;
 
-    // Le schéma contraint les codes à trois majuscules. On le vérifie ici
-    // pour dire ce qui ne va pas, plutôt que de laisser remonter une
-    // violation de contrainte que personne ne sait lire.
-    const codes = [from, to].map((c) => c.trim().toUpperCase());
-    if (codes.some((c) => c && !/^[A-Z]{3}$/.test(c))) {
-      setError('Les codes aéroport font trois lettres — CDG, HND, FUK.');
+    // Les escales se saisissent séparées par une virgule ou un espace : on
+    // accepte les deux plutôt que d'imposer une ponctuation.
+    const stopCodes = stops
+      .split(/[\s,;]+/)
+      .map(normalizeCode)
+      .filter(Boolean);
+
+    const codes = [normalizeCode(from), normalizeCode(to)];
+
+    // Le schéma contraint les codes à trois majuscules. On le vérifie ici pour
+    // dire ce qui ne va pas, plutôt que de laisser remonter une violation de
+    // contrainte que personne ne sait lire.
+    const invalid = [...codes, ...stopCodes].filter((c) => c && !/^[A-Z]{3}$/.test(c));
+    if (invalid.length > 0) {
+      setError(`Code aéroport invalide : ${invalid.join(', ')}. Trois lettres — CDG, HEL, HND.`);
       return;
     }
 
@@ -198,32 +309,28 @@ function FlightForm({ tripId, onChanged }) {
     setBusy(true);
     setError(null);
     try {
-      await addFlight({
-        tripId,
+      await addFlight(trip, {
         direction,
         fromCode: codes[0],
         toCode: codes[1],
+        stops: stopCodes,
         date,
+        dep,
+        arr,
+        arrivalOffsetDays: offset,
         ...splitFlightNumber(number),
         price: parsed.value,
       });
       await onChanged();
-      setFrom('');
-      setTo('');
-      setDate('');
-      setNumber('');
-      setPrice('');
+      onClose();
     } catch (failure) {
       setError(failure.message);
-    } finally {
       setBusy(false);
     }
   }
 
   return (
     <form className="flight-form" onSubmit={submit}>
-      <div className="flight-form__title">Ajouter un vol</div>
-
       <div className="flight-form__row">
         <select
           className="flight-form__field"
@@ -261,9 +368,20 @@ function FlightForm({ tripId, onChanged }) {
       <div className="flight-form__row">
         <input
           className="flight-form__field"
+          type="text"
+          value={stops}
+          placeholder="Escales : HEL, DOH"
+          aria-label="Escales, codes aéroport séparés par des virgules"
+          onChange={(event) => setStops(event.target.value)}
+        />
+      </div>
+
+      <div className="flight-form__row">
+        <input
+          className="flight-form__field"
           type="date"
           value={date}
-          aria-label="Date du vol"
+          aria-label="Date de départ"
           onChange={(event) => setDate(event.target.value)}
         />
         <input
@@ -278,6 +396,38 @@ function FlightForm({ tripId, onChanged }) {
 
       <div className="flight-form__row">
         <input
+          className="flight-form__time"
+          type="time"
+          value={dep}
+          aria-label="Heure de départ"
+          onChange={(event) => setDep(event.target.value)}
+        />
+        <span className="flight-form__arrow" aria-hidden="true">→</span>
+        <input
+          className="flight-form__time"
+          type="time"
+          value={arr}
+          aria-label="Heure d'arrivée"
+          onChange={(event) => setArr(event.target.value)}
+        />
+        {/* Un vol de nuit vers le Japon atterrit le lendemain. Sans ce
+            décalage, « 13:05 → 08:55 » se lit comme un vol qui remonte le
+            temps. */}
+        <select
+          className="flight-form__field"
+          value={offset}
+          aria-label="Jour d'arrivée"
+          onChange={(event) => setOffset(Number(event.target.value))}
+        >
+          <option value={0}>arrivée le jour même</option>
+          <option value={1}>arrivée le lendemain</option>
+          <option value={2}>arrivée le surlendemain</option>
+          <option value={-1}>arrivée la veille</option>
+        </select>
+      </div>
+
+      <div className="flight-form__row">
+        <input
           className="flight-form__field"
           type="text"
           inputMode="numeric"
@@ -287,7 +437,10 @@ function FlightForm({ tripId, onChanged }) {
           onChange={(event) => setPrice(event.target.value)}
         />
         <button className="flight-form__submit" type="submit" disabled={busy}>
-          {busy ? '…' : '+ Ajouter'}
+          {busy ? '…' : "+ Ajouter"}
+        </button>
+        <button className="flight-form__cancel" type="button" onClick={onClose}>
+          Annuler
         </button>
       </div>
 

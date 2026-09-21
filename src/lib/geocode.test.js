@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { buildQuery, geocode, parseCoordinates } from './geocode.js';
+import { MIN_INTERVAL_MS, RATE_LIMIT_MS, buildQuery, geocode, parseCoordinates } from './geocode.js';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -48,7 +48,7 @@ describe('cadence', () => {
   // La politique de Nominatim impose un appel par seconde. Dépasser fait
   // bannir l'IP — et c'est exactement le genre de règle qu'une refonte casse
   // sans que rien ne le signale avant le blocage.
-  it('espace les appels concurrents d’au moins 1,1 s', async () => {
+  it('espace les appels concurrents pour tenir la limite de Nominatim', async () => {
     const stamps = [];
     vi.stubGlobal('fetch', async () => {
       stamps.push(Date.now());
@@ -63,7 +63,16 @@ describe('cadence', () => {
 
     const gaps = stamps.slice(1).map((stamp, index) => stamp - stamps[index]);
     expect(gaps).toHaveLength(2);
-    for (const gap of gaps) expect(gap).toBeGreaterThanOrEqual(1100);
+
+    for (const gap of gaps) {
+      // Ce qui compte est la POLITIQUE — un appel par seconde — pas la
+      // précision du minuteur. Exiger exactement 1100 ms rendait le test
+      // rouge pour 1 ms d'avance d'un setTimeout, ce qui ne violait rien.
+      expect(gap).toBeGreaterThanOrEqual(RATE_LIMIT_MS);
+      // Et la file ne doit pas non plus traîner : trente lieux à géocoder
+      // prendraient une minute au lieu de trente secondes.
+      expect(gap).toBeLessThan(MIN_INTERVAL_MS * 2);
+    }
   }, 10000);
 
   // Un appel qui échoue ne doit pas empoisonner la file : sans cette garantie,

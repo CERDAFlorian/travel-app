@@ -174,13 +174,6 @@
 
     &:hover { color: var(--danger); }
     &:focus-visible { @include mixins.focus-ring; }
-
-    &[data-armed] {
-      padding: 1px 7px;
-      background: var(--danger);
-      color: var(--text-invert);
-      font-size: var(--fs-xs);
-    }
   }
 
   &__error {

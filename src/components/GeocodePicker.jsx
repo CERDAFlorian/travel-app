@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { geocode, parseCoordinates } from '@/lib/geocode.js';
 import { haversine, formatDistance, MAX_DISTANCE_FROM_STEP_KM } from '@/lib/geo.js';
 import './GeocodePicker.scss';
@@ -27,13 +27,18 @@ export default function GeocodePicker({
   const [manual, setManual] = useState('');
   const [pending, setPending] = useState(null);
   const [saving, setSaving] = useState(false);
+  const manualRef = useRef(null);
 
   useEffect(() => {
     let alive = true;
 
     geocode(title, stepName, tripTitle)
       .then((results) => {
-        if (alive) setCandidates(results);
+        if (!alive) return;
+        setCandidates(results);
+        // Rien trouvé : le champ de saisie devient l'action principale. Le
+        // focus y va directement plutôt que de laisser chercher où cliquer.
+        if (results.length === 0) manualRef.current?.focus();
       })
       .catch((failure) => {
         if (alive) setError(failure.message);
@@ -110,7 +115,9 @@ export default function GeocodePicker({
 
   return (
     <div className="geocode">
-      {searching && <p className="geocode__status">Recherche sur OpenStreetMap…</p>}
+      {searching && (
+        <p className="geocode__status">Recherche de « {title} » sur OpenStreetMap…</p>
+      )}
 
       {error && (
         <p className="geocode__error" role="alert">
@@ -119,8 +126,9 @@ export default function GeocodePicker({
       )}
 
       {candidates?.length === 0 && (
-        <p className="geocode__status">
-          Aucun résultat. Colle les coordonnées à la main — clic droit sur Google Maps.
+        <p className="geocode__empty">
+          Aucun résultat pour « {title} ». Ouvre Google Maps, clic droit sur le lieu,
+          puis colle les coordonnées ci-dessous.
         </p>
       )}
 
@@ -155,6 +163,7 @@ export default function GeocodePicker({
           OpenStreetMap sous le nom qu'on leur donne. */}
       <form className="geocode__manual" onSubmit={submitManual}>
         <input
+          ref={manualRef}
           className="geocode__input"
           type="text"
           value={manual}

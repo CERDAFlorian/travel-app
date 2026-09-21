@@ -127,3 +127,11 @@
     align-items: center;
   }
 }
+
+// Rien trouvé : le message n'est pas un simple statut, c'est une consigne.
+// Il se distingue donc du « Recherche en cours… ».
+.geocode__empty {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--fs-sm);
+}

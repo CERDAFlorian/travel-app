@@ -12,6 +12,7 @@ import BudgetPanel from '@/components/BudgetPanel.jsx';
 import ShareLink from '@/components/ShareLink.jsx';
 import AddStep from '@/components/AddStep.jsx';
 import { addStep, removeStep, setStepNights } from '@/lib/mutations.js';
+import { resolveItinerary } from '@/lib/itinerary.js';
 import './TripView.scss';
 
 // L'itinéraire, mis en page comme le design.
@@ -37,6 +38,20 @@ export default function TripView({
   onChanged,
 }) {
   const [selectedStepId, setSelectedStepId] = useState(null);
+  const [justAddedStep, setJustAddedStep] = useState(null);
+
+  // Les dates affichées sont DÉRIVÉES de l'arrivée du vol aller et du nombre
+  // de nuits, pas lues dans `date_start` / `date_end`. Ajouter un vol qui
+  // atterrit le lendemain décale tout le séjour, et il serait absurde
+  // d'afficher des dates fausses en attendant une écriture.
+  //
+  // `view` remplace `trip` partout en dessous : composants d'affichage comme
+  // mutations. Les écritures persistent donc exactement ce qui est à l'écran.
+  const itinerary = useMemo(() => resolveItinerary(trip), [trip]);
+  const view = useMemo(
+    () => ({ ...trip, steps: itinerary.steps, startDate: itinerary.start, endDate: itinerary.end }),
+    [trip, itinerary],
+  );
 
   const selectStep = useCallback((stepId) => {
     setSelectedStepId(stepId);
@@ -46,26 +61,27 @@ export default function TripView({
 
   const handleRemoveStep = useCallback(
     async (stepId) => {
-      await removeStep(trip, stepId);
+      await removeStep(view, stepId);
       await onChanged();
     },
-    [trip, onChanged],
+    [view, onChanged],
   );
 
   const handleNights = useCallback(
     async (stepId, nights) => {
-      await setStepNights(trip, stepId, nights);
+      await setStepNights(view, stepId, nights);
       await onChanged();
     },
-    [trip, onChanged],
+    [view, onChanged],
   );
 
   const handleAddStep = useCallback(
     async (values) => {
-      await addStep(trip, values);
+      const id = await addStep(view, values);
+      setJustAddedStep(id);
       await onChanged();
     },
-    [trip, onChanged],
+    [view, onChanged],
   );
 
   // Le trajet est rattaché à l'étape de départ : il se lit en pied de la carte
@@ -73,9 +89,9 @@ export default function TripView({
   // suivante.
   const legByFromStep = useMemo(() => {
     const map = new Map();
-    for (const leg of trip.legs ?? []) map.set(leg.from_step, leg);
+    for (const leg of view.legs ?? []) map.set(leg.from_step, leg);
     return map;
-  }, [trip]);
+  }, [view]);
 
   return (
     <div className="trip">
@@ -87,7 +103,7 @@ export default function TripView({
         </Link>
       )}
 
-      <TripHeader trip={trip} selectedStepId={selectedStepId} onSelectStep={selectStep} />
+      <TripHeader trip={view} selectedStepId={selectedStepId} onSelectStep={selectStep} />
 
       <div className="trip__strip">
         <SyncLine
@@ -97,24 +113,25 @@ export default function TripView({
           onRefresh={onRefresh}
           onSignIn={onRequestLogin}
         />
-        <ShareLink trip={trip} readOnly={readOnly} onChanged={onChanged} />
+        <ShareLink trip={view} readOnly={readOnly} onChanged={onChanged} />
       </div>
 
-      <FlightsPanel trip={trip} readOnly={readOnly} onChanged={onChanged} />
+      <FlightsPanel trip={view} itinerary={itinerary} readOnly={readOnly} onChanged={onChanged} />
 
       <main className="trip__main">
         <section className="trip__steps">
-          {trip.steps.map((step) => (
+          {view.steps.map((step) => (
             <StepCard
               key={step.id}
               step={step}
-              tripTitle={trip.title}
+              tripTitle={view.title}
               readOnly={readOnly}
               selected={step.id === selectedStepId}
               leg={legByFromStep.get(step.id)}
               onSelect={setSelectedStepId}
               onRemove={handleRemoveStep}
               onNights={handleNights}
+              autoLocate={step.id === justAddedStep}
               // Après chaque écriture on resynchronise le voyage entier plutôt
               // que de rapiécer le cache : une seule source de vérité.
               onChanged={onChanged}
@@ -130,18 +147,18 @@ export default function TripView({
               <h2 className="trip__map-title">La carte du voyage</h2>
               <span className="trip__map-hint">molette pour zoomer · glisser pour déplacer</span>
             </div>
-            <TripMap trip={trip} selectedStepId={selectedStepId} onSelectStep={selectStep} />
-            <TravelTimes steps={trip.steps} legs={trip.legs} />
+            <TripMap trip={view} selectedStepId={selectedStepId} onSelectStep={selectStep} />
+            <TravelTimes steps={view.steps} legs={view.legs} />
           </div>
         </aside>
       </main>
 
-      <HeroBanner steps={trip.steps} />
-      <Experiences experiences={trip.experiences} />
-      <BudgetPanel trip={trip} />
+      <HeroBanner steps={view.steps} />
+      <Experiences experiences={view.experiences} />
+      <BudgetPanel trip={view} />
 
       <footer className="trip__foot">
-        {trip.steps.map((step) => step.name.split(' ')[0]).join(' → ')}
+        {view.steps.map((step) => step.name.split(' ')[0]).join(' → ')}
       </footer>
     </div>
   );

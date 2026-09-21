@@ -72,6 +72,13 @@ export function formatStepDates(startIso, endIso) {
     : `${DAY_MONTH.format(start)} – ${DAY_MONTH.format(end)}`;
 }
 
+// « 7 nov. » — une date seule. `formatStepDates(d, d)` rendrait « 7 – 7 nov. »,
+// un intervalle là où il n'y a qu'un jour.
+export function formatDay(iso) {
+  const date = parse(iso);
+  return date ? DAY_MONTH.format(date) : '';
+}
+
 // « Du 7 nov. au 26 nov. 2026 » — la forme de l'en-tête dans le design.
 // L'année n'apparaît qu'une fois, à la fin : un voyage ne chevauche pas deux
 // années dans la pratique, et la répéter alourdit une ligne déjà dense.
