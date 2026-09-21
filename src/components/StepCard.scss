@@ -136,12 +136,6 @@
   cursor: pointer;
 
   &:hover { color: var(--danger); }
-
-  &[data-armed] {
-    color: var(--danger);
-    font-size: var(--fs-md);
-  }
-
   &:disabled { opacity: 0.5; cursor: progress; }
 }
 

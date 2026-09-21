@@ -187,7 +187,20 @@ export async function removeStep(trip, stepId) {
 // Un voyage en compte souvent plus de deux : aller, sauts intérieurs, retour.
 // La direction « interieur » a été ouverte en base par 0004_vols.sql.
 
-export async function addFlight({ tripId, direction, fromCode, toCode, date, airline, flightNo, price }) {
+export async function addFlight({
+  tripId,
+  direction,
+  fromCode,
+  toCode,
+  stops,
+  date,
+  dep,
+  arr,
+  arrivalOffsetDays,
+  airline,
+  flightNo,
+  price,
+}) {
   const { error } = await supabase.from('flights').insert({
     trip_id: tripId,
     direction,
@@ -196,7 +209,13 @@ export async function addFlight({ tripId, direction, fromCode, toCode, date, air
     // en minuscules, qui est le cas courant.
     from_code: fromCode ? fromCode.trim().toUpperCase() : null,
     to_code: toCode ? toCode.trim().toUpperCase() : null,
+    // Une liste vide vaut NULL : en base, « pas d'escale » et « tableau vide »
+    // doivent se lire pareil, sinon deux vols directs diffèrent sans raison.
+    stops: stops && stops.length > 0 ? stops : null,
     date: date || null,
+    dep: dep || null,
+    arr: arr || null,
+    arrival_offset_days: arrivalOffsetDays ?? 0,
     airline: airline || null,
     flight_no: flightNo || null,
     price: price ?? null,

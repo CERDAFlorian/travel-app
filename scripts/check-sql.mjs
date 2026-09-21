@@ -107,6 +107,7 @@ const files = {
   rls: 'supabase/migrations/0002_rls.sql',
   share: 'supabase/migrations/0003_partage.sql',
   flights: 'supabase/migrations/0004_vols.sql',
+  stopovers: 'supabase/migrations/0005_escales.sql',
   seed: 'supabase/seed.sql',
 };
 
@@ -215,8 +216,17 @@ if (Object.keys(clean).length === Object.keys(files).length) {
 
   // 3. Le filtre sur le jeton est le contrôle d'accès. Sans lui, la fonction
   //    rendrait n'importe quel voyage à n'importe qui.
-  if (!/where\s+t\.share_token\s*=\s*p_token/i.test(raw.share)) {
-    fail(files.share, 'trip_by_share_token ne filtre pas sur le jeton : elle exposerait tous les voyages');
+  // Le contrôle porte sur TOUTE migration qui (re)définit la fonction : une
+  // version ultérieure qui oublierait le filtre exposerait tous les voyages,
+  // et 0003 continuerait de passer au vert.
+  for (const [key, rel] of Object.entries(files)) {
+    if (!raw[key] || !/create or replace function public\.trip_by_share_token/i.test(raw[key])) continue;
+    if (!/where\s+t\.share_token\s*=\s*p_token/i.test(raw[key])) {
+      fail(rel, 'trip_by_share_token ne filtre pas sur le jeton : elle exposerait tous les voyages');
+    }
+    if (!/set search_path\s*=\s*''/i.test(raw[key])) {
+      fail(rel, "trip_by_share_token : SECURITY DEFINER sans « set search_path = '' »");
+    }
   }
 
   // 4. Le droit d'exécution doit être retiré à `public` avant d'être accordé

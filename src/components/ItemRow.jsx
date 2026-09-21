@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { priceInEuros } from '@/lib/currency.js';
 import { haversine, formatDistance, MAX_DISTANCE_FROM_STEP_KM } from '@/lib/geo.js';
 import { imageFor } from '@/lib/photos.js';
 import { deleteItem, setCoordinates, setFavorite, updateItem } from '@/lib/mutations.js';
 import GeocodePicker from './GeocodePicker.jsx';
+import ConfirmDialog from './ConfirmDialog.jsx';
 import './ItemRow.scss';
 
 // « Plan ↗ » sur iOS, « Maps ↗ » ailleurs — repris du design. L'universal link
@@ -31,18 +32,10 @@ function parsePrice(raw) {
 export default function ItemRow({ item, step, tripTitle, readOnly, onChanged }) {
   const [locating, setLocating] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const titleRef = useRef(null);
-
-  // La confirmation retombe d'elle-même après trois secondes : un bouton armé
-  // en permanence finit par être touché par mégarde, et il n'y a pas de corbeille.
-  useEffect(() => {
-    if (!confirmingDelete) return undefined;
-    const timer = setTimeout(() => setConfirmingDelete(false), 3000);
-    return () => clearTimeout(timer);
-  }, [confirmingDelete]);
 
   async function run(action) {
     setBusy(true);
@@ -200,18 +193,11 @@ export default function ItemRow({ item, step, tripTitle, readOnly, onChanged }) 
               <button
                 type="button"
                 className="item__delete"
-                data-armed={confirmingDelete || undefined}
                 disabled={busy}
                 title="Supprimer"
-                onClick={() => {
-                  if (!confirmingDelete) {
-                    setConfirmingDelete(true);
-                    return;
-                  }
-                  run(() => deleteItem(item.id));
-                }}
+                onClick={() => setAsking(true)}
               >
-                {confirmingDelete ? 'Confirmer ?' : '✕'}
+                ✕<span className="sr-only">Supprimer {item.title}</span>
               </button>
             </>
           )}
@@ -236,6 +222,22 @@ export default function ItemRow({ item, step, tripTitle, readOnly, onChanged }) 
           }}
         />
       )}
+
+      <ConfirmDialog
+        open={asking}
+        title="Supprimer cet item ?"
+        busy={busy}
+        onCancel={() => setAsking(false)}
+        onConfirm={async () => {
+          await run(() => deleteItem(item.id));
+          setAsking(false);
+        }}
+      >
+        <p>
+          <strong>{item.title}</strong> sera retiré de {step.name}.
+        </p>
+        <p>Cette action est définitive : il n'y a pas de corbeille.</p>
+      </ConfirmDialog>
 
       {error && (
         <p className="item__error" role="alert">

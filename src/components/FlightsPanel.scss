@@ -42,6 +42,25 @@
 
   // auto-fit + minmax(min(100%, 270px)) : deux colonnes dès qu'il y a la place,
   // une seule au téléphone, sans point de rupture à maintenir.
+  // Bouton d'ouverture du formulaire, dans l'en-tête plutôt qu'en carte : une
+  // carte en pointillés juste pour un bouton occupait la place d'un vol réel.
+  &__add {
+    flex: none;
+    padding: 3px 11px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--surface-warm);
+    color: var(--accent);
+    font: inherit;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover { border-color: var(--accent); }
+  }
+
   &__grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr));
@@ -79,6 +98,31 @@
     font-family: var(--font-display);
     font-size: clamp(14.5px, 1.5vw, 19px);
     color: var(--text);
+
+    // Une escale est un passage, pas une extrémité : elle se lit plus
+    // discrètement que le départ et l'arrivée.
+    [data-stop] {
+      color: var(--muted);
+      font-size: 0.82em;
+    }
+  }
+
+  &__arrow {
+    color: var(--muted);
+  }
+
+  &__times {
+    margin-top: 2px;
+    color: var(--text-soft);
+    font-size: clamp(11.5px, 1.2vw, 14px);
+    font-variant-numeric: tabular-nums;
+  }
+
+  // Le « +1 » des compagnies : en exposant, il se lit sans alourdir l'horaire.
+  &__offset {
+    margin-left: 2px;
+    color: var(--accent);
+    font-weight: 600;
   }
 
   &__bottom {
@@ -128,13 +172,6 @@
     cursor: pointer;
 
     &:hover { color: var(--danger); }
-
-    &[data-armed] {
-      padding: 1px 7px;
-      background: var(--danger);
-      color: var(--text-invert);
-      font-size: var(--fs-xs);
-    }
   }
 
   &__price {
@@ -169,19 +206,15 @@
 .flight-form {
   display: grid;
   gap: 6px;
+  margin-top: clamp(8px, 1vw, 14px);
   padding: 10px 12px;
   border: 1px dashed var(--border-strong);
   border-radius: 12px;
-
-  &__title {
-    font-size: clamp(11px, 1.1vw, 13px);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
+  background: var(--surface-sunken);
 
   &__row {
     display: flex;
+    flex-wrap: wrap;
     gap: 6px;
     align-items: center;
   }
@@ -229,6 +262,30 @@
 
     &:hover { border-color: var(--accent); }
     &:disabled { opacity: 0.6; cursor: progress; }
+  }
+
+  &__time {
+    flex: none;
+    width: 8em;
+    padding: 4px 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: 7px;
+    background: var(--surface-raised);
+    color: var(--text);
+    font: inherit;
+    font-size: var(--fs-md);
+  }
+
+  &__cancel {
+    flex: none;
+    padding: 0 var(--sp-2);
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: var(--fs-sm);
+    text-decoration: underline;
+    cursor: pointer;
   }
 
   &__error {

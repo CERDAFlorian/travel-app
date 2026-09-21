@@ -1,0 +1,76 @@
+@use '../theme/mixins';
+
+.confirm {
+  padding: 0;
+  border: 0;
+  background: none;
+  // Le dialogue natif s'ouvre dans la couche « top layer », au-dessus de tout,
+  // sans avoir à jouer du z-index.
+  max-width: min(100%, 420px);
+
+  &::backdrop {
+    background: var(--overlay);
+  }
+
+  &__box {
+    display: grid;
+    gap: var(--sp-3);
+    padding: var(--sp-5);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-lg);
+  }
+
+  &__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-lg);
+    color: var(--text-heading);
+  }
+
+  &__body {
+    margin: 0;
+    color: var(--text);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-base);
+
+    p { margin: 0 0 var(--sp-2); }
+    p:last-child { margin-bottom: 0; }
+
+    strong { color: var(--text-heading); }
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    justify-content: flex-end;
+  }
+
+  &__cancel,
+  &__go {
+    padding: var(--sp-2) var(--sp-4);
+    border-radius: var(--radius-pill);
+    font: inherit;
+    font-size: var(--fs-sm);
+    cursor: pointer;
+
+    &:focus-visible { @include mixins.focus-ring; }
+    &:disabled { opacity: 0.6; cursor: progress; }
+  }
+
+  &__cancel {
+    border: 1px solid var(--border-strong);
+    background: var(--surface-raised);
+    color: var(--text);
+  }
+
+  // La destruction se lit comme telle. Elle n'est pas mise en avant par un
+  // focus automatique pour autant.
+  &__go {
+    border: 1px solid var(--danger);
+    background: var(--danger);
+    color: var(--text-invert);
+  }
+}
