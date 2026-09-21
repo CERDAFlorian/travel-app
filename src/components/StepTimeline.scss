@@ -9,7 +9,12 @@
   // illisibles. La frise devient défilante : chaque segment garde sa largeur
   // proportionnelle aux nuits, et l'on fait glisser.
   overflow-x: auto;
-  scroll-snap-type: x proximity;
+  // PAS de scroll-snap. Les segments n'ont pas tous la même largeur — six
+  // nuits à Tokyo font 204 px, une à Shirakawa-go en fait 84 —, si bien qu'un
+  // petit glissement était ramené à son point de départ par l'accrochage. Le
+  // geste semblait sans effet. L'accrochage vaut pour un carrousel de cartes
+  // identiques, pas pour un ruban de largeurs variables.
+  overscroll-behavior-x: contain;
   // Le dégradé des bords EST l'indice qu'il y a plus à voir. Une barre de
   // défilement ferait le même travail en moins discret, et n'apparaît de
   // toute façon pas au doigt.
@@ -26,10 +31,22 @@
     display: none;
   }
 
+  // La main dit qu'on peut attraper. Sans elle, rien n'indique à un
+  // utilisateur à la souris que la frise se déplace — la barre est masquée et
+  // le geste n'existe pas nativement.
+  cursor: grab;
+
+  &[data-dragging] {
+    cursor: grabbing;
+    // Pendant le glisser, le texte ne doit pas se surligner en bleu.
+    user-select: none;
+  }
+
   // Au-delà, tout tient : plus de défilement, plus de dégradé.
   @include mixins.from('md') {
     overflow-x: visible;
     mask-image: none;
+    cursor: default;
   }
 
   &__segment {
@@ -37,14 +54,28 @@
     gap: 4px;
     align-items: baseline;
     justify-content: center;
-    flex-basis: 0;
-    // Largeur plancher proportionnelle au nombre de nuits : quatre nuits à
-    // Kyoto occupent bien plus qu'une à Shirakawa-go, même en défilant.
-    min-width: calc(var(--grow, 3) * 1.5rem);
-    scroll-snap-align: start;
     padding: 6px 8px;
 
+    // EN DÉFILEMENT — le segment ne se contracte pas.
+    //
+    // `flex-shrink: 0` est ce qui garantit le débordement, donc le
+    // défilement. La version précédente s'appuyait sur `min-width` seul, et
+    // c'était fragile : un élément flex dont l'`overflow` n'est pas `visible`
+    // — le nôtre, à cause de l'ellipse — a une taille minimale automatique de
+    // ZÉRO. Il suffisait que le `calc()` ne se résolve pas pour que tous les
+    // segments s'écrasent, que la frise cesse de déborder, et que le geste
+    // n'ait plus rien à faire défiler.
+    //
+    // `width` garde la proportion ; si la variable manque, on retombe sur la
+    // largeur du contenu, qui déborde de toute façon.
+    flex: 0 0 auto;
+    width: calc(var(--grow, 4) * 1.5rem);
+
+    // Ils ne se contractent plus : l'ellipse n'a plus lieu d'être, et le
+    // libellé complet reste lisible.
     @include mixins.from('md') {
+      flex: 1 1 0;
+      width: auto;
       min-width: 0;
     }
     border: 1px solid var(--border-strong);

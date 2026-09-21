@@ -1,5 +1,6 @@
 import { formatDay, formatStepDates } from '@/lib/dates.js';
 import { flightArrival } from '@/lib/itinerary.js';
+import { useDragScroll } from '@/hooks/useDragScroll.js';
 import './StepTimeline.scss';
 
 const DIRECTION = { aller: 'Aller', interieur: 'Vol', retour: 'Retour' };
@@ -16,8 +17,11 @@ const DIRECTION = { aller: 'Aller', interieur: 'Vol', retour: 'Retour' };
 const FLIGHT_GROW = 2;
 
 export default function StepTimeline({ entries, selectedId, onSelectStep, onSelectFlight }) {
+  // Le glisser à la souris n'existe pas nativement sur un conteneur défilant.
+  const ref = useDragScroll();
+
   return (
-    <div className="timeline">
+    <div className="timeline" ref={ref}>
       {entries.map((entry) =>
         entry.kind === 'flight' ? (
           <FlightSegment key={entry.id} flight={entry.flight} onSelect={onSelectFlight} />
