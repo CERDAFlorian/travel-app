@@ -24,10 +24,20 @@ export default function TripHeader({ trip, selectedStepId, onSelectStep, back })
       <img className="trip-header__momiji" src="/img/deco-momiji.webp" alt="" aria-hidden="true" />
       <img className="trip-header__fuji" src="/img/deco-fuji.webp" alt="" aria-hidden="true" />
 
-      {/* Le retour et les chiffres partagent une ligne, au-dessus du titre.
-          Le lien flottait auparavant en position absolue, où il chevauchait le
+      <div className="trip-header__bar">
+        <h1 className="trip-header__title">{trip.title}</h1>
+
+        <div className="trip-header__subtitle">
+          <div className="trip-header__tagline">— {trip.subtitle}</div>
+          <div className="trip-header__dates">{formatTripRange(trip.startDate, trip.endDate)}</div>
+        </div>
+      </div>
+
+      {/* Le retour et les chiffres partagent une ligne, SOUS le titre et les
+          dates : on lit d'abord où l'on va, ensuite de quoi c'est fait. Le
+          lien flottait auparavant en position absolue, où il chevauchait le
           décor et volait de la place au titre sur un écran étroit. */}
-      <div className="trip-header__top">
+      <div className="trip-header__summary">
         {back}
 
         <ul className="trip-header__chips">
@@ -37,15 +47,6 @@ export default function TripHeader({ trip, selectedStepId, onSelectStep, back })
               un lieu. Le design les comptait, à tort. */}
           <li className="trip-header__chip">{places} lieux</li>
         </ul>
-      </div>
-
-      <div className="trip-header__bar">
-        <h1 className="trip-header__title">{trip.title}</h1>
-
-        <div className="trip-header__subtitle">
-          <div className="trip-header__tagline">— {trip.subtitle}</div>
-          <div className="trip-header__dates">{formatTripRange(trip.startDate, trip.endDate)}</div>
-        </div>
       </div>
 
       <div className="trip-header__timeline">

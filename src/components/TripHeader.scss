@@ -34,9 +34,10 @@
     }
   }
 
-  // Ligne du retour et des chiffres. Elle passe AU-DESSUS du décor, d'où le
-  // z-index : le momiji dépasse sur le coin et intercepterait le clic.
-  &__top {
+  // Ligne du retour et des chiffres, sous le titre. Le z-index la garde
+  // au-dessus du décor : le Fuji descend bas à droite et intercepterait le
+  // clic sur une pastille.
+  &__summary {
     position: relative;
     z-index: var(--z-sticky);
     display: flex;
@@ -44,7 +45,7 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--sp-2);
-    padding: var(--sp-3) clamp(16px, 3vw, 44px) 0;
+    padding: 0 clamp(16px, 3vw, 44px) var(--sp-3);
   }
 
   // Marges asymétriques : elles réservent la place du décor. Sur mobile, le
@@ -56,11 +57,11 @@
     flex-wrap: wrap;
     align-items: flex-end;
     gap: clamp(8px, 1.6vw, 20px);
-    padding: var(--sp-2) clamp(110px, 26vw, 375px) clamp(12px, 1.6vw, 18px) clamp(16px, 8vw, 130px);
-
-    @include mixins.from('md') {
-      padding-top: clamp(16px, 2.4vw, 30px);
-    }
+    padding:
+      clamp(14px, 2.4vw, 30px)
+      clamp(110px, 26vw, 375px)
+      var(--sp-3)
+      clamp(16px, 8vw, 130px);
   }
 
   &__title {
