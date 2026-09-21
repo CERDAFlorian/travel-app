@@ -11,7 +11,12 @@
 // La contrainte qu'on peut réellement tenir est l'espacement, et on la tient.
 
 const ENDPOINT = 'https://nominatim.openstreetmap.org/search';
-const MIN_INTERVAL_MS = 1100;
+
+// La politique de Nominatim impose un appel par seconde. On vise 1100 ms pour
+// garder 100 ms de marge : une horloge un peu généreuse ne doit pas nous faire
+// passer sous la limite réelle.
+export const RATE_LIMIT_MS = 1000;
+export const MIN_INTERVAL_MS = 1100;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -22,8 +27,14 @@ let lastCall = 0;
 // qui échoue ne doit pas empoisonner la chaîne et faire échouer les suivants.
 function enqueue(run) {
   const result = queue.then(async () => {
-    const wait = MIN_INTERVAL_MS - (Date.now() - lastCall);
-    if (wait > 0) await sleep(wait);
+    // Boucle jusqu'à l'échéance plutôt qu'un `setTimeout` unique : un minuteur
+    // a le droit de se déclencher une milliseconde en avance, et un seul
+    // sommeil ne garantit donc pas l'espacement. La boucle, si.
+    const deadline = lastCall + MIN_INTERVAL_MS;
+    for (let now = Date.now(); now < deadline; now = Date.now()) {
+      await sleep(deadline - now);
+    }
+
     lastCall = Date.now();
     return run();
   });
