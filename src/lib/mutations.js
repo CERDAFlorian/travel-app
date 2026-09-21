@@ -1,6 +1,11 @@
 import { supabase } from '@/lib/supabase.js';
 import { fail } from '@/lib/errors.js';
-import { addDays, datesToUpdate, tripEndDate } from '@/lib/itinerary.js';
+import {
+  addDays,
+  datesToUpdate,
+  tripEndDate,
+  tripStartFromFlights,
+} from '@/lib/itinerary.js';
 
 // Écritures.
 //
@@ -93,7 +98,7 @@ export async function revokeShareToken(tripId) {
 //
 // On n'écrit que ce qui a changé. Sur sept étapes, ajouter une nuit au milieu
 // en déplace quatre, pas sept.
-async function persistItinerary(trip, orderedSteps) {
+async function persistItinerary(trip, orderedSteps, startIso = trip.startDate) {
   for (const [index, step] of orderedSteps.entries()) {
     const position = index + 1;
     if (step.position === position) continue;
@@ -101,7 +106,7 @@ async function persistItinerary(trip, orderedSteps) {
     if (error) fail(error, 'Renumérotation des étapes');
   }
 
-  for (const dates of datesToUpdate(trip.startDate, orderedSteps)) {
+  for (const dates of datesToUpdate(startIso, orderedSteps)) {
     const { error } = await supabase
       .from('steps')
       .update({ date_start: dates.date_start, date_end: dates.date_end })
@@ -109,13 +114,25 @@ async function persistItinerary(trip, orderedSteps) {
     if (error) fail(error, 'Recalcul des dates');
   }
 
-  // La fin du voyage suit la dernière étape, sinon l'en-tête annoncerait une
-  // période qui ne correspond plus à ce qu'on lit en dessous.
-  const end = tripEndDate(trip.startDate, orderedSteps);
-  if (end !== trip.endDate) {
-    const { error } = await supabase.from('trips').update({ end_date: end }).eq('id', trip.id);
-    if (error) fail(error, 'Mise à jour de la fin du voyage');
+  // Début et fin sont écrits ENSEMBLE. Le schéma exige `end_date >= start_date` :
+  // avancer le départ avant la fin, en deux requêtes, violerait la contrainte
+  // entre les deux.
+  const end = tripEndDate(startIso, orderedSteps);
+  if (startIso !== trip.startDate || end !== trip.endDate) {
+    const { error } = await supabase
+      .from('trips')
+      .update({ start_date: startIso, end_date: end })
+      .eq('id', trip.id);
+    if (error) fail(error, 'Mise à jour des dates du voyage');
   }
+}
+
+// Recale le début du voyage sur l'arrivée du vol aller, et décale tout
+// l'itinéraire avec. Appelée après chaque écriture sur les vols.
+async function realignTripStart(trip, flights) {
+  const start = tripStartFromFlights(flights, trip.startDate);
+  if (start === trip.startDate) return;
+  await persistItinerary(trip, trip.steps, start);
 }
 
 // Ajoute une étape à la fin de l'itinéraire.
@@ -187,8 +204,7 @@ export async function removeStep(trip, stepId) {
 // Un voyage en compte souvent plus de deux : aller, sauts intérieurs, retour.
 // La direction « interieur » a été ouverte en base par 0004_vols.sql.
 
-export async function addFlight({
-  tripId,
+export async function addFlight(trip, {
   direction,
   fromCode,
   toCode,
@@ -202,7 +218,7 @@ export async function addFlight({
   price,
 }) {
   const { error } = await supabase.from('flights').insert({
-    trip_id: tripId,
+    trip_id: trip.id,
     direction,
     // Les codes IATA sont contraints à trois majuscules par le schéma : on
     // normalise ici plutôt que de laisser l'insertion échouer sur une saisie
@@ -221,14 +237,31 @@ export async function addFlight({
     price: price ?? null,
   });
   if (error) fail(error, 'Ajout du vol');
+
+  await realignTripStart(trip, [
+    ...trip.flights,
+    { direction, date: date || null, arrival_offset_days: arrivalOffsetDays ?? 0 },
+  ]);
 }
 
-export async function updateFlight(id, patch) {
+export async function updateFlight(trip, id, patch) {
   const { error } = await supabase.from('flights').update(patch).eq('id', id);
   if (error) fail(error, 'Modification du vol');
+
+  await realignTripStart(
+    trip,
+    trip.flights.map((flight) => (flight.id === id ? { ...flight, ...patch } : flight)),
+  );
 }
 
-export async function deleteFlight(id) {
+export async function deleteFlight(trip, id) {
   const { error } = await supabase.from('flights').delete().eq('id', id);
   if (error) fail(error, 'Suppression du vol');
+
+  // Supprimer le vol aller rend la main : le début du voyage retombe sur la
+  // date saisie, faute de mieux.
+  await realignTripStart(
+    trip,
+    trip.flights.filter((flight) => flight.id !== id),
+  );
 }

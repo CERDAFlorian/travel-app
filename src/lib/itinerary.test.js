@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { addDays, chainDates, datesToUpdate, tripEndDate } from './itinerary.js';
+import {
+  addDays,
+  chainDates,
+  datesToUpdate,
+  flightArrival,
+  tripEndDate,
+  tripStartFromFlights,
+} from './itinerary.js';
 
 // L'itinéraire du seed : 2, 1, 1, 4, 2, 3, 6 nuits à partir du 7 novembre.
 const SEED = [
@@ -87,5 +94,56 @@ describe('tripEndDate', () => {
 
   it('retombe sur le départ quand il n’y a plus d’étape', () => {
     expect(tripEndDate('2026-11-07', [])).toBe('2026-11-07');
+  });
+});
+
+describe('flightArrival', () => {
+  it('reporte le décalage de jour', () => {
+    expect(flightArrival({ date: '2026-11-07', arrival_offset_days: 1 })).toBe('2026-11-08');
+  });
+
+  it('vaut le jour du départ sans décalage', () => {
+    expect(flightArrival({ date: '2026-11-07' })).toBe('2026-11-07');
+  });
+
+  it('recule d’un jour à la ligne de changement de date', () => {
+    expect(flightArrival({ date: '2026-11-07', arrival_offset_days: -1 })).toBe('2026-11-06');
+  });
+
+  it('rend null sans date', () => {
+    expect(flightArrival({ arrival_offset_days: 1 })).toBeNull();
+  });
+});
+
+describe('tripStartFromFlights', () => {
+  // Le cas qui motive tout : on décolle le 7, on atterrit le 8, la première
+  // nuit d'hôtel est celle du 8.
+  it("cale le depart sur l'ARRIVEE du vol aller", () => {
+    const flights = [
+      { direction: 'aller', date: '2026-11-07', arrival_offset_days: 1 },
+      { direction: 'retour', date: '2026-11-26', arrival_offset_days: 0 },
+    ];
+    expect(tripStartFromFlights(flights, '2026-11-07')).toBe('2026-11-08');
+  });
+
+  it('ignore les vols intérieurs et le retour', () => {
+    const flights = [
+      { direction: 'interieur', date: '2026-11-01' },
+      { direction: 'retour', date: '2026-10-01' },
+    ];
+    expect(tripStartFromFlights(flights, '2026-11-07')).toBe('2026-11-07');
+  });
+
+  it('retient le premier aller quand il y en a plusieurs', () => {
+    const flights = [
+      { direction: 'aller', date: '2026-11-09' },
+      { direction: 'aller', date: '2026-11-07', arrival_offset_days: 1 },
+    ];
+    expect(tripStartFromFlights(flights, '2026-01-01')).toBe('2026-11-08');
+  });
+
+  // Sans vol daté, on ne devine rien : la date saisie fait foi.
+  it('retombe sur la date fournie sans vol aller', () => {
+    expect(tripStartFromFlights([], '2026-11-07')).toBe('2026-11-07');
   });
 });

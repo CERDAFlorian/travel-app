@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { formatStepDates } from '@/lib/dates.js';
+import { formatDay, formatStepDates } from '@/lib/dates.js';
+import { flightArrival } from '@/lib/itinerary.js';
 import { formatEuros, priceInEuros, toEuros } from '@/lib/currency.js';
 import { addFlight, deleteFlight, updateFlight } from '@/lib/mutations.js';
 import ConfirmDialog from './ConfirmDialog.jsx';
@@ -18,6 +19,14 @@ function parsePrice(raw) {
   if (cleaned === '') return { value: null };
   const value = Number(cleaned);
   return Number.isFinite(value) && value >= 0 ? { value } : { error: true };
+}
+
+// Un vol qui atterrit le lendemain couvre deux dates. Sans décalage, il n'y en
+// a qu'une : « 7 – 7 nov. » afficherait un intervalle là où il n'y a qu'un jour.
+function flightDates(flight) {
+  if (!flight.date) return 'date à venir';
+  const offset = flight.arrival_offset_days ?? 0;
+  return offset === 0 ? formatDay(flight.date) : formatStepDates(flight.date, flightArrival(flight));
 }
 
 // Postgres rend un `time` en « HH:MM:SS ». Les secondes d'un horaire de vol
@@ -57,7 +66,9 @@ export default function FlightsPanel({ trip, readOnly, onChanged }) {
       <div className="flights__card">
         <div className="flights__head">
           <h2 className="flights__title">Billets d'avion</h2>
-          <span className="flights__hint">aller, retour et vols intérieurs</span>
+          <span className="flights__hint">
+            le voyage commence à l'arrivée du vol aller
+          </span>
           <span className="flights__total">
             Total vols <em>{total}</em>
           </span>
@@ -78,6 +89,7 @@ export default function FlightsPanel({ trip, readOnly, onChanged }) {
           {flights.map((flight) => (
             <FlightCard
               key={flight.id}
+              trip={trip}
               flight={flight}
               readOnly={readOnly}
               onChanged={onChanged}
@@ -88,7 +100,7 @@ export default function FlightsPanel({ trip, readOnly, onChanged }) {
 
         {!readOnly && adding && (
           <FlightForm
-            tripId={trip.id}
+            trip={trip}
             onChanged={onChanged}
             onClose={() => setAdding(false)}
           />
@@ -98,7 +110,7 @@ export default function FlightsPanel({ trip, readOnly, onChanged }) {
   );
 }
 
-function FlightCard({ flight, readOnly, onChanged }) {
+function FlightCard({ trip, flight, readOnly, onChanged }) {
   const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
@@ -125,9 +137,7 @@ function FlightCard({ flight, readOnly, onChanged }) {
     <article className="flight">
       <div className="flight__top">
         <span className="flight__label">{LABEL[flight.direction] ?? flight.direction}</span>
-        <span className="flight__date">
-          {flight.date ? formatStepDates(flight.date, flight.date) : 'date à venir'}
-        </span>
+        <span className="flight__date">{flightDates(flight)}</span>
 
         {!readOnly && (
           <button
@@ -189,7 +199,7 @@ function FlightCard({ flight, readOnly, onChanged }) {
                 return;
               }
               if (parsed.value !== (flight.price ?? null)) {
-                run(() => updateFlight(flight.id, { price: parsed.value }));
+                run(() => updateFlight(trip, flight.id, { price: parsed.value }));
               }
             }}
             onKeyDown={(event) => {
@@ -205,7 +215,7 @@ function FlightCard({ flight, readOnly, onChanged }) {
         busy={busy}
         onCancel={() => setAsking(false)}
         onConfirm={async () => {
-          await run(() => deleteFlight(flight.id));
+          await run(() => deleteFlight(trip, flight.id));
           setAsking(false);
         }}
       >
@@ -232,7 +242,7 @@ function offsetTitle(offset) {
   return '';
 }
 
-function FlightForm({ tripId, onChanged, onClose }) {
+function FlightForm({ trip, onChanged, onClose }) {
   const [direction, setDirection] = useState('aller');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
@@ -279,8 +289,7 @@ function FlightForm({ tripId, onChanged, onClose }) {
     setBusy(true);
     setError(null);
     try {
-      await addFlight({
-        tripId,
+      await addFlight(trip, {
         direction,
         fromCode: codes[0],
         toCode: codes[1],

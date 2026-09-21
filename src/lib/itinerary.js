@@ -59,3 +59,26 @@ export function tripEndDate(startIso, steps) {
   const chained = chainDates(startIso, steps);
   return chained.length > 0 ? chained.at(-1).date_end : startIso;
 }
+
+// Date d'arrivée d'un vol : son départ décalé du nombre de jours franchis.
+export function flightArrival(flight) {
+  if (!flight?.date) return null;
+  return addDays(flight.date, flight.arrival_offset_days ?? 0);
+}
+
+// Le voyage commence quand on ARRIVE, pas quand on décolle.
+//
+// Un Genève → Antananarivo décollant le 7 à 15:00 et atterrissant le 8 à
+// 17:20 : la première nuit d'hôtel est celle du 8. Faire commencer le voyage
+// au décollage décalerait tout l'itinéraire d'un jour, et la première nuit
+// serait réservée pour une nuit passée en vol.
+//
+// On prend le premier vol « aller » daté. S'il n'y en a pas, la date de départ
+// saisie fait foi — on ne devine rien.
+export function tripStartFromFlights(flights, fallback) {
+  const outbound = flights
+    .filter((flight) => flight.direction === 'aller' && flight.date)
+    .sort((a, b) => a.date.localeCompare(b.date))[0];
+
+  return outbound ? flightArrival(outbound) : fallback;
+}
