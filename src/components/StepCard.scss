@@ -94,33 +94,6 @@
     margin-top: 10px;
     border-top: 1px solid var(--border-soft);
   }
-
-  &__travel {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    margin-top: 10px;
-    padding-top: 8px;
-  }
-
-  &__travel-kind {
-    font-size: clamp(11px, 1.15vw, 14px);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-
-  &__travel-rule {
-    flex: 1;
-    height: 1px;
-    background: repeating-linear-gradient(90deg, var(--border-strong) 0 6px, transparent 6px 11px);
-  }
-
-  &__travel-time {
-    font-size: clamp(12.5px, 1.3vw, 16px);
-    font-style: italic;
-    color: var(--accent);
-  }
 }
 
 // Retrait d'une étape. Discret par défaut — le geste emporte les items et les

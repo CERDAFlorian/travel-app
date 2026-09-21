@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase.js';
 import { fail } from '@/lib/errors.js';
+import { durationBetween } from '@/lib/transport.js';
 import {
   addDays,
   datesToUpdate,
@@ -282,4 +283,38 @@ export async function deleteFlight(trip, id) {
     trip,
     trip.flights.filter((flight) => flight.id !== id),
   );
+}
+
+// --- Trajets entre étapes ---------------------------------------------------
+//
+// `duration_min` est CALCULÉE depuis les horaires plutôt que saisie : on
+// connaît le train de 9h12 qui arrive à 11h52, rarement « 160 minutes ». Elle
+// reste stockée parce que c'est elle qu'affichent le pied d'étape et le
+// panneau des temps de trajet, et parce qu'un trajet peut n'avoir qu'une durée
+// connue, sans horaire.
+
+export async function saveLeg({ id, tripId, fromStep, toStep, mode, dep, arr }) {
+  const row = {
+    trip_id: tripId,
+    from_step: fromStep,
+    to_step: toStep,
+    mode,
+    dep: dep || null,
+    arr: arr || null,
+    duration_min: durationBetween(dep, arr),
+  };
+
+  // Un trajet existe déjà entre ces deux étapes : on le remplace plutôt que
+  // d'échouer sur la contrainte unique (from_step, to_step).
+  const query = id
+    ? supabase.from('legs').update(row).eq('id', id)
+    : supabase.from('legs').insert(row);
+
+  const { error } = await query;
+  if (error) fail(error, 'Enregistrement du trajet');
+}
+
+export async function deleteLeg(id) {
+  const { error } = await supabase.from('legs').delete().eq('id', id);
+  if (error) fail(error, 'Suppression du trajet');
 }

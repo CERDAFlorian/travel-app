@@ -8,24 +8,6 @@ import PhotoStrip from './PhotoStrip.jsx';
 import CategoryAccordion from './CategoryAccordion.jsx';
 import './StepCard.scss';
 
-const MODE_LABEL = {
-  shinkansen: 'Shinkansen',
-  train: 'Train',
-  bus: 'Bus',
-  voiture: 'Voiture',
-  ferry: 'Ferry',
-  avion: 'Avion',
-  marche: 'À pied',
-};
-
-function formatDuration(minutes) {
-  if (!minutes) return null;
-  const hours = Math.floor(minutes / 60);
-  const rest = minutes % 60;
-  if (hours === 0) return `${rest} min`;
-  return rest === 0 ? `${hours} h` : `${hours} h ${String(rest).padStart(2, '0')}`;
-}
-
 // Une étape : rail à gauche, contenu à droite.
 //
 // Le rail porte le numéro puis un filet dégradé qui descend vers l'étape
@@ -36,7 +18,6 @@ export default function StepCard({
   tripTitle,
   readOnly,
   selected,
-  leg,
   onSelect,
   onRemove,
   onNights,
@@ -53,8 +34,6 @@ export default function StepCard({
   for (const item of step.items) {
     itemsByCategory.get(item.category)?.push(item);
   }
-
-  const duration = formatDuration(leg?.duration_min);
 
   return (
     <article
@@ -204,14 +183,6 @@ export default function StepCard({
             </p>
           </ConfirmDialog>
         </div>
-
-        {duration && (
-          <div className="step__travel">
-            <span className="step__travel-kind">{MODE_LABEL[leg.mode] ?? leg.mode}</span>
-            <span className="step__travel-rule" aria-hidden="true" />
-            <span className="step__travel-time">{duration}</span>
-          </div>
-        )}
       </div>
     </article>
   );
