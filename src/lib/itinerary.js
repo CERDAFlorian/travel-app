@@ -82,3 +82,61 @@ export function tripStartFromFlights(flights, fallback) {
 
   return outbound ? flightArrival(outbound) : fallback;
 }
+
+// Fin du voyage : le DÉPART du vol retour. On dort à l'hôtel jusqu'au matin du
+// décollage, pas jusqu'à l'atterrissage à la maison.
+export function tripEndFromFlights(flights, fallback) {
+  const inbound = flights
+    .filter((flight) => flight.direction === 'retour' && flight.date)
+    .sort((a, b) => b.date.localeCompare(a.date))[0];
+
+  return inbound ? inbound.date : fallback;
+}
+
+export function nightsBetween(startIso, endIso) {
+  if (!startIso || !endIso) return null;
+  return Math.round((parse(endIso) - parse(startIso)) / DAY_MS);
+}
+
+// L'itinéraire tel qu'il doit S'AFFICHER.
+//
+// Les dates viennent d'ici, pas des colonnes `date_start` / `date_end`. La
+// raison est concrète : ajouter un vol aller qui atterrit le lendemain décale
+// tout le séjour, et attendre une écriture pour le voir serait absurde — on
+// afficherait sciemment des dates fausses en attendant que l'utilisateur
+// « touche » quelque chose.
+//
+// Les colonnes restent écrites à chaque changement de structure : la base
+// reste juste pour qui l'interroge directement, et la vue partagée n'a pas
+// besoin de rejouer ce calcul. Mais c'est bien le couple (arrivée du vol
+// aller, nuits de chaque étape) qui fait foi.
+export function resolveItinerary(trip) {
+  const start = tripStartFromFlights(trip.flights ?? [], trip.startDate);
+  const chained = chainDates(start, trip.steps ?? []);
+  const byId = new Map(chained.map((entry) => [entry.id, entry]));
+
+  const steps = (trip.steps ?? []).map((step) => {
+    const dates = byId.get(step.id);
+    return dates ? { ...step, date_start: dates.date_start, date_end: dates.date_end } : step;
+  });
+
+  const plannedNights = steps.reduce((total, step) => total + (step.nights ?? 0), 0);
+  const lastNight = steps.length > 0 ? steps.at(-1).date_end : start;
+
+  // La fenêtre imposée par les vols, quand les deux sont connus.
+  const windowEnd = tripEndFromFlights(trip.flights ?? [], null);
+  const availableNights = windowEnd ? nightsBetween(start, windowEnd) : null;
+
+  return {
+    start,
+    // Fin réelle de ce qui est planifié — ce que l'en-tête annonce.
+    end: lastNight,
+    steps,
+    plannedNights,
+    // Nuits disponibles entre l'arrivée et le départ du retour.
+    availableNights,
+    // > 0 : il reste des nuits à placer. < 0 : le séjour déborde le vol retour.
+    // null : pas de vol retour daté, rien à comparer.
+    nightsGap: availableNights == null ? null : availableNights - plannedNights,
+  };
+}

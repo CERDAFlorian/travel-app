@@ -294,3 +294,20 @@
     font-size: var(--fs-xs);
   }
 }
+
+// Écart entre les nuits planifiées et la fenêtre imposée par les vols.
+// Informatif quand il reste des nuits à placer, alarmant quand le séjour
+// déborde le vol retour — on ne dort pas dans un avion déjà parti.
+.flights__gap {
+  padding: 2px 10px;
+  border: 1px solid var(--warn);
+  border-radius: var(--radius-pill);
+  color: var(--warn);
+  font-size: var(--fs-xs);
+  font-style: italic;
+
+  &[data-over] {
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+}

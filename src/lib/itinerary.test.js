@@ -4,7 +4,9 @@ import {
   chainDates,
   datesToUpdate,
   flightArrival,
+  resolveItinerary,
   tripEndDate,
+  tripEndFromFlights,
   tripStartFromFlights,
 } from './itinerary.js';
 
@@ -145,5 +147,69 @@ describe('tripStartFromFlights', () => {
   // Sans vol daté, on ne devine rien : la date saisie fait foi.
   it('retombe sur la date fournie sans vol aller', () => {
     expect(tripStartFromFlights([], '2026-11-07')).toBe('2026-11-07');
+  });
+});
+
+describe('resolveItinerary', () => {
+  const steps = [
+    { id: 'a', nights: 2, date_start: '2026-11-07', date_end: '2026-11-09' },
+    { id: 'b', nights: 3, date_start: '2026-11-09', date_end: '2026-11-12' },
+  ];
+
+  // Le cas signalé : le vol atterrit le 8, la première nuit est celle du 8.
+  // Les colonnes en base disent encore le 7 — elles sont ignorées.
+  it("fait commencer la premiere etape a l'arrivee du vol, pas au decollage", () => {
+    const trip = {
+      startDate: '2026-11-07',
+      steps,
+      flights: [{ direction: 'aller', date: '2026-11-07', arrival_offset_days: 1 }],
+    };
+    const resolved = resolveItinerary(trip);
+    expect(resolved.start).toBe('2026-11-08');
+    expect(resolved.steps[0].date_start).toBe('2026-11-08');
+    expect(resolved.steps[0].date_end).toBe('2026-11-10');
+    expect(resolved.steps[1].date_start).toBe('2026-11-10');
+  });
+
+  it('ignore les dates stockees, meme incoherentes', () => {
+    const trip = {
+      startDate: '2026-11-08',
+      steps: [{ id: 'a', nights: 2, date_start: '1999-01-01', date_end: '1999-01-02' }],
+      flights: [],
+    };
+    expect(resolveItinerary(trip).steps[0].date_start).toBe('2026-11-08');
+  });
+
+  // Le retour borne le sejour : on dort jusqu'au matin du decollage.
+  it('compte les nuits disponibles jusqu’au depart du vol retour', () => {
+    const trip = {
+      startDate: '2026-11-07',
+      steps,
+      flights: [
+        { direction: 'aller', date: '2026-11-07', arrival_offset_days: 1 },
+        { direction: 'retour', date: '2026-11-14' },
+      ],
+    };
+    const resolved = resolveItinerary(trip);
+    expect(resolved.availableNights).toBe(6);
+    expect(resolved.plannedNights).toBe(5);
+    expect(resolved.nightsGap).toBe(1);
+  });
+
+  it('signale un sejour qui deborde le vol retour', () => {
+    const trip = {
+      startDate: '2026-11-08',
+      steps,
+      flights: [{ direction: 'retour', date: '2026-11-11' }],
+    };
+    expect(resolveItinerary(trip).nightsGap).toBe(-2);
+  });
+
+  // Sans vol retour date, il n'y a rien a comparer : on ne fabrique pas
+  // d'avertissement a partir de rien.
+  it('ne compare rien sans vol retour', () => {
+    const resolved = resolveItinerary({ startDate: '2026-11-07', steps, flights: [] });
+    expect(resolved.availableNights).toBeNull();
+    expect(resolved.nightsGap).toBeNull();
   });
 });
