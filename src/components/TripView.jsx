@@ -14,7 +14,7 @@ import ShareLink from '@/components/ShareLink.jsx';
 import AddStep from '@/components/AddStep.jsx';
 import StepLink from '@/components/StepLink.jsx';
 import { addStep, removeStep, setStepNights } from '@/lib/mutations.js';
-import { resolveItinerary } from '@/lib/itinerary.js';
+import { resolveItinerary, timelineEntries } from '@/lib/itinerary.js';
 import './TripView.scss';
 
 // L'itinéraire, mis en page comme le design.
@@ -59,6 +59,21 @@ export default function TripView({
     setSelectedStepId(stepId);
     if (!stepId) return;
     document.getElementById(`step-${stepId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
+
+  // Vols et étapes dans l'ordre où on les vit. Un vol intérieur s'intercale
+  // tout seul à sa date, sans qu'on ait à savoir quelles étapes il relie.
+  const entries = useMemo(
+    () => timelineEntries(itinerary.steps, view.flights),
+    [itinerary.steps, view.flights],
+  );
+
+  // Cliquer un vol amène au panneau des billets. Sur mobile il peut être
+  // replié : on l'ouvre au passage, sinon on enverrait vers un bloc fermé.
+  const showFlights = useCallback(() => {
+    const target = document.getElementById('vols');
+    target?.querySelector('[aria-expanded="false"]')?.click();
+    target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, []);
 
   const handleRemoveStep = useCallback(
@@ -117,7 +132,12 @@ export default function TripView({
           les yeux où l'on en est dans le voyage, et de quoi sauter ailleurs.
           Sortie de l'en-tête pour ça — voir TripHeader. */}
       <div className="trip__timeline">
-        <StepTimeline steps={view.steps} selectedId={selectedStepId} onSelect={selectStep} />
+        <StepTimeline
+          entries={entries}
+          selectedId={selectedStepId}
+          onSelectStep={selectStep}
+          onSelectFlight={showFlights}
+        />
       </div>
 
       <div className="trip__strip">

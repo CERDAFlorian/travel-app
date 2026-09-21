@@ -33,6 +33,10 @@
   }
 
   &__segment {
+    display: flex;
+    gap: 4px;
+    align-items: baseline;
+    justify-content: center;
     flex-basis: 0;
     // Largeur plancher proportionnelle au nombre de nuits : quatre nuits à
     // Kyoto occupent bien plus qu'une à Shirakawa-go, même en défilant.
@@ -65,5 +69,15 @@
       color: var(--accent-contrast);
       border-color: var(--accent);
     }
+  }
+
+  // Un vol se distingue d'une étape : fond accentué, pas de nuits. Il marque
+  // une transition dans le fil, il n'occupe pas de temps de séjour.
+  &__segment--flight {
+    border-style: dashed;
+    border-color: var(--accent);
+    background: var(--surface);
+    color: var(--accent);
+    letter-spacing: 0.02em;
   }
 }

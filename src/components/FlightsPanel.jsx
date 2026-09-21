@@ -63,7 +63,7 @@ export default function FlightsPanel({ trip, itinerary, readOnly, onChanged }) {
   if (flights.length === 0 && readOnly) return null;
 
   return (
-    <section className="flights">
+    <section className="flights" id="vols">
       <div className="flights__card" data-collapsed={isMobile && !open ? '' : undefined}>
         <div className="flights__head">
           {/* Le titre devient le bouton de pliage, mais seulement là où le
