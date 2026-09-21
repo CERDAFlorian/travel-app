@@ -101,9 +101,15 @@ export default function FlightsPanel({ trip, itinerary, readOnly, onChanged }) {
               remplissent pas la fenêtre, on le dit — sans rien corriger
               d'autorité : c'est une décision de voyage, pas une erreur. */}
           <NightsGap gap={itinerary?.nightsGap} />
-          <span className="flights__total">
-            Total vols <em>{total}</em>
-          </span>
+          {/* Le total disparaît quand le bloc est replié : le bouton de pliage
+              occupe toute la ligne, le total passait donc en dessous et
+              l'en-tête changeait de hauteur selon l'état. Replié, on veut une
+              seule ligne, toujours la même. */}
+          {(!isMobile || open) && (
+            <span className="flights__total">
+              Total vols <em>{total}</em>
+            </span>
+          )}
 
           {!readOnly && (!isMobile || open) && (
             <button
