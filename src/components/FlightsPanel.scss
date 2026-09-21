@@ -27,7 +27,7 @@
   }
 
   &__hint {
-    font-size: clamp(11.5px, 1.2vw, 14.5px);
+    font-size: clamp(12px, 1.2vw, 14.5px);
     font-style: italic;
     color: var(--text-soft);
   }
@@ -81,14 +81,14 @@
   }
 
   &__label {
-    font-size: clamp(10.5px, 1.05vw, 12.5px);
+    font-size: clamp(12px, 1.05vw, 12.5px);
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--accent);
   }
 
   &__date {
-    font-size: clamp(11.5px, 1.2vw, 14px);
+    font-size: clamp(12px, 1.2vw, 14px);
     font-style: italic;
     color: var(--text-soft);
   }
@@ -114,7 +114,7 @@
   &__times {
     margin-top: 2px;
     color: var(--text-soft);
-    font-size: clamp(11.5px, 1.2vw, 14px);
+    font-size: clamp(12px, 1.2vw, 14px);
     font-variant-numeric: tabular-nums;
   }
 
@@ -133,7 +133,7 @@
   }
 
   &__number {
-    font-size: clamp(11.5px, 1.2vw, 14px);
+    font-size: clamp(12px, 1.2vw, 14px);
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--muted);

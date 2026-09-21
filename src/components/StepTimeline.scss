@@ -48,7 +48,7 @@
     background: var(--surface-tint);
     color: var(--text-soft);
     font: inherit;
-    font-size: clamp(10px, 1.05vw, 13.5px);
+    font-size: clamp(12px, 1.05vw, 13.5px);
     letter-spacing: 0.04em;
     text-transform: uppercase;
     // L'ellipse plutôt que le retour à la ligne : les segments doivent garder

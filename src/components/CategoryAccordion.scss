@@ -41,7 +41,7 @@
   }
 
   &__count {
-    font-size: clamp(11px, 1.15vw, 13.5px);
+    font-size: clamp(12px, 1.15vw, 13.5px);
     font-style: italic;
     color: var(--muted);
   }
@@ -50,14 +50,14 @@
   // déplier une seule catégorie.
   &__total {
     margin-left: auto;
-    font-size: clamp(11.5px, 1.2vw, 14.5px);
+    font-size: clamp(12px, 1.2vw, 14.5px);
     font-style: italic;
     color: var(--accent);
     white-space: nowrap;
   }
 
   &__caret {
-    font-size: clamp(11px, 1.15vw, 13.5px);
+    font-size: clamp(12px, 1.15vw, 13.5px);
     color: var(--muted);
   }
 
