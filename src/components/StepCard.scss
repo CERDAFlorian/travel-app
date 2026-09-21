@@ -1,8 +1,15 @@
+@use '../theme/mixins';
+
 .step {
   position: relative;
-  // Respiration quand on arrive ici par défilement, depuis la carte ou la
-  // frise : sans ça la carte d'étape vient coller le bord haut de l'écran.
-  scroll-margin-top: var(--sp-4);
+  // Marge de défilement : on arrive ici depuis la carte ou la frise. Sur
+  // mobile elle doit dégager la hauteur de la frise collante, sinon l'étape
+  // sélectionnée atterrit DERRIÈRE elle.
+  scroll-margin-top: 60px;
+
+  @include mixins.from('md') {
+    scroll-margin-top: var(--sp-4);
+  }
   display: grid;
   grid-template-columns: auto 1fr;
   gap: clamp(10px, 1.2vw, 16px);

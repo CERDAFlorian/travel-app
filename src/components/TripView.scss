@@ -20,6 +20,28 @@
     &:focus-visible { @include mixins.focus-ring; }
   }
 
+  // Collante en haut de l'écran sur mobile : sept étapes défilent longtemps,
+  // et la frise dit à la fois où l'on en est et comment sauter ailleurs.
+  //
+  // Le fond opaque n'est pas décoratif : sans lui, le contenu défilerait
+  // visiblement sous des segments translucides.
+  &__timeline {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+    padding: var(--sp-2) clamp(16px, 3vw, 44px);
+    background: var(--bg);
+    border-bottom: 1px solid var(--border-soft);
+  }
+
+  // Au-delà, la colonne de gauche est plus courte et la carte collante tient
+  // déjà le rôle de repère : la frise redevient un élément du flux.
+  @include mixins.from('md') {
+    &__timeline {
+      position: static;
+    }
+  }
+
   // Bandeau de service : fraîcheur de la donnée à gauche, partage à droite.
   &__strip {
     display: flex;
@@ -65,11 +87,17 @@
     min-width: 0;
   }
 
-  // Collante : en faisant défiler une liste de sept étapes, la carte reste
-  // sous les yeux. C'est ce qui rend la sélection croisée utile.
+  // Collante seulement à deux colonnes : la carte reste alors sous les yeux
+  // pendant qu'on fait défiler les étapes, ce qui rend la sélection croisée
+  // utile. En colonne unique elle est tout en bas, il n'y a rien à suivre — et
+  // deux éléments collants se disputeraient le haut de l'écran avec la frise.
   &__map-card {
-    position: sticky;
-    top: 12px;
+    position: static;
+
+    @include mixins.from('md') {
+      position: sticky;
+      top: 12px;
+    }
     padding: clamp(11px, 1.2vw, 16px);
     border: 1.5px solid var(--border);
     border-radius: var(--radius-lg);

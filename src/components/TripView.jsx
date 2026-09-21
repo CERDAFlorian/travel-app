@@ -2,6 +2,7 @@ import { Fragment, useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import SyncLine from '@/components/SyncLine.jsx';
 import TripHeader from '@/components/TripHeader.jsx';
+import StepTimeline from '@/components/StepTimeline.jsx';
 import FlightsPanel from '@/components/FlightsPanel.jsx';
 import StepCard from '@/components/StepCard.jsx';
 import TripMap from '@/components/TripMap.jsx';
@@ -101,8 +102,6 @@ export default function TripView({
     <div className="trip">
       <TripHeader
         trip={view}
-        selectedStepId={selectedStepId}
-        onSelectStep={selectStep}
         back={
           shared ? (
             <p className="trip__shared">Vue partagée · lecture seule</p>
@@ -113,6 +112,13 @@ export default function TripView({
           )
         }
       />
+
+      {/* Collante sur mobile : en faisant défiler sept étapes, on garde sous
+          les yeux où l'on en est dans le voyage, et de quoi sauter ailleurs.
+          Sortie de l'en-tête pour ça — voir TripHeader. */}
+      <div className="trip__timeline">
+        <StepTimeline steps={view.steps} selectedId={selectedStepId} onSelect={selectStep} />
+      </div>
 
       <div className="trip__strip">
         <SyncLine

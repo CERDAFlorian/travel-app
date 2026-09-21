@@ -1,17 +1,21 @@
 import { CATEGORIES } from '@/lib/categories.js';
 import { formatTripRange } from '@/lib/dates.js';
-import StepTimeline from './StepTimeline.jsx';
 import './TripHeader.scss';
 
 const GEOGRAPHIC = new Set(CATEGORIES.filter((c) => c.onMap).map((c) => c.key));
 
-// En-tête du voyage — titre, chiffres, frise.
+// En-tête du voyage — titre, chiffres.
+//
+// La frise n'est PAS ici : elle doit pouvoir rester collée en haut de l'écran
+// pendant qu'on fait défiler les étapes, et `position: sticky` ne fonctionne
+// pas dans un ancêtre en `overflow: hidden` — or l'en-tête en a besoin pour
+// rogner le décor qui déborde. Elle vit donc juste en dessous, dans TripView.
 //
 // Le décor déborde volontairement du cadre : le momiji mord sur le bord gauche
 // (-18px, -14px), le Fuji occupe le coin droit. Le bloc de titre réserve la
 // place par ses marges internes, très asymétriques, pour ne jamais passer
 // dessous.
-export default function TripHeader({ trip, selectedStepId, onSelectStep, back }) {
+export default function TripHeader({ trip, back }) {
   const steps = trip.steps;
   const nights = steps.reduce((total, step) => total + (step.nights ?? 0), 0);
   const places = steps.reduce(
@@ -47,10 +51,6 @@ export default function TripHeader({ trip, selectedStepId, onSelectStep, back })
               un lieu. Le design les comptait, à tort. */}
           <li className="trip-header__chip">{places} lieux</li>
         </ul>
-      </div>
-
-      <div className="trip-header__timeline">
-        <StepTimeline steps={steps} selectedId={selectedStepId} onSelect={onSelectStep} />
       </div>
     </header>
   );

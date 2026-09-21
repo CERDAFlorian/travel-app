@@ -2,8 +2,9 @@
 
 .trip-header {
   position: relative;
+  // Rogne le décor qui déborde volontairement du cadre. C'est aussi ce qui
+  // interdit d'y placer la frise collante — elle est dans TripView.
   overflow: hidden;
-  border-bottom: 1px solid var(--border-soft);
 
   // Le décor sort du cadre, c'est voulu : `overflow: hidden` sur l'en-tête le
   // recoupe proprement et donne l'impression d'une estampe débordante.
@@ -113,8 +114,4 @@
     white-space: nowrap;
   }
 
-  &__timeline {
-    position: relative;
-    padding: 0 clamp(16px, 3vw, 44px) clamp(12px, 1.6vw, 18px);
-  }
 }
