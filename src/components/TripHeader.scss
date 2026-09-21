@@ -14,31 +14,53 @@
     user-select: none;
   }
 
+  // Le décor déborde, mais il ne doit pas manger le contenu. Sur un écran
+  // étroit il rétrécit fortement : à 375 px, les tailles du design
+  // laissaient 91 px au titre.
   &__momiji {
-    left: -18px;
-    top: -14px;
-    width: clamp(96px, 11vw, 168px);
+    left: -22px;
+    top: -12px;
+    width: clamp(64px, 11vw, 168px);
   }
 
   &__fuji {
-    right: 0;
+    right: -10px;
     top: 0;
-    width: clamp(190px, 26vw, 360px);
+    width: clamp(120px, 26vw, 360px);
+    opacity: 0.65;
+
+    @include mixins.from('md') {
+      opacity: 0.85;
+    }
   }
 
-  // Marges très asymétriques : elles réservent la place du décor. À gauche le
-  // momiji, à droite le Fuji, qui est bien plus large.
+  // Ligne du retour et des chiffres. Elle passe AU-DESSUS du décor, d'où le
+  // z-index : le momiji dépasse sur le coin et intercepterait le clic.
+  &__top {
+    position: relative;
+    z-index: var(--z-sticky);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+    padding: var(--sp-3) clamp(16px, 3vw, 44px) 0;
+  }
+
+  // Marges asymétriques : elles réservent la place du décor. Sur mobile, le
+  // décor est réduit et les marges avec — sinon il ne reste rien pour le
+  // titre.
   &__bar {
     position: relative;
     display: flex;
     flex-wrap: wrap;
     align-items: flex-end;
     gap: clamp(8px, 1.6vw, 20px);
-    padding:
-      clamp(16px, 2.4vw, 30px)
-      clamp(200px, 27vw, 375px)
-      clamp(12px, 1.6vw, 18px)
-      clamp(84px, 8vw, 130px);
+    padding: var(--sp-2) clamp(110px, 26vw, 375px) clamp(12px, 1.6vw, 18px) clamp(16px, 8vw, 130px);
+
+    @include mixins.from('md') {
+      padding-top: clamp(16px, 2.4vw, 30px);
+    }
   }
 
   &__title {
@@ -68,22 +90,23 @@
     color: var(--accent);
   }
 
+  // En ligne, jamais empilés : trois pastilles l'une sous l'autre prenaient
+  // un tiers de l'écran sur mobile.
   &__chips {
-    margin-left: auto;
     display: flex;
-    flex-wrap: wrap;
     gap: var(--sp-2);
-    padding: 0 0 4px;
+    margin: 0;
+    padding: 0;
     list-style: none;
   }
 
   &__chip {
     border: 1px solid var(--border-strong);
     border-radius: var(--radius-pill);
-    padding: 5px 13px;
+    padding: 4px clamp(8px, 2vw, 13px);
     background: var(--surface);
-    font-size: clamp(11px, 1.15vw, 14px);
-    letter-spacing: 0.09em;
+    font-size: clamp(10px, 1.15vw, 14px);
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--accent-deep);
     white-space: nowrap;
