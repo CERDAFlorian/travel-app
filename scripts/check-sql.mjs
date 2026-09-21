@@ -106,6 +106,7 @@ const files = {
   schema: 'supabase/migrations/0001_schema.sql',
   rls: 'supabase/migrations/0002_rls.sql',
   share: 'supabase/migrations/0003_partage.sql',
+  flights: 'supabase/migrations/0004_vols.sql',
   seed: 'supabase/seed.sql',
 };
 
@@ -163,6 +164,25 @@ if (Object.keys(clean).length === Object.keys(files).length) {
   for (const [, name, body] of policies) {
     if (!/\bto authenticated\b/i.test(body)) fail(files.rls, `policy ${name} : pas de « to authenticated »`);
   }
+  // --- Vols -----------------------------------------------------------------
+  //
+  // Les directions du seed doivent figurer dans le CHECK courant, qui vit
+  // maintenant dans 0004 et non plus dans 0001. Sans ce contrôle, ajouter une
+  // direction à l'app sans l'ouvrir en base échouerait à l'insertion.
+  // `strip` vide aussi les litteraux : on lit le texte brut.
+  const directionCheck = /direction in \(([^)]+)\)/i.exec(raw.flights);
+  if (!directionCheck) fail(files.flights, 'contrainte de direction introuvable');
+  else {
+    const allowed = [...directionCheck[1].matchAll(/'([a-z]+)'/gi)].map((m) => m[1]);
+    for (const m of raw.seed.matchAll(/insert into public\.flights[\s\S]*?;/gi)) {
+      for (const d of m[0].matchAll(/'(aller|retour|interieur|[a-z]+)',\s*'[A-Z]{3}'/g)) {
+        if (!allowed.includes(d[1])) {
+          fail(files.seed, `direction de vol « ${d[1] }» hors du CHECK (${allowed.join(', ')})`);
+        }
+      }
+    }
+  }
+
   // --- Partage --------------------------------------------------------------
   //
   // Le lien de partage est la seule porte ouverte à `anon`. Trois propriétés

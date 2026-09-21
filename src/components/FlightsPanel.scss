@@ -114,3 +114,126 @@
     white-space: nowrap;
   }
 }
+
+.flight {
+  &__delete {
+    margin-left: auto;
+    padding: 0 3px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--border-strong);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+
+    &:hover { color: var(--danger); }
+
+    &[data-armed] {
+      padding: 1px 7px;
+      background: var(--danger);
+      color: var(--text-invert);
+      font-size: var(--fs-xs);
+    }
+  }
+
+  &__price {
+    width: 84px;
+    padding: 3px 7px;
+    border: 1px solid var(--border-strong);
+    border-radius: 7px;
+    background: var(--surface-raised);
+    color: var(--accent);
+    font: inherit;
+    font-size: var(--fs-md);
+    font-style: italic;
+    text-align: right;
+  }
+
+  &__price-read {
+    font-size: clamp(12px, 1.25vw, 15px);
+    font-style: italic;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  &__error {
+    margin: 5px 0 0;
+    color: var(--danger);
+    font-size: var(--fs-xs);
+  }
+}
+
+// Carte d'ajout, en pointillés : elle se lit comme une place à remplir, pas
+// comme un vol déjà saisi.
+.flight-form {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 12px;
+
+  &__title {
+    font-size: clamp(11px, 1.1vw, 13px);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  &__row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  &__field,
+  &__code {
+    min-width: 0;
+    padding: 4px 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: 7px;
+    background: var(--surface-raised);
+    color: var(--text);
+    font: inherit;
+    // 16 px minimum : en dessous, Safari iOS zoome sur le champ au focus et
+    // ne dézoome jamais.
+    font-size: var(--fs-md);
+  }
+
+  &__field { flex: 1; }
+
+  // Largeur d'un code IATA, en capitales : la saisie ressemble au résultat.
+  &__code {
+    width: 4.5em;
+    flex: none;
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  &__arrow {
+    flex: none;
+    color: var(--muted);
+  }
+
+  &__submit {
+    flex: none;
+    padding: 4px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: 7px;
+    background: var(--surface-warm);
+    color: var(--accent);
+    font: inherit;
+    font-size: clamp(12.5px, 1.25vw, 15px);
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover { border-color: var(--accent); }
+    &:disabled { opacity: 0.6; cursor: progress; }
+  }
+
+  &__error {
+    margin: 0;
+    color: var(--danger);
+    font-size: var(--fs-xs);
+  }
+}

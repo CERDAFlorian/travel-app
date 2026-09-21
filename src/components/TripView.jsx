@@ -10,6 +10,8 @@ import HeroBanner from '@/components/HeroBanner.jsx';
 import Experiences from '@/components/Experiences.jsx';
 import BudgetPanel from '@/components/BudgetPanel.jsx';
 import ShareLink from '@/components/ShareLink.jsx';
+import AddStep from '@/components/AddStep.jsx';
+import { addStep, removeStep, setStepNights } from '@/lib/mutations.js';
 import './TripView.scss';
 
 // L'itinéraire, mis en page comme le design.
@@ -41,6 +43,30 @@ export default function TripView({
     if (!stepId) return;
     document.getElementById(`step-${stepId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, []);
+
+  const handleRemoveStep = useCallback(
+    async (stepId) => {
+      await removeStep(trip, stepId);
+      await onChanged();
+    },
+    [trip, onChanged],
+  );
+
+  const handleNights = useCallback(
+    async (stepId, nights) => {
+      await setStepNights(trip, stepId, nights);
+      await onChanged();
+    },
+    [trip, onChanged],
+  );
+
+  const handleAddStep = useCallback(
+    async (values) => {
+      await addStep(trip, values);
+      await onChanged();
+    },
+    [trip, onChanged],
+  );
 
   // Le trajet est rattaché à l'étape de départ : il se lit en pied de la carte
   // qu'on vient de finir, au moment où l'on se demande comment rejoindre la
@@ -74,7 +100,7 @@ export default function TripView({
         <ShareLink trip={trip} readOnly={readOnly} onChanged={onChanged} />
       </div>
 
-      <FlightsPanel flights={trip.flights} />
+      <FlightsPanel trip={trip} readOnly={readOnly} onChanged={onChanged} />
 
       <main className="trip__main">
         <section className="trip__steps">
@@ -87,11 +113,15 @@ export default function TripView({
               selected={step.id === selectedStepId}
               leg={legByFromStep.get(step.id)}
               onSelect={setSelectedStepId}
+              onRemove={handleRemoveStep}
+              onNights={handleNights}
               // Après chaque écriture on resynchronise le voyage entier plutôt
               // que de rapiécer le cache : une seule source de vérité.
               onChanged={onChanged}
             />
           ))}
+
+          {!readOnly && <AddStep onAdd={handleAddStep} />}
         </section>
 
         <aside className="trip__aside">

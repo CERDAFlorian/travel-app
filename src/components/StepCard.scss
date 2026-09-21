@@ -1,5 +1,8 @@
 .step {
   position: relative;
+  // Respiration quand on arrive ici par défilement, depuis la carte ou la
+  // frise : sans ça la carte d'étape vient coller le bord haut de l'écran.
+  scroll-margin-top: var(--sp-4);
   display: grid;
   grid-template-columns: auto 1fr;
   gap: clamp(10px, 1.2vw, 16px);
@@ -117,5 +120,61 @@
     font-size: clamp(12.5px, 1.3vw, 16px);
     font-style: italic;
     color: var(--accent);
+  }
+}
+
+// Retrait d'une étape. Discret par défaut — le geste emporte les items et les
+// liaisons —, franc une fois armé.
+.step__remove {
+  padding: 0 var(--sp-1);
+  border: 0;
+  background: none;
+  color: var(--border-strong);
+  font: inherit;
+  font-size: var(--fs-sm);
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover { color: var(--danger); }
+
+  &[data-armed] {
+    color: var(--danger);
+    font-size: var(--fs-md);
+  }
+
+  &:disabled { opacity: 0.5; cursor: progress; }
+}
+
+.step {
+  &__nights-step {
+    padding: 0 3px;
+    border: 0;
+    background: none;
+    color: var(--accent);
+    font: inherit;
+    font-size: var(--fs-sm);
+    line-height: 1;
+    cursor: pointer;
+
+    &:disabled { opacity: 0.3; cursor: default; }
+  }
+
+  &__locate-row {
+    margin-top: 9px;
+  }
+
+  // Bleuté comme la pilule LOCALISER des items : situer est une action
+  // technique, pas une décision de voyage.
+  &__locate {
+    padding: 2px 10px;
+    border: 1px dashed var(--info);
+    border-radius: var(--radius-pill);
+    background: none;
+    color: var(--info);
+    font: inherit;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
   }
 }
