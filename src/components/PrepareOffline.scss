@@ -1,0 +1,57 @@
+@use '../theme/mixins';
+
+.prepare {
+  display: grid;
+  gap: var(--sp-2);
+  justify-items: start;
+  padding: var(--sp-4);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+
+  &__button,
+  &__again {
+    padding: var(--sp-2) var(--sp-4);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--surface-warm);
+    color: var(--accent);
+    font: inherit;
+    font-size: var(--fs-sm);
+    cursor: pointer;
+
+    &:hover { border-color: var(--accent); }
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  &__hint,
+  &__label,
+  &__done {
+    margin: 0;
+    color: var(--muted);
+    font-size: var(--fs-xs);
+  }
+
+  &__done { color: var(--text); }
+
+  &__error {
+    margin: 0;
+    color: var(--danger);
+    font-size: var(--fs-xs);
+  }
+
+  &__bar {
+    justify-self: stretch;
+    height: 6px;
+    overflow: hidden;
+    border-radius: var(--radius-pill);
+    background: var(--surface-tint);
+
+    span {
+      display: block;
+      height: 100%;
+      background: var(--accent);
+      transition: width var(--dur-base) var(--ease-out);
+    }
+  }
+}

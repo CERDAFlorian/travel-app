@@ -11,7 +11,10 @@
     "img:check": "node scripts/optimize-images.mjs --check",
     "sql:check": "node scripts/check-sql.mjs",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "icons": "node scripts/build-icons.mjs",
+    "fonts": "node scripts/build-fonts.mjs",
+    "map": "node scripts/build-map.mjs 50m"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",
@@ -23,6 +26,7 @@
     "@vitejs/plugin-react": "^6.1.0",
     "sass": "^1.103.1",
     "vite": "^8.2.2",
+    "vite-plugin-pwa": "^1.3.0",
     "vitest": "^4.1.11"
   }
 }

@@ -27,11 +27,68 @@ npm run preview   # sert dist/ localement
 ## Vérifications
 
 ```sh
+npm test            # suite unitaire Vitest
 npm run img:check   # les WebP servis sont à jour vis-à-vis des PNG sources
 npm run sql:check   # cohérence du schéma, des policies RLS et du seed
 ```
 
-Les deux tournent en CI sur chaque push.
+Les trois tournent en CI sur chaque push.
+
+## Ressources générées
+
+Trois scripts produisent des fichiers **commités**. Ils ne tournent jamais au
+build : `npm run build` n'a donc besoin ni de réseau ni d'outil externe.
+
+```sh
+npm run map      # fond de carte du Japon → src/data/japan-geometry.js
+npm run icons    # icônes PWA et écran d'accueil → public/
+npm run fonts    # Playfair Display + EB Garamond → public/fonts/
+npm run img      # PNG de design/img/ → WebP de public/img/
+```
+
+`map` et `fonts` téléchargent depuis le réseau ; `icons` encode les PNG à la
+main (aucune dépendance graphique) ; `img` a besoin de `cwebp`
+(`brew install webp`).
+
+## Avant de partir
+
+À faire **la veille du départ, en wifi**, dans cet ordre.
+
+**1. Installer l'app sur l'écran d'accueil.** Ouvrir le site dans **Safari**
+(pas Chrome), puis *Partager → Sur l'écran d'accueil*.
+
+Ce n'est pas qu'un confort : Safari efface toutes les données d'un site après
+**7 jours sans visite** — IndexedDB, caches, service worker. Les apps ajoutées
+à l'écran d'accueil en sont **exemptées**. En mode navigateur, le cache peut
+donc avoir disparu le jour où on en a besoin.
+
+**2. Ouvrir l'app depuis l'icône**, se connecter, et appuyer sur
+**« Préparer le voyage hors ligne »** sur la page des voyages.
+
+Ce bouton télécharge tous les voyages en entier. Naviguer dans l'app ne suffit
+pas : il suffit de n'avoir jamais ouvert l'étape de Hiroshima pour qu'elle
+manque dans le train.
+
+**3. Vérifier**, toujours en wifi : le bandeau doit afficher le nombre de
+voyages en cache et de fichiers précachés.
+
+**4. Tester en vrai.** Mode avion, **fermer complètement l'app** (balayer
+depuis le sélecteur d'apps), rouvrir. Tout doit s'afficher : étapes, photos,
+carte, budget. Si quelque chose manque, c'est maintenant qu'il faut le voir.
+
+### Ce qui marche hors ligne, et ce qui ne marche pas
+
+| | |
+|---|---|
+| Lire l'itinéraire, les photos, la carte, le budget | ✅ |
+| Naviguer entre les écrans | ✅ |
+| Ajouter, modifier, supprimer | ❌ écriture bloquée |
+| Localiser un lieu (Nominatim) | ❌ et sans objet hors préparation |
+| Se connecter | ❌ — mais inutile : l'affichage ne dépend pas de la session |
+
+Le jeton d'authentification expire en une heure et son renouvellement demande
+le réseau. C'est prévu : l'app rend le cache sans se soucier de qui est
+connecté.
 
 ## Variables d'environnement
 

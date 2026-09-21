@@ -3,6 +3,7 @@ import { useTheme } from '@/hooks/useTheme.js';
 import { APP_THEME } from '@/theme/themes.js';
 import { formatPeriod } from '@/lib/dates.js';
 import SyncLine from '@/components/SyncLine.jsx';
+import PrepareOffline from '@/components/PrepareOffline.jsx';
 import './Trips.scss';
 
 const plural = (n, one, many) => `${n} ${n > 1 ? many : one}`;
@@ -73,6 +74,10 @@ export default function Trips({
           ))}
         </ul>
       )}
+
+      {/* Réservé à une session ouverte : la préparation va chercher la donnée
+          sur le réseau, ce qu'un visiteur déconnecté ne peut pas faire. */}
+      {email && <PrepareOffline />}
 
       <footer className="trips__foot">
         <span className="trips__email">{email ?? 'Non connecté · lecture seule'}</span>
