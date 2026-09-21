@@ -19,6 +19,8 @@ function parsePrice(raw) {
 // d'emblée ferait de Tokyo un mur de texte.
 export default function CategoryAccordion({ category, items, step, tripTitle, readOnly, onChanged }) {
   const [open, setOpen] = useState(false);
+  // Item tout juste créé : sa ligne ouvre d'elle-même la recherche d'adresse.
+  const [justAdded, setJustAdded] = useState(null);
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState('');
   const [busy, setBusy] = useState(false);
@@ -39,13 +41,16 @@ export default function CategoryAccordion({ category, items, step, tripTitle, re
 
     setBusy(true);
     try {
-      await addItem({
+      const id = await addItem({
         stepId: step.id,
         category: category.key,
         position: nextPosition,
         title: trimmed,
         price: parsePrice(price),
       });
+      // Une note perso n'a pas de lieu : lui proposer une adresse n'a aucun
+      // sens. Les cinq autres catégories, si.
+      if (category.onMap) setJustAdded(id);
       await onChanged();
       setTitle('');
       setPrice('');
@@ -84,6 +89,7 @@ export default function CategoryAccordion({ category, items, step, tripTitle, re
                 step={step}
                 tripTitle={tripTitle}
                 readOnly={readOnly}
+                autoLocate={item.id === justAdded}
                 onChanged={onChanged}
               />
             ))}

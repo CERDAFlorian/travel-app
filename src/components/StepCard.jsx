@@ -40,11 +40,14 @@ export default function StepCard({
   onSelect,
   onRemove,
   onNights,
+  autoLocate,
   onChanged,
 }) {
   const [asking, setAsking] = useState(false);
   const [removing, setRemoving] = useState(false);
-  const [locating, setLocating] = useState(false);
+  // Vrai au montage de l'étape qu'on vient d'ajouter : elle cherche sa
+  // position toute seule.
+  const [locating, setLocating] = useState(Boolean(autoLocate));
 
   const itemsByCategory = new Map(CATEGORIES.map(({ key }) => [key, []]));
   for (const item of step.items) {

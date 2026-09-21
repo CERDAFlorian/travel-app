@@ -29,8 +29,10 @@ function parsePrice(raw) {
 
 // Une ligne d'item, sur UNE ligne comme dans le design : vignette, pastille,
 // nom, note, pilule Plan, puis à droite l'étoile, LOCALISER, le prix et ✕.
-export default function ItemRow({ item, step, tripTitle, readOnly, onChanged }) {
-  const [locating, setLocating] = useState(false);
+export default function ItemRow({ item, step, tripTitle, readOnly, autoLocate, onChanged }) {
+  // `autoLocate` n'est vrai qu'au montage de la ligne créée à l'instant : la
+  // recherche part sans qu'on ait à cliquer « Localiser ».
+  const [locating, setLocating] = useState(Boolean(autoLocate));
   const [editing, setEditing] = useState(false);
   const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState(false);

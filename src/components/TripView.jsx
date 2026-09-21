@@ -38,6 +38,7 @@ export default function TripView({
   onChanged,
 }) {
   const [selectedStepId, setSelectedStepId] = useState(null);
+  const [justAddedStep, setJustAddedStep] = useState(null);
 
   // Les dates affichées sont DÉRIVÉES de l'arrivée du vol aller et du nombre
   // de nuits, pas lues dans `date_start` / `date_end`. Ajouter un vol qui
@@ -76,7 +77,8 @@ export default function TripView({
 
   const handleAddStep = useCallback(
     async (values) => {
-      await addStep(view, values);
+      const id = await addStep(view, values);
+      setJustAddedStep(id);
       await onChanged();
     },
     [view, onChanged],
@@ -129,6 +131,7 @@ export default function TripView({
               onSelect={setSelectedStepId}
               onRemove={handleRemoveStep}
               onNights={handleNights}
+              autoLocate={step.id === justAddedStep}
               // Après chaque écriture on resynchronise le voyage entier plutôt
               // que de rapiécer le cache : une seule source de vérité.
               onChanged={onChanged}

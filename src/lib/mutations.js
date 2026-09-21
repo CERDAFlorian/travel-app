@@ -19,15 +19,27 @@ import {
 // de réseau, ou pas de session. RLS refuserait de toute façon, mais mieux vaut
 // une UI qui n'invite pas au geste qu'un message d'erreur après coup.
 
+// Renvoie l'identifiant créé, pour que l'appelant puisse enchaîner — ici,
+// ouvrir la recherche d'adresse sur la ligne qui vient d'apparaître.
+//
+// `.select()` est possible ici, contrairement à `trips` : la policy de lecture
+// d'un item remonte à son étape puis au voyage, dont on est déjà membre au
+// moment de l'insertion. Sur `trips`, c'est le trigger AFTER qui crée
+// l'appartenance, donc trop tard pour un RETURNING — voir 0002_rls.sql.
 export async function addItem({ stepId, category, title, price, position }) {
-  const { error } = await supabase.from('items').insert({
-    step_id: stepId,
-    category,
-    title: title.trim(),
-    price: price ?? null,
-    position,
-  });
+  const { data, error } = await supabase
+    .from('items')
+    .insert({
+      step_id: stepId,
+      category,
+      title: title.trim(),
+      price: price ?? null,
+      position,
+    })
+    .select('id')
+    .single();
   if (error) fail(error, "Ajout de l'item");
+  return data.id;
 }
 
 export async function updateItem(id, { title, price, notes }) {
@@ -143,14 +155,18 @@ async function realignTripStart(trip, flights) {
 export async function addStep(trip, { name, nights }) {
   const start = tripEndDate(trip.startDate, trip.steps);
 
-  const { error } = await supabase.from('steps').insert({
-    trip_id: trip.id,
-    position: trip.steps.length + 1,
-    name: name.trim(),
-    nights,
-    date_start: start,
-    date_end: addDays(start, nights),
-  });
+  const { data, error } = await supabase
+    .from('steps')
+    .insert({
+      trip_id: trip.id,
+      position: trip.steps.length + 1,
+      name: name.trim(),
+      nights,
+      date_start: start,
+      date_end: addDays(start, nights),
+    })
+    .select('id')
+    .single();
   if (error) fail(error, "Ajout de l'étape");
 
   const { error: endError } = await supabase
@@ -158,6 +174,8 @@ export async function addStep(trip, { name, nights }) {
     .update({ end_date: addDays(start, nights) })
     .eq('id', trip.id);
   if (endError) fail(endError, 'Mise à jour de la fin du voyage');
+
+  return data.id;
 }
 
 // Change le nombre de nuits d'une étape, et décale tout ce qui suit.
