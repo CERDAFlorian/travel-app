@@ -108,6 +108,7 @@ const files = {
   share: 'supabase/migrations/0003_partage.sql',
   flights: 'supabase/migrations/0004_vols.sql',
   stopovers: 'supabase/migrations/0005_escales.sql',
+  transport: 'supabase/migrations/0006_trajets.sql',
   seed: 'supabase/seed.sql',
 };
 

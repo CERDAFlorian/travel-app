@@ -9,7 +9,9 @@ automatiquement : ni le repo, ni la CI, ni le déploiement ne parlent à Supabas
 | 2 | `migrations/0002_rls.sql` | fonctions d'accès, trigger, policies | oui, tout est en `create or replace` / `drop … if exists` |
 | 3 | `migrations/0003_partage.sql` | jeton de partage + fonction de lecture publique | oui |
 | 4 | `migrations/0004_vols.sql` | ouvre la direction « interieur » sur les vols | oui |
-| 5 | `seed.sql` | le voyage Japon | oui, **il écrase le voyage `japon-2026`** |
+| 5 | `migrations/0005_escales.sql` | escales et jour d'arrivée des vols | oui |
+| 6 | `migrations/0006_trajets.sql` | horaires des trajets entre étapes | oui |
+| 7 | `seed.sql` | le voyage Japon | oui, **il écrase le voyage `japon-2026`** |
 
 ## Application — pas à pas
 

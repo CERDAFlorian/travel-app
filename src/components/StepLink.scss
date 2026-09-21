@@ -1,0 +1,153 @@
+@use '../theme/mixins';
+
+// Une ligne fine qui tient le fil entre deux étapes, avec son libellé au
+// milieu. Le trait s'efface vers les extrémités pour ne pas concurrencer les
+// bordures des cartes.
+.link {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 26px;
+  padding: 0 clamp(8px, 1.4vw, 18px);
+
+  &__rule {
+    flex: 1;
+    height: 1px;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--border-strong) 0 5px,
+      transparent 5px 10px
+    );
+  }
+
+  &__summary {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-1);
+    flex: none;
+  }
+
+  // Le résumé est un bouton, pas un texte : cliquer dessus rouvre la saisie.
+  &__label {
+    padding: 2px var(--sp-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    color: var(--text-soft);
+    font: inherit;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    &:focus-visible { @include mixins.focus-ring; }
+    &:disabled { cursor: default; }
+  }
+
+  // Discret tant qu'aucun trajet n'est saisi : c'est une invitation, pas une
+  // action attendue. Sept intervalles, sept boutons — ils ne doivent pas
+  // hacher la lecture de l'itinéraire.
+  &__add {
+    flex: none;
+    padding: 1px var(--sp-3);
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: var(--fs-xs);
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover { border-color: var(--accent); color: var(--accent); }
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  &__delete {
+    flex: none;
+    padding: 0 3px;
+    border: 0;
+    background: none;
+    color: var(--border-strong);
+    font: inherit;
+    font-size: var(--fs-xs);
+    cursor: pointer;
+
+    &:hover { color: var(--danger); }
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  &--editing {
+    padding-block: var(--sp-2);
+  }
+
+  &__form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: var(--sp-3);
+    border: 1px dashed var(--border-strong);
+    border-radius: 12px;
+    background: var(--surface-sunken);
+  }
+
+  &__field,
+  &__time {
+    padding: 4px 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: 7px;
+    background: var(--surface-raised);
+    color: var(--text);
+    font: inherit;
+    // 16 px minimum : en dessous, Safari iOS zoome au focus et ne dézoome pas.
+    font-size: var(--fs-md);
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  &__time { width: 7.5em; }
+
+  &__arrow { color: var(--muted); }
+
+  &__preview {
+    color: var(--accent);
+    font-size: var(--fs-sm);
+    font-style: italic;
+  }
+
+  &__save {
+    padding: 4px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: 7px;
+    background: var(--surface-warm);
+    color: var(--accent);
+    font: inherit;
+    font-size: var(--fs-sm);
+    cursor: pointer;
+
+    &:hover { border-color: var(--accent); }
+    &:focus-visible { @include mixins.focus-ring; }
+    &:disabled { opacity: 0.6; cursor: progress; }
+  }
+
+  &__cancel {
+    padding: 0 var(--sp-2);
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: var(--fs-sm);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  &__error {
+    flex-basis: 100%;
+    margin: 0;
+    color: var(--danger);
+    font-size: var(--fs-xs);
+  }
+}

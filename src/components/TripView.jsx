@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { Fragment, useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import SyncLine from '@/components/SyncLine.jsx';
 import TripHeader from '@/components/TripHeader.jsx';
@@ -11,6 +11,7 @@ import Experiences from '@/components/Experiences.jsx';
 import BudgetPanel from '@/components/BudgetPanel.jsx';
 import ShareLink from '@/components/ShareLink.jsx';
 import AddStep from '@/components/AddStep.jsx';
+import StepLink from '@/components/StepLink.jsx';
 import { addStep, removeStep, setStepNights } from '@/lib/mutations.js';
 import { resolveItinerary } from '@/lib/itinerary.js';
 import './TripView.scss';
@@ -87,10 +88,13 @@ export default function TripView({
   // Le trajet est rattaché à l'étape de départ : il se lit en pied de la carte
   // qu'on vient de finir, au moment où l'on se demande comment rejoindre la
   // suivante.
-  const legByFromStep = useMemo(() => {
+  // Un trajet est identifié par le COUPLE d'étapes, pas par son départ seul :
+  // une liaison vers une étape non adjacente s'afficherait sinon au mauvais
+  // endroit.
+  const legBetween = useMemo(() => {
     const map = new Map();
-    for (const leg of view.legs ?? []) map.set(leg.from_step, leg);
-    return map;
+    for (const leg of view.legs ?? []) map.set(`${leg.from_step}>${leg.to_step}`, leg);
+    return (from, to) => map.get(`${from}>${to}`) ?? null;
   }, [view]);
 
   return (
@@ -120,23 +124,41 @@ export default function TripView({
 
       <main className="trip__main">
         <section className="trip__steps">
-          {view.steps.map((step) => (
-            <StepCard
-              key={step.id}
-              step={step}
-              tripTitle={view.title}
-              readOnly={readOnly}
-              selected={step.id === selectedStepId}
-              leg={legByFromStep.get(step.id)}
-              onSelect={setSelectedStepId}
-              onRemove={handleRemoveStep}
-              onNights={handleNights}
-              autoLocate={step.id === justAddedStep}
-              // Après chaque écriture on resynchronise le voyage entier plutôt
-              // que de rapiécer le cache : une seule source de vérité.
-              onChanged={onChanged}
-            />
-          ))}
+          {view.steps.map((step, index) => {
+            const next = view.steps[index + 1];
+
+            return (
+              <Fragment key={step.id}>
+                <StepCard
+                  step={step}
+                  tripTitle={view.title}
+                  readOnly={readOnly}
+                  selected={step.id === selectedStepId}
+                  onSelect={setSelectedStepId}
+                  onRemove={handleRemoveStep}
+                  onNights={handleNights}
+                  autoLocate={step.id === justAddedStep}
+                  // Après chaque écriture on resynchronise le voyage entier
+                  // plutôt que de rapiécer le cache : une seule source de
+                  // vérité.
+                  onChanged={onChanged}
+                />
+
+                {/* Le trajet appartient à l'intervalle, pas à la ville qu'on
+                    quitte : il se pose donc entre les deux cartes. */}
+                {next && (
+                  <StepLink
+                    trip={view}
+                    fromStep={step}
+                    toStep={next}
+                    leg={legBetween(step.id, next.id)}
+                    readOnly={readOnly}
+                    onChanged={onChanged}
+                  />
+                )}
+              </Fragment>
+            );
+          })}
 
           {!readOnly && <AddStep onAdd={handleAddStep} />}
         </section>
