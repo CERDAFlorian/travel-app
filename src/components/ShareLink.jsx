@@ -69,7 +69,7 @@ export default function ShareLink({ trip, readOnly, onChanged }) {
           disabled={busy}
           onClick={() => run(() => createShareToken(trip.id))}
         >
-          {busy ? 'Création…' : 'Créer un lien de partage'}
+          {busy ? '…' : 'Partager'}
         </button>
       )}
 
