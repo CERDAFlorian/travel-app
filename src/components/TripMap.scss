@@ -184,7 +184,7 @@
     background: var(--surface-sunken);
     color: var(--text-heading);
     font: inherit;
-    font-size: clamp(11px, 1.15vw, 14px);
+    font-size: clamp(12px, 1.15vw, 14px);
     cursor: pointer;
 
     &::before {

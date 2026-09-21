@@ -4,11 +4,10 @@
   min-height: 100svh;
   background: var(--bg);
 
+  // Plus de position absolue : le lien vit dans le flux, sur la ligne des
+  // chiffres du voyage.
   &__back {
-    position: absolute;
-    left: var(--sp-3);
-    top: var(--sp-3);
-    z-index: var(--z-sticky);
+    flex: none;
     padding: var(--sp-1) var(--sp-3);
     border: 1px solid var(--border-strong);
     border-radius: var(--radius-pill);
@@ -34,10 +33,7 @@
   // Bandeau de la vue partagée : il remplace le retour « Mes voyages », qui
   // ne mènerait nulle part pour qui n'a pas de compte.
   &__shared {
-    position: absolute;
-    left: var(--sp-3);
-    top: var(--sp-3);
-    z-index: var(--z-sticky);
+    flex: none;
     margin: 0;
     padding: var(--sp-1) var(--sp-3);
     border: 1px solid var(--border-strong);
@@ -97,7 +93,7 @@
   }
 
   &__map-hint {
-    font-size: clamp(11.5px, 1.2vw, 14.5px);
+    font-size: clamp(12px, 1.2vw, 14.5px);
     font-style: italic;
     color: var(--text-soft);
   }

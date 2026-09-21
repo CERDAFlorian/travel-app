@@ -11,7 +11,7 @@
   background: var(--surface-sunken);
 
   &__title {
-    font-size: clamp(11px, 1.1vw, 13px);
+    font-size: clamp(12px, 1.1vw, 13px);
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--muted);
@@ -53,7 +53,7 @@
   &__hint {
     flex-basis: 100%;
     margin: 0;
-    font-size: clamp(11.5px, 1.2vw, 14px);
+    font-size: clamp(12px, 1.2vw, 14px);
     font-style: italic;
     color: var(--text-soft);
   }

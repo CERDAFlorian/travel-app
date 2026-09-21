@@ -99,15 +99,20 @@ export default function TripView({
 
   return (
     <div className="trip">
-      {shared ? (
-        <p className="trip__shared">Vue partagée · lecture seule</p>
-      ) : (
-        <Link className="trip__back" to="/">
-          ← Mes voyages
-        </Link>
-      )}
-
-      <TripHeader trip={view} selectedStepId={selectedStepId} onSelectStep={selectStep} />
+      <TripHeader
+        trip={view}
+        selectedStepId={selectedStepId}
+        onSelectStep={selectStep}
+        back={
+          shared ? (
+            <p className="trip__shared">Vue partagée · lecture seule</p>
+          ) : (
+            <Link className="trip__back" to="/">
+              ← Mes voyages
+            </Link>
+          )
+        }
+      />
 
       <div className="trip__strip">
         <SyncLine

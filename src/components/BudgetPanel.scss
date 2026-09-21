@@ -29,7 +29,7 @@
   }
 
   &__hint {
-    font-size: clamp(11.5px, 1.2vw, 14.5px);
+    font-size: clamp(12px, 1.2vw, 14.5px);
     font-style: italic;
     color: var(--text-soft);
   }
@@ -104,7 +104,7 @@
   &__label { font-size: clamp(12.5px, 1.3vw, 16px); }
 
   &__count {
-    font-size: clamp(11px, 1.1vw, 13px);
+    font-size: clamp(12px, 1.1vw, 13px);
     font-style: italic;
     color: var(--muted);
   }
@@ -133,7 +133,7 @@
   }
 
   &__caption {
-    font-size: clamp(10.5px, 1.1vw, 13px);
+    font-size: clamp(12px, 1.1vw, 13px);
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--muted);
@@ -156,7 +156,7 @@
   &__note {
     margin: 0 0 0 auto;
     max-width: 320px;
-    font-size: clamp(11.5px, 1.2vw, 14.5px);
+    font-size: clamp(12px, 1.2vw, 14.5px);
     font-style: italic;
     color: var(--text-soft);
   }

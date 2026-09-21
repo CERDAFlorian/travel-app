@@ -65,7 +65,7 @@
   }
 
   &__meta {
-    font-size: clamp(11px, 1.15vw, 13.5px);
+    font-size: clamp(12px, 1.15vw, 13.5px);
     font-style: italic;
     color: var(--text-soft);
   }
@@ -75,7 +75,7 @@
     border: 1px solid var(--border-strong);
     border-radius: var(--radius-pill);
     color: var(--text-soft);
-    font-size: clamp(10.5px, 1.05vw, 12.5px);
+    font-size: clamp(12px, 1.05vw, 12.5px);
     letter-spacing: 0.06em;
     text-transform: uppercase;
     text-decoration: none;
@@ -124,7 +124,7 @@
     background: none;
     color: var(--info);
     font: inherit;
-    font-size: clamp(10.5px, 1.05vw, 12.5px);
+    font-size: clamp(12px, 1.05vw, 12.5px);
     letter-spacing: 0.06em;
     text-transform: uppercase;
     white-space: nowrap;
@@ -148,7 +148,7 @@
     background: var(--surface-raised);
     color: var(--accent);
     font: inherit;
-    font-size: clamp(11.5px, 1.2vw, 14px);
+    font-size: clamp(12px, 1.2vw, 14px);
     font-style: italic;
     text-align: right;
 
@@ -156,7 +156,7 @@
   }
 
   &__price-read {
-    font-size: clamp(11.5px, 1.2vw, 14px);
+    font-size: clamp(12px, 1.2vw, 14px);
     font-style: italic;
     color: var(--accent);
     font-variant-numeric: tabular-nums;

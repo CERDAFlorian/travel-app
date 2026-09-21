@@ -3,6 +3,7 @@ import { formatDay, formatStepDates } from '@/lib/dates.js';
 import { flightArrival } from '@/lib/itinerary.js';
 import { formatEuros, priceInEuros, toEuros } from '@/lib/currency.js';
 import { addFlight, deleteFlight, updateFlight } from '@/lib/mutations.js';
+import { MOBILE_QUERY, useMediaQuery } from '@/hooks/useMediaQuery.js';
 import ConfirmDialog from './ConfirmDialog.jsx';
 import './FlightsPanel.scss';
 
@@ -53,6 +54,12 @@ export default function FlightsPanel({ trip, itinerary, readOnly, onChanged }) {
   // autant de place qu'un vol réel alors qu'on l'utilise trois fois par voyage.
   const [adding, setAdding] = useState(false);
 
+  // Sur mobile, le bloc des vols est replié : il précède l'itinéraire, et
+  // quatre cartes de vol repoussaient la première étape hors de l'écran. Sur
+  // grand écran il reste ouvert, la place ne manque pas.
+  const isMobile = useMediaQuery(MOBILE_QUERY);
+  const [open, setOpen] = useState(!isMobile);
+
   const sum = flights.reduce(
     (amount, flight) => amount + (toEuros(flight.price, flight.currency ?? 'EUR') ?? 0),
     0,
@@ -63,22 +70,48 @@ export default function FlightsPanel({ trip, itinerary, readOnly, onChanged }) {
 
   return (
     <section className="flights">
-      <div className="flights__card">
+      <div className="flights__card" data-collapsed={isMobile && !open ? '' : undefined}>
         <div className="flights__head">
-          <h2 className="flights__title">Billets d'avion</h2>
-          <span className="flights__hint">
-            le voyage commence à l'arrivée du vol aller
-          </span>
+          {/* Le titre devient le bouton de pliage, mais seulement là où le
+              pliage existe : sur grand écran, un bouton qui ne fait rien
+              serait un piège. */}
+          {isMobile ? (
+            <button
+              type="button"
+              className="flights__toggle"
+              aria-expanded={open}
+              onClick={() => setOpen((value) => !value)}
+            >
+              <h2 className="flights__title">Billets d'avion</h2>
+              <span className="flights__count">{flights.length}</span>
+              <span className="flights__caret" aria-hidden="true">
+                {open ? '▾' : '▸'}
+              </span>
+            </button>
+          ) : (
+            <h2 className="flights__title">Billets d'avion</h2>
+          )}
+          {!isMobile && (
+            <span className="flights__hint">
+              le voyage commence à l'arrivée du vol aller
+            </span>
+          )}
 
           {/* Les deux vols bornent le séjour. Si les nuits planifiées ne
               remplissent pas la fenêtre, on le dit — sans rien corriger
               d'autorité : c'est une décision de voyage, pas une erreur. */}
           <NightsGap gap={itinerary?.nightsGap} />
-          <span className="flights__total">
-            Total vols <em>{total}</em>
-          </span>
+          {/* Le total disparaît quand le bloc est replié : le bouton de pliage
+              occupe toute la ligne, le total passait donc en dessous et
+              l'en-tête changeait de hauteur selon l'état. Replié, on veut une
+              seule ligne, toujours la même. */}
+          {(!isMobile || open) && (
+            <span className="flights__total">
+              Total vols <em>{total}</em>
+            </span>
+          )}
 
-          {!readOnly && (
+          {!readOnly && (!isMobile || open) && (
             <button
               type="button"
               className="flights__add"
@@ -90,6 +123,7 @@ export default function FlightsPanel({ trip, itinerary, readOnly, onChanged }) {
           )}
         </div>
 
+        {(!isMobile || open) && (
         <div className="flights__grid">
           {flights.map((flight) => (
             <FlightCard
@@ -102,8 +136,9 @@ export default function FlightsPanel({ trip, itinerary, readOnly, onChanged }) {
           ))}
 
         </div>
+        )}
 
-        {!readOnly && adding && (
+        {(!isMobile || open) && !readOnly && adding && (
           <FlightForm
             trip={trip}
             onChanged={onChanged}

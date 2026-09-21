@@ -27,7 +27,7 @@
   }
 
   &__hint {
-    font-size: clamp(11.5px, 1.2vw, 14.5px);
+    font-size: clamp(12px, 1.2vw, 14.5px);
     font-style: italic;
     color: var(--text-soft);
   }
@@ -81,14 +81,14 @@
   }
 
   &__label {
-    font-size: clamp(10.5px, 1.05vw, 12.5px);
+    font-size: clamp(12px, 1.05vw, 12.5px);
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--accent);
   }
 
   &__date {
-    font-size: clamp(11.5px, 1.2vw, 14px);
+    font-size: clamp(12px, 1.2vw, 14px);
     font-style: italic;
     color: var(--text-soft);
   }
@@ -114,7 +114,7 @@
   &__times {
     margin-top: 2px;
     color: var(--text-soft);
-    font-size: clamp(11.5px, 1.2vw, 14px);
+    font-size: clamp(12px, 1.2vw, 14px);
     font-variant-numeric: tabular-nums;
   }
 
@@ -133,7 +133,7 @@
   }
 
   &__number {
-    font-size: clamp(11.5px, 1.2vw, 14px);
+    font-size: clamp(12px, 1.2vw, 14px);
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--muted);
@@ -309,5 +309,47 @@
   &[data-over] {
     border-color: var(--danger);
     color: var(--danger);
+  }
+}
+
+.flights {
+  // Le titre devient bouton sur mobile : toute la ligne est cliquable, pas
+  // seulement un petit chevron au bord.
+  &__toggle {
+    display: flex;
+    align-items: baseline;
+    gap: var(--sp-2);
+    flex: 1;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  &__count {
+    padding: 1px var(--sp-2);
+    border-radius: var(--radius-pill);
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: var(--fs-xs);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__caret {
+    margin-left: auto;
+    color: var(--muted);
+  }
+
+  // Replié, la carte se resserre : elle ne doit pas garder la hauteur d'un
+  // bloc qui n'affiche plus rien.
+  &__card[data-collapsed] {
+    padding-bottom: clamp(8px, 1vw, 12px);
+  }
+
+  &__card[data-collapsed] &__head {
+    margin-bottom: 0;
   }
 }

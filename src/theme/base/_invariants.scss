@@ -33,7 +33,9 @@
   --sp-8: 64px;
 
   // Échelle typographique.
-  --fs-xs:  12px;
+  // 13 px et non 12 : en dessous, les libellés secondaires — pastilles,
+  // notes, méta — deviennent pénibles à lire sur un écran de téléphone.
+  --fs-xs:  13px;
   --fs-sm:  14px;
   --fs-md:  16px;
   --fs-lg:  20px;

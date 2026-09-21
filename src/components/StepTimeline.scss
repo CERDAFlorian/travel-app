@@ -5,16 +5,50 @@
   gap: 4px;
   align-items: stretch;
 
+  // Sur mobile, sept segments partagés sur 375 px donnent des bandes
+  // illisibles. La frise devient défilante : chaque segment garde sa largeur
+  // proportionnelle aux nuits, et l'on fait glisser.
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  // Le dégradé des bords EST l'indice qu'il y a plus à voir. Une barre de
+  // défilement ferait le même travail en moins discret, et n'apparaît de
+  // toute façon pas au doigt.
+  scrollbar-width: none;
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 14px,
+    #000 calc(100% - 26px),
+    transparent 100%
+  );
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  // Au-delà, tout tient : plus de défilement, plus de dégradé.
+  @include mixins.from('md') {
+    overflow-x: visible;
+    mask-image: none;
+  }
+
   &__segment {
     flex-basis: 0;
-    min-width: 0;
+    // Largeur plancher proportionnelle au nombre de nuits : quatre nuits à
+    // Kyoto occupent bien plus qu'une à Shirakawa-go, même en défilant.
+    min-width: calc(var(--grow, 3) * 1.5rem);
+    scroll-snap-align: start;
     padding: 6px 8px;
+
+    @include mixins.from('md') {
+      min-width: 0;
+    }
     border: 1px solid var(--border-strong);
     border-radius: 6px;
     background: var(--surface-tint);
     color: var(--text-soft);
     font: inherit;
-    font-size: clamp(10px, 1.05vw, 13.5px);
+    font-size: clamp(12px, 1.05vw, 13.5px);
     letter-spacing: 0.04em;
     text-transform: uppercase;
     // L'ellipse plutôt que le retour à la ligne : les segments doivent garder

@@ -15,7 +15,10 @@ export default function StepTimeline({ steps, selectedId, onSelect }) {
           key={step.id}
           type="button"
           className="timeline__segment"
-          style={{ flexGrow: (step.nights ?? 0) + 2.5 }}
+          // `--grow` sert au mode défilant : sur mobile les segments ne
+          // peuvent plus se partager la largeur, mais ils gardent leur
+          // proportion — c'est elle qui donne le rythme du voyage.
+          style={{ flexGrow: (step.nights ?? 0) + 2.5, '--grow': (step.nights ?? 0) + 2.5 }}
           data-selected={step.id === selectedId || undefined}
           onClick={() => onSelect(step.id === selectedId ? null : step.id)}
           title={`${step.name} · ${formatStepDates(step.date_start, step.date_end)}`}

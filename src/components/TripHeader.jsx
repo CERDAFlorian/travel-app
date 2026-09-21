@@ -11,7 +11,7 @@ const GEOGRAPHIC = new Set(CATEGORIES.filter((c) => c.onMap).map((c) => c.key));
 // (-18px, -14px), le Fuji occupe le coin droit. Le bloc de titre réserve la
 // place par ses marges internes, très asymétriques, pour ne jamais passer
 // dessous.
-export default function TripHeader({ trip, selectedStepId, onSelectStep }) {
+export default function TripHeader({ trip, selectedStepId, onSelectStep, back }) {
   const steps = trip.steps;
   const nights = steps.reduce((total, step) => total + (step.nights ?? 0), 0);
   const places = steps.reduce(
@@ -31,6 +31,14 @@ export default function TripHeader({ trip, selectedStepId, onSelectStep }) {
           <div className="trip-header__tagline">— {trip.subtitle}</div>
           <div className="trip-header__dates">{formatTripRange(trip.startDate, trip.endDate)}</div>
         </div>
+      </div>
+
+      {/* Le retour et les chiffres partagent une ligne, SOUS le titre et les
+          dates : on lit d'abord où l'on va, ensuite de quoi c'est fait. Le
+          lien flottait auparavant en position absolue, où il chevauchait le
+          décor et volait de la place au titre sur un écran étroit. */}
+      <div className="trip-header__summary">
+        {back}
 
         <ul className="trip-header__chips">
           <li className="trip-header__chip">{steps.length} étapes</li>
