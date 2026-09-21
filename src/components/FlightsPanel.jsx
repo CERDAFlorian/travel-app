@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { formatDay, formatStepDates } from '@/lib/dates.js';
 import { flightArrival } from '@/lib/itinerary.js';
-import { formatEuros, priceInEuros, toEuros } from '@/lib/currency.js';
+import { priceInEuros } from '@/lib/currency.js';
 import { addFlight, deleteFlight, updateFlight } from '@/lib/mutations.js';
 import { MOBILE_QUERY, useMediaQuery } from '@/hooks/useMediaQuery.js';
 import ConfirmDialog from './ConfirmDialog.jsx';
@@ -60,12 +60,6 @@ export default function FlightsPanel({ trip, itinerary, readOnly, onChanged }) {
   const isMobile = useMediaQuery(MOBILE_QUERY);
   const [open, setOpen] = useState(!isMobile);
 
-  const sum = flights.reduce(
-    (amount, flight) => amount + (toEuros(flight.price, flight.currency ?? 'EUR') ?? 0),
-    0,
-  );
-  const total = sum > 0 ? formatEuros(sum) : 'à renseigner';
-
   if (flights.length === 0 && readOnly) return null;
 
   return (
@@ -101,16 +95,6 @@ export default function FlightsPanel({ trip, itinerary, readOnly, onChanged }) {
               remplissent pas la fenêtre, on le dit — sans rien corriger
               d'autorité : c'est une décision de voyage, pas une erreur. */}
           <NightsGap gap={itinerary?.nightsGap} />
-          {/* Le total disparaît quand le bloc est replié : le bouton de pliage
-              occupe toute la ligne, le total passait donc en dessous et
-              l'en-tête changeait de hauteur selon l'état. Replié, on veut une
-              seule ligne, toujours la même. */}
-          {(!isMobile || open) && (
-            <span className="flights__total">
-              Total vols <em>{total}</em>
-            </span>
-          )}
-
           {!readOnly && (!isMobile || open) && (
             <button
               type="button"

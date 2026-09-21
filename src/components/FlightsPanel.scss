@@ -32,19 +32,14 @@
     color: var(--text-soft);
   }
 
-  &__total {
-    margin-left: auto;
-    font-size: clamp(12.5px, 1.3vw, 16px);
-    color: var(--text-soft);
-
-    em { color: var(--accent); }
-  }
-
   // auto-fit + minmax(min(100%, 270px)) : deux colonnes dès qu'il y a la place,
   // une seule au téléphone, sans point de rupture à maintenir.
   // Bouton d'ouverture du formulaire, dans l'en-tête plutôt qu'en carte : une
   // carte en pointillés juste pour un bouton occupait la place d'un vol réel.
   &__add {
+    // C'est le total qui poussait ce bouton à droite ; il est parti au budget
+    // global, la marge automatique prend le relais.
+    margin-left: auto;
     flex: none;
     padding: 3px 11px;
     border: 1px solid var(--border-strong);
