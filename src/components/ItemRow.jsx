@@ -5,6 +5,7 @@ import { imageFor } from '@/lib/photos.js';
 import { deleteItem, setCoordinates, setFavorite, updateItem } from '@/lib/mutations.js';
 import GeocodePicker from './GeocodePicker.jsx';
 import ConfirmDialog from './ConfirmDialog.jsx';
+import TrashIcon from './TrashIcon.jsx';
 import './ItemRow.scss';
 
 // « Plan ↗ » sur iOS, « Maps ↗ » ailleurs — repris du design. L'universal link
@@ -28,7 +29,8 @@ function parsePrice(raw) {
 }
 
 // Une ligne d'item, sur UNE ligne comme dans le design : vignette, pastille,
-// nom, note, pilule Plan, puis à droite l'étoile, LOCALISER, le prix et ✕.
+// nom, note, pilule Plan, puis à droite l'étoile, LOCALISER, le prix et la
+// corbeille.
 export default function ItemRow({ item, step, tripTitle, readOnly, autoLocate, onChanged }) {
   // `autoLocate` n'est vrai qu'au montage de la ligne créée à l'instant : la
   // recherche part sans qu'on ait à cliquer « Localiser ».
@@ -199,7 +201,8 @@ export default function ItemRow({ item, step, tripTitle, readOnly, autoLocate, o
                 title="Supprimer"
                 onClick={() => setAsking(true)}
               >
-                ✕<span className="sr-only">Supprimer {item.title}</span>
+                <TrashIcon />
+                <span className="sr-only">Supprimer {item.title}</span>
               </button>
             </>
           )}

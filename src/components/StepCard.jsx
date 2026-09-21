@@ -4,6 +4,7 @@ import { formatStepDates } from '@/lib/dates.js';
 import { setStepCoordinates } from '@/lib/mutations.js';
 import GeocodePicker from './GeocodePicker.jsx';
 import ConfirmDialog from './ConfirmDialog.jsx';
+import TrashIcon from './TrashIcon.jsx';
 import PhotoStrip from './PhotoStrip.jsx';
 import CategoryAccordion from './CategoryAccordion.jsx';
 import './StepCard.scss';
@@ -94,7 +95,8 @@ export default function StepCard({
               setAsking(true);
             }}
           >
-            ✕<span className="sr-only">Retirer {step.name}</span>
+            <TrashIcon />
+            <span className="sr-only">Retirer {step.name}</span>
           </button>
         )}
 

@@ -5,6 +5,7 @@ import { priceInEuros } from '@/lib/currency.js';
 import { addFlight, deleteFlight, updateFlight } from '@/lib/mutations.js';
 import { MOBILE_QUERY, useMediaQuery } from '@/hooks/useMediaQuery.js';
 import ConfirmDialog from './ConfirmDialog.jsx';
+import TrashIcon from './TrashIcon.jsx';
 import './FlightsPanel.scss';
 
 const DIRECTIONS = [
@@ -186,7 +187,8 @@ function FlightCard({ trip, flight, readOnly, onChanged }) {
             title="Supprimer ce vol"
             onClick={() => setAsking(true)}
           >
-            ✕<span className="sr-only">Supprimer ce vol</span>
+            <TrashIcon />
+            <span className="sr-only">Supprimer ce vol</span>
           </button>
         )}
       </div>

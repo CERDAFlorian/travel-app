@@ -162,14 +162,20 @@
     font-variant-numeric: tabular-nums;
   }
 
+  // Cible carrée : une icône n'a pas la boîte d'un glyphe texte, et un
+  // bouton de 3 px de large se rate au doigt.
   &__delete {
-    padding: 0 3px;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
     border: 0;
     border-radius: var(--radius-sm);
     background: none;
     color: var(--muted);
     font: inherit;
-    font-size: 12.5px;
+    font-size: var(--fs-sm);
     cursor: pointer;
 
     &:hover { color: var(--danger); }

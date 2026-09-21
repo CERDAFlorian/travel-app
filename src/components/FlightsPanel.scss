@@ -156,14 +156,18 @@
 
 .flight {
   &__delete {
+    display: grid;
+    place-items: center;
     margin-left: auto;
-    padding: 0 3px;
+    width: 28px;
+    height: 28px;
+    padding: 0;
     border: 0;
     border-radius: var(--radius-sm);
     background: none;
     color: var(--border-strong);
     font: inherit;
-    font-size: 13px;
+    font-size: var(--fs-sm);
     cursor: pointer;
 
     &:hover { color: var(--danger); }
