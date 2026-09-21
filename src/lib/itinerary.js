@@ -180,3 +180,28 @@ export function timelineEntries(steps = [], flights = []) {
     return a.rank - b.rank;
   });
 }
+
+// Déplace une étape d'un cran dans l'itinéraire.
+//
+// Rend un NOUVEAU tableau, ou le tableau d'origine si le mouvement est
+// impossible — première étape vers le haut, dernière vers le bas. L'appelant
+// peut donc comparer les références pour savoir s'il y a quelque chose à
+// écrire.
+//
+// Les dates ne sont pas touchées ici : elles se recalculent depuis l'ordre et
+// les nuits, c'est `datesToUpdate` qui s'en charge.
+export function reorderSteps(steps, stepId, delta) {
+  const index = steps.findIndex((step) => step.id === stepId);
+  const target = index + delta;
+
+  if (index < 0 || target < 0 || target >= steps.length) return steps;
+
+  const next = [...steps];
+  [next[index], next[target]] = [next[target], next[index]];
+  return next;
+}
+
+export function canMoveStep(steps, stepId, delta) {
+  const index = steps.findIndex((step) => step.id === stepId);
+  return index >= 0 && index + delta >= 0 && index + delta < steps.length;
+}

@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   addDays,
+  canMoveStep,
   chainDates,
   datesToUpdate,
   flightArrival,
+  reorderSteps,
   resolveItinerary,
   tripEndDate,
   timelineEntries,
@@ -278,5 +280,60 @@ describe('timelineEntries', () => {
 
   it('accepte un voyage sans vol', () => {
     expect(timelineEntries(steps).map((e) => e.kind)).toEqual(['step', 'step', 'step']);
+  });
+});
+
+describe('reorderSteps', () => {
+  const steps = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
+
+  it('remonte une étape d’un cran', () => {
+    expect(reorderSteps(steps, 'b', -1).map((s) => s.id)).toEqual(['b', 'a', 'c']);
+  });
+
+  it('descend une étape d’un cran', () => {
+    expect(reorderSteps(steps, 'b', 1).map((s) => s.id)).toEqual(['a', 'c', 'b']);
+  });
+
+  // Rendre le tableau d'origine, et non une copie, permet à l'appelant de
+  // savoir qu'il n'y a rien à écrire en comparant les références.
+  it('rend le tableau d’origine quand le mouvement est impossible', () => {
+    expect(reorderSteps(steps, 'a', -1)).toBe(steps);
+    expect(reorderSteps(steps, 'c', 1)).toBe(steps);
+    expect(reorderSteps(steps, 'inconnue', 1)).toBe(steps);
+  });
+
+  it('ne modifie pas le tableau reçu', () => {
+    reorderSteps(steps, 'b', -1);
+    expect(steps.map((s) => s.id)).toEqual(['a', 'b', 'c']);
+  });
+});
+
+describe('canMoveStep', () => {
+  const steps = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
+
+  it.each([
+    ['a', -1, false],
+    ['a', 1, true],
+    ['b', -1, true],
+    ['b', 1, true],
+    ['c', -1, true],
+    ['c', 1, false],
+  ])('%s vers %i → %s', (id, delta, expected) => {
+    expect(canMoveStep(steps, id, delta)).toBe(expected);
+  });
+
+  // Le déplacement change les DATES, pas seulement l'ordre : une étape de
+  // quatre nuits qui passe devant une d'une nuit décale tout ce qui suit.
+  it('le réordonnancement recale la chaîne des dates', () => {
+    const withNights = [
+      { id: 'a', nights: 2 },
+      { id: 'b', nights: 4 },
+      { id: 'c', nights: 1 },
+    ];
+    const moved = reorderSteps(withNights, 'c', -1);
+    const dates = chainDates('2026-11-08', moved);
+
+    expect(moved.map((s) => s.id)).toEqual(['a', 'c', 'b']);
+    expect(dates.map((d) => d.date_start)).toEqual(['2026-11-08', '2026-11-10', '2026-11-11']);
   });
 });

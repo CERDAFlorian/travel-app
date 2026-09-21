@@ -13,7 +13,7 @@ import BudgetPanel from '@/components/BudgetPanel.jsx';
 import ShareLink from '@/components/ShareLink.jsx';
 import AddStep from '@/components/AddStep.jsx';
 import StepLink from '@/components/StepLink.jsx';
-import { addStep, removeStep, setStepNights } from '@/lib/mutations.js';
+import { addStep, moveStep, removeStep, setStepNights } from '@/lib/mutations.js';
 import { resolveItinerary, timelineEntries } from '@/lib/itinerary.js';
 import './TripView.scss';
 
@@ -79,6 +79,14 @@ export default function TripView({
   const handleRemoveStep = useCallback(
     async (stepId) => {
       await removeStep(view, stepId);
+      await onChanged();
+    },
+    [view, onChanged],
+  );
+
+  const handleMoveStep = useCallback(
+    async (stepId, delta) => {
+      await moveStep(view, stepId, delta);
       await onChanged();
     },
     [view, onChanged],
@@ -167,6 +175,9 @@ export default function TripView({
                   selected={step.id === selectedStepId}
                   onSelect={setSelectedStepId}
                   onRemove={handleRemoveStep}
+                  onMove={handleMoveStep}
+                  canMoveUp={index > 0}
+                  canMoveDown={index < view.steps.length - 1}
                   onNights={handleNights}
                   autoLocate={step.id === justAddedStep}
                   // Après chaque écriture on resynchronise le voyage entier

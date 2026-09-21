@@ -20,6 +20,9 @@ export default function StepCard({
   selected,
   onSelect,
   onRemove,
+  onMove,
+  canMoveUp,
+  canMoveDown,
   onNights,
   autoLocate,
   onChanged,
@@ -44,6 +47,39 @@ export default function StepCard({
     >
       <div className="step__rail">
         <div className="step__number">{step.position}</div>
+
+        {!readOnly && onMove && (
+          <div className="step__order">
+            {/* Grisées plutôt que masquées : une commande qui disparaît sur la
+                première et la dernière étape ferait sauter la colonne, et on
+                chercherait ce qui a bougé. */}
+            <button
+              type="button"
+              className="step__arrow"
+              disabled={!canMoveUp}
+              title={canMoveUp ? 'Monter cette étape' : 'Déjà en premier'}
+              onClick={(event) => {
+                event.stopPropagation();
+                onMove(step.id, -1);
+              }}
+            >
+              ▲<span className="sr-only">Monter {step.name}</span>
+            </button>
+
+            <button
+              type="button"
+              className="step__arrow"
+              disabled={!canMoveDown}
+              title={canMoveDown ? 'Descendre cette étape' : 'Déjà en dernier'}
+              onClick={(event) => {
+                event.stopPropagation();
+                onMove(step.id, 1);
+              }}
+            >
+              ▼<span className="sr-only">Descendre {step.name}</span>
+            </button>
+          </div>
+        )}
 
         {!readOnly && onRemove && (
           <button
