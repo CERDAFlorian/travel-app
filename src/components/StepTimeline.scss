@@ -42,9 +42,15 @@
     user-select: none;
   }
 
-  // Au-delà, tout tient : plus de défilement, plus de dégradé.
+  // Au-delà, tout tient normalement : plus de dégradé ni de curseur de
+  // préhension. Mais on GARDE `overflow-x: auto`.
+  //
+  // `visible` reportait le débordement sur la page entière : il suffisait
+  // qu'un nom d'étape refuse de se contracter pour que tout le document
+  // gagne une barre de défilement horizontale. Un conteneur défilant doit
+  // contenir son propre débordement à toutes les largeurs — s'il n'y a rien
+  // à faire défiler, `auto` ne montre rien.
   @include mixins.from('md') {
-    overflow-x: visible;
     mask-image: none;
     cursor: default;
   }
