@@ -66,19 +66,34 @@ describe('lovenotes', () => {
     const DEPART = '2026-11-07';
 
     it('compte les jours qui restent', () => {
-      expect(countdown(DEPART, new Date(2026, 8, 22))).toContain('46 jours');
+      // Le nombre, pas le mot : selon le jour, la phrase parle de jours, de
+      // matins, de nuits ou de levers de soleil.
+      expect(countdown(DEPART, new Date(2026, 8, 22))).toContain('46');
     });
 
-    it('parle de voyage de noces a chaque palier', () => {
-      // Le compte a rebours tient la place du sous-titre en en-tete : c'est la
-      // premiere ligne qu'elle lit, elle doit porter l'intention a tous les
-      // paliers, pas seulement au dernier.
-      const paliers = [
-        new Date(2026, 8, 22), new Date(2026, 9, 20),
-        new Date(2026, 10, 3), new Date(2026, 10, 6), new Date(2026, 10, 7),
-      ];
-      for (const jour of paliers) {
-        expect(countdown(DEPART, jour)).toMatch(/noces|ma femme/);
+    it('change de phrase chaque matin', () => {
+      // C'est tout l'interet : elle ouvre l'app et trouve autre chose qu'hier,
+      // sans qu'on ait rien a faire. Un tirage par empreinte faisait tomber
+      // trois jours d'affilee sur la meme ligne.
+      const veille = countdown(DEPART, new Date(2026, 9, 20));
+      const jour = countdown(DEPART, new Date(2026, 9, 21));
+      expect(veille).not.toBe(jour);
+    });
+
+    it('reste la meme toute la journee', () => {
+      const matin = countdown(DEPART, new Date(2026, 8, 22, 7, 30));
+      const soir = countdown(DEPART, new Date(2026, 8, 22, 23, 45));
+      expect(matin).toBe(soir);
+    });
+
+    it('tient dans la largeur de l\'en-tete', () => {
+      // Affichee jusqu'a 29px en italique a la place du sous-titre : au-dela
+      // d'une soixantaine de signes, elle passe sur trois lignes et pousse les
+      // dates hors du bloc de titre.
+      for (let jours = 0; jours <= 400; jours += 1) {
+        const jour = new Date(2026, 10, 7);
+        jour.setDate(jour.getDate() - jours);
+        expect(countdown(DEPART, jour).length, `J-${jours}`).toBeLessThanOrEqual(62);
       }
     });
 
@@ -92,14 +107,6 @@ describe('lovenotes', () => {
     it('se tait une fois le voyage commencé', () => {
       // Compter les jours n'a plus de sens quand on y est.
       expect(countdown(DEPART, new Date(2026, 10, 8))).toBeNull();
-    });
-
-    it('ne bascule pas selon l\'heure de la journée', () => {
-      // Une date nue comparée à un instant ferait passer « 46 jours » à 45
-      // selon qu'on ouvre l'app le matin ou le soir.
-      const matin = countdown(DEPART, new Date(2026, 8, 22, 7, 30));
-      const soir = countdown(DEPART, new Date(2026, 8, 22, 23, 45));
-      expect(matin).toBe(soir);
     });
 
     it('se tait sans date de départ', () => {

@@ -237,10 +237,56 @@ export function whisperFor(kind, seed) {
   return list[fingerprint(seed) % list.length];
 }
 
-// Compte à rebours avant le départ. C'est un voyage de noces : il tient la
-// place du sous-titre en en-tête, et c'est donc la première chose qu'elle lit
-// en ouvrant le voyage. Le ton se resserre à mesure qu'on approche.
+// Compte à rebours avant le départ.
 //
+// Il tient la place du sous-titre en en-tête, en grand et en italique : c'est
+// la premiere ligne qu'elle lit en ouvrant le voyage, et la seule qui change
+// toute seule. Un compteur suivi d'un « mon amour » ne suffisait pas — c'est
+// une phrase qu'on doit avoir envie de relire.
+//
+// Le tirage est semé par le nombre de jours : la ligne est stable toute la
+// journée, et change le lendemain. Elle a donc quelque chose de neuf à lire
+// chaque matin sans qu'on ait rien à faire.
+const COUNTDOWN = {
+  // Plus d'un mois : on a le temps, on rêve.
+  loin: [
+    (n) => `J\u2019ai attendu toute ma vie. Je peux bien attendre ${n} jours.`,
+    (n) => `Encore ${n} levers de soleil avant le premier avec toi.`,
+    (n) => `Dans ${n} jours, je t\u2019épouse une seconde fois, au Japon.`,
+    (n) => `${n} jours à t\u2019imaginer endormie contre le hublot.`,
+    (n) => `${n} jours avant de t\u2019emmener au bout du monde.`,
+  ],
+  // Le mois qui précède : ça devient concret.
+  proche: [
+    (n) => `Plus que ${n} matins avant de me réveiller près de toi, là-bas.`,
+    (n) => `${n} jours. Je compte, je recommence, et je compte encore.`,
+    (n) => `${n} jours, et le monde se réduit à toi et moi.`,
+    (n) => `${n} jours. Commence à rêver — moi, j\u2019ai déjà commencé.`,
+  ],
+  // La dernière semaine : on ne tient plus en place.
+  imminent: [
+    (n) => `Plus que ${n} jours. Je ne pense plus à rien d\u2019autre.`,
+    (n) => `${n} jours. J\u2019ai déjà le cœur qui décolle.`,
+    (n) => `Encore ${n} nuits ici. Toutes les autres, avec toi, là-bas.`,
+  ],
+  demain: [
+    () => 'Demain, je t\u2019emmène. Et je ne te rends plus.',
+    () => 'Demain, ma femme. Je ne dormirai pas de la nuit.',
+  ],
+  jourJ: [
+    () => 'C\u2019est aujourd\u2019hui. Prends ma main et ne la lâche plus.',
+    () => 'Aujourd\u2019hui, ma femme. Viens, le Japon nous attend.',
+  ],
+};
+
+function tier(days) {
+  if (days === 0) return 'jourJ';
+  if (days === 1) return 'demain';
+  if (days <= 7) return 'imminent';
+  if (days <= 30) return 'proche';
+  return 'loin';
+}
+
 // Renvoie null une fois le voyage commencé : compter les jours n'a plus de
 // sens quand on y est. `today` est injectable pour que le test ne dépende pas
 // du jour où il tourne.
@@ -254,11 +300,11 @@ export function countdown(startIso, today = new Date()) {
   const departure = new Date(year, month - 1, day);
   const now = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   const days = Math.round((departure - now) / 86400000);
-
   if (days < 0) return null;
-  if (days === 0) return 'C\u2019est aujourd\u2019hui. Donne-moi ta main, ma femme.';
-  if (days === 1) return 'Demain, je pars en voyage de noces avec toi.';
-  if (days <= 7) return `Plus que ${days} jours avant de t\u2019emmener en voyage de noces.`;
-  if (days <= 30) return `${days} jours avant notre voyage de noces. Je compte, figure-toi.`;
-  return `${days} jours avant notre voyage de noces, mon amour.`;
+
+  // Le reste du nombre de jours, pas une empreinte : l'empreinte faisait
+  // tomber trois jours d'affilee sur la meme phrase. Le modulo garantit qu'on
+  // change de ligne chaque matin, en tournant dans la liste.
+  const lignes = COUNTDOWN[tier(days)];
+  return lignes[days % lignes.length](days);
 }
