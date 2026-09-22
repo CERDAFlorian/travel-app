@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase.js';
 import { fail } from '@/lib/errors.js';
 import { durationBetween } from '@/lib/transport.js';
 import { hotelsOf } from '@/lib/lodging.js';
+import { positionsToUpdate, releasedBy, reorderInDay } from '@/lib/days.js';
 import {
   addDays,
   datesToUpdate,
@@ -125,6 +126,98 @@ export async function unsealHotel(id) {
   if (error) fail(error, 'Annulation de la réservation');
 }
 
+// --- Le programme jour par jour ---------------------------------------------
+//
+// Voir lib/days.js pour le modèle : un jour est une position dans l'étape, pas
+// une ligne en base. Seul le rattachement est stocké.
+
+// Pose un item sur un jour, en fin de journée.
+//
+// En fin et pas en tête : on ajoute ce qu'on vient de décider à la suite de ce
+// qui est déjà prévu. Le rang se calcule sur le jour visé, pas sur l'étape —
+// deux jours ont chacun leur numérotation.
+export async function placeItem(step, id, dayOffset) {
+  const last = (step.items ?? [])
+    .filter((item) => item.day_offset === dayOffset)
+    .reduce((max, item) => Math.max(max, item.day_position ?? 0), 0);
+
+  const { error } = await supabase
+    .from('items')
+    .update({ day_offset: dayOffset, day_position: last + 1 })
+    .eq('id', id);
+  if (error) fail(error, "Placement de l'item");
+}
+
+// Renvoie un item en réserve. Il reste dans sa catégorie, avec son prix et ses
+// coordonnées : on retire une date, pas une envie.
+export async function unplaceItem(id) {
+  const { error } = await supabase
+    .from('items')
+    .update({ day_offset: null, day_slot: null, day_position: 0 })
+    .eq('id', id);
+  if (error) fail(error, "Retrait de l'item du programme");
+}
+
+// Déplace un item d'un cran dans sa journée. `items` est la liste du jour,
+// déjà ordonnée par `scheduleOf`.
+export async function moveItemInDay(items, itemId, delta) {
+  const reordered = reorderInDay(items, itemId, delta);
+  // Même contrat que moveStep : le tableau d'origine veut dire « rien à
+  // écrire ».
+  if (reordered === items) return;
+
+  for (const patch of positionsToUpdate(reordered)) {
+    const { error } = await supabase
+      .from('items')
+      .update({ day_position: patch.day_position })
+      .eq('id', patch.id);
+    if (error) fail(error, 'Réordonnancement de la journée');
+  }
+}
+
+// « Refaire un autre jour » : une copie de l'item, posée sur le jour choisi.
+//
+// C'est la contrepartie du modèle — un item, un placement (voir l'arbitrage 1
+// de L9). Manger deux fois à Dōtonbori fait deux lignes, et c'est défendable :
+// ce sont deux sorties, deux budgets. Encore faut-il que la deuxième ne se
+// resaisisse pas à la main, d'où cette copie complète.
+export async function duplicateItemOnDay(step, item, dayOffset) {
+  const position =
+    (step.items ?? []).reduce((max, current) => Math.max(max, current.position ?? 0), 0) + 1;
+  const last = (step.items ?? [])
+    .filter((other) => other.day_offset === dayOffset)
+    .reduce((max, other) => Math.max(max, other.day_position ?? 0), 0);
+
+  const { data, error } = await supabase
+    .from('items')
+    .insert({
+      step_id: step.id,
+      category: item.category,
+      title: item.title,
+      url: item.url,
+      address: item.address,
+      price: item.price,
+      currency: item.currency,
+      notes: item.notes,
+      // Les coordonnées suivent, `geocoded_at` compris : c'est le même lieu,
+      // et le redemander à Nominatim pour une adresse déjà résolue serait une
+      // requête pour rien.
+      lat: item.lat,
+      lng: item.lng,
+      geocoded_at: item.geocoded_at,
+      position,
+      day_offset: dayOffset,
+      day_position: last + 1,
+      // Ni l'étoile ni la réservation ne se copient : la mise en avant vaut
+      // pour un lieu, pas pour chacun de ses passages, et une table réservée
+      // le lundi ne l'est pas le jeudi.
+    })
+    .select('id')
+    .single();
+  if (error) fail(error, "Duplication de l'item");
+  return data.id;
+}
+
 // `geocoded_at` distingue les deux origines, comme le prévoit le schéma :
 // renseigné quand Nominatim a répondu, NULL quand les coordonnées ont été
 // collées à la main. Utile le jour où l'on voudra re-géocoder en masse sans
@@ -240,8 +333,28 @@ export async function addStep(trip, { name, nights }) {
 }
 
 // Change le nombre de nuits d'une étape, et décale tout ce qui suit.
+//
+// Une étape a au moins une nuit : c'est un changement de ville ET de logement,
+// une excursion est une activité. Le schéma le garantit depuis 0007, on
+// s'arrête avant de le lui faire refuser.
 export async function setStepNights(trip, stepId, nights) {
-  if (nights < 0) return;
+  if (nights < 1) return;
+
+  const step = trip.steps.find((candidate) => candidate.id === stepId);
+  const isLast = trip.steps.at(-1)?.id === stepId;
+
+  // LIBÉRER AVANT DE RACCOURCIR. Raccourcir un séjour fait perdre des jours,
+  // pas des envies : les items qui y étaient posés repassent en réserve. Dans
+  // l'autre ordre, un échec laisserait des items accrochés à des jours qui
+  // n'existent plus.
+  const released = step ? releasedBy(step, nights, { isLast }) : [];
+  if (released.length > 0) {
+    const { error } = await supabase
+      .from('items')
+      .update({ day_offset: null, day_slot: null, day_position: 0 })
+      .in('id', released);
+    if (error) fail(error, 'Libération des items des jours supprimés');
+  }
 
   const { error } = await supabase.from('steps').update({ nights }).eq('id', stepId);
   if (error) fail(error, 'Modification des nuits');

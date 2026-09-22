@@ -160,6 +160,56 @@
     white-space: nowrap;
   }
 
+  // Bascule entre les deux lectures de l'étape. Deux onglets et pas un
+  // interrupteur : « Catégories | Jour par jour » se lit sans avoir à deviner
+  // ce que l'autre position contient.
+  &__tabs {
+    display: flex;
+    gap: 4px;
+    margin: var(--sp-3) 0 0;
+    padding: 3px;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-pill);
+    background: var(--surface-sunken);
+  }
+
+  &__tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    justify-content: center;
+    min-height: var(--hit-dense);
+    padding: 2px var(--sp-3);
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: none;
+    color: var(--text-soft);
+    font: inherit;
+    font-size: clamp(12px, 1.15vw, 13.5px);
+    letter-spacing: 0.04em;
+    cursor: pointer;
+
+    &[data-on] {
+      background: var(--surface);
+      color: var(--accent-deep);
+      box-shadow: var(--shadow-sm);
+    }
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  // Ce qui reste à placer. En accent plutôt qu'en gris : c'est une chose à
+  // faire, pas une statistique.
+  &__tab-count {
+    padding: 0 6px;
+    border-radius: var(--radius-pill);
+    background: var(--accent-soft);
+    color: var(--accent-deep);
+    font-size: var(--fs-xs);
+    font-variant-numeric: tabular-nums;
+  }
+
   &__cats {
     margin-top: 10px;
     border-top: 1px solid var(--border-soft);

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CATEGORIES } from '@/lib/categories.js';
 import { chosenHotel, hotelsOf } from '@/lib/lodging.js';
+import { unplacedOf } from '@/lib/days.js';
 import { formatStepDates } from '@/lib/dates.js';
 import { setStepCoordinates } from '@/lib/mutations.js';
 import GeocodePicker from './GeocodePicker.jsx';
@@ -8,6 +9,7 @@ import ConfirmDialog from './ConfirmDialog.jsx';
 import TrashIcon from './TrashIcon.jsx';
 import PhotoStrip from './PhotoStrip.jsx';
 import CategoryAccordion from './CategoryAccordion.jsx';
+import StepDays from './StepDays.jsx';
 import LoveNote from './LoveNote.jsx';
 import './StepCard.scss';
 
@@ -20,6 +22,7 @@ export default function StepCard({
   step,
   tripTitle,
   readOnly,
+  isLast,
   selected,
   onSelect,
   onRemove,
@@ -33,6 +36,9 @@ export default function StepCard({
   const [asking, setAsking] = useState(false);
   const [nightsAdded, setNightsAdded] = useState(0);
   const [removing, setRemoving] = useState(false);
+  // Les catégories d'abord : c'est par elles qu'on saisit, et une étape qu'on
+  // n'a pas encore remplie n'a pas de programme à montrer.
+  const [view, setView] = useState('cats');
   // Vrai au montage de l'étape qu'on vient d'ajouter : elle cherche sa
   // position toute seule.
   const [locating, setLocating] = useState(Boolean(autoLocate));
@@ -51,6 +57,7 @@ export default function StepCard({
   // une étape où personne n'a encore cherché où dormir.
   const lodging = chosenHotel(step);
   const candidates = hotelsOf(step).length;
+  const toPlace = unplacedOf(step, { isLast }).length;
 
   return (
     <article
@@ -129,8 +136,11 @@ export default function StepCard({
               <button
                 type="button"
                 className="step__nights-btn"
-                title="Une nuit de moins"
-                disabled={step.nights === 0}
+                // Une étape est un changement de ville ET de logement : elle
+                // a au moins une nuit. Une excursion est une activité, pas une
+                // étape — et le schéma le refuse depuis 0007.
+                title={step.nights > 1 ? 'Une nuit de moins' : 'Une étape dure au moins une nuit'}
+                disabled={step.nights <= 1}
                 onClick={(event) => {
                   event.stopPropagation();
                   onNights(step.id, step.nights - 1);
@@ -221,19 +231,54 @@ export default function StepCard({
 
         <PhotoStrip items={step.items} stepName={step.name.split(' ')[0]} />
 
-        <div className="step__cats">
-          {CATEGORIES.map((category) => (
-            <CategoryAccordion
-              key={category.key}
-              category={category}
-              items={itemsByCategory.get(category.key)}
-              step={step}
-              tripTitle={tripTitle}
-              readOnly={readOnly}
-              onChanged={onChanged}
-            />
-          ))}
+        {/* Deux lectures des mêmes items : les catégories sont le garde-manger,
+            les jours sont le menu. On saisit dans l'une, on organise dans
+            l'autre — d'où une bascule et non deux blocs empilés, qui auraient
+            doublé la hauteur d'une étape déjà longue. */}
+        <div className="step__tabs" role="tablist" onClick={(event) => event.stopPropagation()}>
+          <button
+            type="button"
+            role="tab"
+            className="step__tab"
+            data-on={view === 'cats' || undefined}
+            aria-selected={view === 'cats'}
+            onClick={() => setView('cats')}
+          >
+            Catégories
+          </button>
+          <button
+            type="button"
+            role="tab"
+            className="step__tab"
+            data-on={view === 'days' || undefined}
+            aria-selected={view === 'days'}
+            onClick={() => setView('days')}
+          >
+            Jour par jour
+            {/* Le reste à faire, visible sans ouvrir l'onglet. */}
+            {toPlace > 0 && <span className="step__tab-count">{toPlace}</span>}
+          </button>
         </div>
+
+        {view === 'cats' ? (
+          <div className="step__cats">
+            {CATEGORIES.map((category) => (
+              <CategoryAccordion
+                key={category.key}
+                category={category}
+                items={itemsByCategory.get(category.key)}
+                step={step}
+                tripTitle={tripTitle}
+                readOnly={readOnly}
+                onChanged={onChanged}
+              />
+            ))}
+          </div>
+        ) : (
+          <div onClick={(event) => event.stopPropagation()}>
+            <StepDays step={step} isLast={isLast} readOnly={readOnly} onChanged={onChanged} />
+          </div>
+        )}
 
         {/* Le trajet vers l'étape suivante, en pied de carte : il appartient à
             l'intervalle, pas à l'étape d'arrivée. */}

@@ -182,6 +182,10 @@ export default function TripView({
                   onMove={handleMoveStep}
                   canMoveUp={index > 0}
                   canMoveDown={index < view.steps.length - 1}
+                  // La dernière étape porte un jour de plus : celui du vol
+                  // retour, où l'on ne dort pas mais où l'on fait encore
+                  // quelque chose.
+                  isLast={index === view.steps.length - 1}
                   onNights={handleNights}
                   autoLocate={step.id === justAddedStep}
                   // Après chaque écriture on resynchronise le voyage entier

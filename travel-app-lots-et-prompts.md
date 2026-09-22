@@ -153,6 +153,30 @@ les étapes à bandeau complet de **2 sur 7 à 4 sur 7**, sans toucher au code.
 Les trois autres (`sushi`, `matcha`, `baguettes`) ne servent qu'aux expériences
 de L6. Le plafond de 256 Ko de `get_file` empêche de les récupérer via le MCP.
 
+**Les mots d'amour ne doivent pas partir dans le lien de partage** — demandé le
+22 septembre 2026. Ils sont personnels ; un itinéraire envoyé à la famille ou à
+un ami ne doit pas les afficher. La vue partagée rend le MÊME composant que la
+vue propriétaire (`TripView`, c'est délibéré), donc la coupure se fait sur le
+drapeau `shared`, pas sur `readOnly` — hors ligne on reste chez soi, et les mots
+doivent rester.
+
+**Trois sont visibles aujourd'hui en partage**, et deux n'utilisent pas le
+composant `LoveNote` — les chercher par son nom n'en trouverait qu'un :
+
+| Où | Comment |
+|---|---|
+| Pied de page | `TripView.jsx` — `<LoveNote>` |
+| En-tête du panneau des vols | `FlightsPanel.jsx` — `whisperFor('flights', …)` |
+| Sous le vol retour | `FlightsPanel.jsx` — `whisperFor('comeback', …)` |
+
+Les trois autres `<LoveNote>` — nuits, item ajouté, ville ajoutée — se
+déclenchent sur une écriture, donc jamais en partage.
+
+Le plus propre est de passer `shared` en prop et de ne rien rendre : masquer en
+CSS laisserait le texte dans le HTML envoyé, donc lisible par qui regarde la
+source. Et prévoir le cas au moment d'ajouter le prochain mot doux, sinon la
+fuite reviendra par la porte suivante.
+
 **Trois items n'auront jamais de photo** : Distillerie Hakushu, Balade dans le
 village, Mémorial de la Paix. Aucun mot-clé ne leur correspond dans le design.
 

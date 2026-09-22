@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { formatPeriod, formatSince, formatStepDates, formatTripRange } from './dates.js';
+import {
+  formatDayFull,
+  formatPeriod,
+  formatSince,
+  formatStepDates,
+  formatTripRange,
+} from './dates.js';
 
 // fr-FR sépare les milliers par une espace fine insécable (U+202F) et colle
 // l'unité avec une insécable (U+00A0). On normalise pour que les assertions
@@ -75,5 +81,21 @@ describe('formatTripRange', () => {
 
   it('retombe sur formatPeriod si une date manque', () => {
     expect(plain(formatTripRange(null, '2026-11-26'))).toBe(plain(formatPeriod(null, '2026-11-26')));
+  });
+});
+
+describe('formatDayFull', () => {
+  // Le jour de la semaine mène la lecture d'un programme : c'est lui qui dit
+  // qu'un musée sera ferme ou qu'un marché n'aura pas lieu.
+  it('nomme le jour de la semaine', () => {
+    expect(formatDayFull('2026-11-13')).toBe('ven. 13 nov.');
+  });
+
+  it('ne recule pas d’un jour à l’ouest de Greenwich', () => {
+    expect(formatDayFull('2026-11-01')).toBe('dim. 1 nov.');
+  });
+
+  it('rend une chaîne vide sans date', () => {
+    expect(formatDayFull(null)).toBe('');
   });
 });

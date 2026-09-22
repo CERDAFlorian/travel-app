@@ -1,0 +1,256 @@
+@use '../theme/mixins';
+
+.days {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+}
+
+// Un jour : un bloc, un en-tête, ses lignes. Le bloc vide garde sa boîte —
+// c'est un emplacement libre, pas une absence, et c'est là qu'on clique.
+.day {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  overflow: hidden;
+
+  &[data-empty] {
+    background: var(--surface-sunken);
+    border-style: dashed;
+  }
+
+  &__head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    margin: 0;
+    padding: 6px var(--sp-3);
+    border-bottom: 1px solid var(--border-soft);
+    font-size: var(--fs-sm);
+    font-weight: 500;
+
+    [data-empty] > & { border-bottom-color: transparent; }
+  }
+
+  // Le rang dans l'étape prime sur la date : on raisonne en « J2 », la date
+  // sert à s'y retrouver dans la semaine.
+  &__rank {
+    flex: none;
+    padding: 1px 8px;
+    border-radius: var(--radius-pill);
+    background: var(--accent-soft);
+    color: var(--accent-deep);
+    font-size: var(--fs-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  &__date {
+    color: var(--text-soft);
+    font-style: italic;
+    @include mixins.truncate;
+  }
+
+  &__count {
+    margin-left: auto;
+    flex: none;
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__empty {
+    margin: 0;
+    padding: 6px var(--sp-3) 8px;
+    color: var(--muted);
+    font-size: var(--fs-sm);
+    font-style: italic;
+  }
+
+  &__items {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+}
+
+.planned {
+  padding: 5px var(--sp-3);
+
+  & + & { border-top: 1px solid var(--border-soft); }
+
+  // La distance au précédent, au-dessus de la ligne : elle appartient à
+  // l'intervalle entre deux activités, pas à celle qui suit.
+  &__hop {
+    display: block;
+    padding-left: 30px;
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    font-style: italic;
+
+    &::before {
+      content: '↳ ';
+      font-style: normal;
+    }
+  }
+
+  &__line {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-width: 0;
+  }
+
+  &__order {
+    display: inline-flex;
+    flex-direction: column;
+    flex: none;
+    line-height: 0.8;
+  }
+
+  &__arrow {
+    padding: 0 2px;
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: 10px;
+    cursor: pointer;
+
+    &:hover:not(:disabled) { color: var(--accent); }
+    &:focus-visible { @include mixins.focus-ring; }
+    &:disabled { opacity: 0.3; cursor: default; }
+  }
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--cat-hotel);
+
+    &[data-cat='activite'] { background: var(--cat-activite); }
+    &[data-cat='restaurant'] { background: var(--cat-restaurant); }
+    &[data-cat='shopping'] { background: var(--cat-shopping); }
+    &[data-cat='lieu'] { background: var(--cat-lieu); }
+    &[data-cat='note'] { background: var(--cat-note); }
+  }
+
+  &__name {
+    @include mixins.truncate;
+    font-size: var(--fs-sm);
+  }
+
+  &__meta {
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    font-style: italic;
+    @include mixins.truncate;
+  }
+
+  &__tools {
+    margin-left: auto;
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 4px;
+  }
+
+  // Commandes d'organisation : discrètes au repos, elles ne doivent pas
+  // concurrencer la lecture du programme.
+  &__act {
+    min-height: var(--hit-dense);
+    padding: 1px 7px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-pill);
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.04em;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      border-color: var(--border-strong);
+      color: var(--accent);
+    }
+
+    &:focus-visible { @include mixins.focus-ring; }
+    &:disabled { opacity: 0.5; cursor: progress; }
+  }
+}
+
+// La réserve : ce qu'on veut faire sans avoir dit quand.
+.reserve {
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-warm);
+
+  &__head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    margin: 0 0 4px;
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+  }
+
+  &__count {
+    padding: 0 6px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-action);
+    color: var(--text-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__empty {
+    margin: 0;
+    color: var(--muted);
+    font-size: var(--fs-sm);
+    font-style: italic;
+  }
+
+  &__items {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+}
+
+.spare {
+  padding: 4px 0;
+
+  & + & { border-top: 1px solid var(--border-soft); }
+
+  &__line {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-width: 0;
+  }
+
+  &__place {
+    margin-left: auto;
+    flex: none;
+    min-height: var(--hit-dense);
+    padding: 1px 9px;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-pill);
+    background: none;
+    color: var(--accent);
+    font: inherit;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+
+    &:hover:not(:disabled) { background: var(--accent-soft); }
+    &:focus-visible { @include mixins.focus-ring; }
+    &:disabled { opacity: 0.5; cursor: progress; }
+  }
+}

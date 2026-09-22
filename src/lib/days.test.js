@@ -1,0 +1,209 @@
+import { describe, expect, it } from 'vitest';
+import {
+  daysOf,
+  positionsToUpdate,
+  releasedBy,
+  reorderInDay,
+  scheduleOf,
+  unplacedOf,
+} from './days.js';
+
+// Kyoto du seed : 4 nuits à partir du 11 novembre.
+const kyoto = (items = []) => ({
+  name: 'Kyoto',
+  nights: 4,
+  date_start: '2026-11-11',
+  date_end: '2026-11-15',
+  items,
+});
+
+const item = (id, overrides = {}) => ({
+  id,
+  category: 'activite',
+  title: id,
+  position: 0,
+  day_offset: null,
+  day_position: 0,
+  ...overrides,
+});
+
+describe('daysOf', () => {
+  // Quatre nuits, quatre jours. Le 15 est le jour de trajet : il appartient à
+  // Hiroshima, la ville où l'on dort ce soir-là.
+  it('donne autant de jours que de nuits', () => {
+    expect(daysOf(kyoto()).map((day) => day.date)).toEqual([
+      '2026-11-11',
+      '2026-11-12',
+      '2026-11-13',
+      '2026-11-14',
+    ]);
+  });
+
+  // La dernière étape a un jour de plus : celui du vol retour. On y fait
+  // encore quelque chose — check-out, train pour l'aéroport — mais on n'y dort
+  // pas, d'où le drapeau.
+  it('ajoute le jour du départ à la dernière étape', () => {
+    const days = daysOf(kyoto(), { isLast: true });
+    expect(days).toHaveLength(5);
+    expect(days.at(-1)).toMatchObject({ offset: 4, date: '2026-11-15', departure: true });
+    expect(days.slice(0, 4).every((day) => day.departure === false)).toBe(true);
+  });
+
+  it('numérote à partir de zéro', () => {
+    expect(daysOf(kyoto()).map((day) => day.offset)).toEqual([0, 1, 2, 3]);
+  });
+
+  // Une étape ajoutée dans l'app peut n'avoir pas encore de date résolue.
+  // Mieux vaut des jours sans date qu'une exception au premier rendu.
+  it('survit à une étape sans date', () => {
+    const days = daysOf({ nights: 2, items: [] });
+    expect(days.map((day) => day.date)).toEqual([null, null]);
+  });
+});
+
+describe('scheduleOf', () => {
+  it('range chaque item dans son jour', () => {
+    const step = kyoto([
+      item('fushimi', { day_offset: 0 }),
+      item('kinkakuji', { day_offset: 2 }),
+      item('arashiyama', { day_offset: 0 }),
+    ]);
+
+    const byDay = scheduleOf(step).map((day) => day.items.map((i) => i.id));
+    expect(byDay).toEqual([['fushimi', 'arashiyama'], [], ['kinkakuji'], []]);
+  });
+
+  it('ordonne un jour par day_position', () => {
+    const step = kyoto([
+      item('soir', { day_offset: 1, day_position: 3 }),
+      item('matin', { day_offset: 1, day_position: 1 }),
+      item('midi', { day_offset: 1, day_position: 2 }),
+    ]);
+
+    expect(scheduleOf(step)[1].items.map((i) => i.id)).toEqual(['matin', 'midi', 'soir']);
+  });
+
+  // Deux items jamais réordonnés valent 0 tous les deux : sans départage, leur
+  // ordre dépendrait du hasard de la réponse et pourrait changer d'un rendu à
+  // l'autre sous les yeux.
+  it('départage deux items de même rang par ordre de saisie', () => {
+    const step = kyoto([
+      item('second', { day_offset: 0, position: 2 }),
+      item('premier', { day_offset: 0, position: 1 }),
+    ]);
+
+    expect(scheduleOf(step)[0].items.map((i) => i.id)).toEqual(['premier', 'second']);
+  });
+
+  it('laisse les items en réserve hors du programme', () => {
+    const step = kyoto([item('un jour peut-être'), item('posé', { day_offset: 3 })]);
+    expect(scheduleOf(step).flatMap((day) => day.items).map((i) => i.id)).toEqual(['posé']);
+  });
+});
+
+describe('unplacedOf', () => {
+  it('rend ce qui reste à placer', () => {
+    const step = kyoto([item('placé', { day_offset: 1 }), item('à placer')]);
+    expect(unplacedOf(step).map((i) => i.id)).toEqual(['à placer']);
+  });
+
+  // Un hôtel est le décor de l'étape entière, une note perso n'a pas de jour :
+  // ni l'un ni l'autre n'a à traîner dans une réserve qu'on doit vider.
+  it('ignore les catégories qui ne se planifient pas', () => {
+    const step = kyoto([
+      item('machiya', { category: 'hotel' }),
+      item('JR Pass', { category: 'note' }),
+      item('atelier matcha'),
+    ]);
+    expect(unplacedOf(step).map((i) => i.id)).toEqual(['atelier matcha']);
+  });
+
+  // Filet de sécurité : si la libération a échoué — réseau coupé pendant la
+  // réduction des nuits —, l'item doit réapparaître dans la réserve plutôt que
+  // de sortir de l'écran en restant en base.
+  it('récupère un item posé sur un jour qui n’existe plus', () => {
+    const step = { ...kyoto([item('orphelin', { day_offset: 7 })]) };
+    expect(unplacedOf(step).map((i) => i.id)).toEqual(['orphelin']);
+  });
+});
+
+describe('releasedBy', () => {
+  // Passer Kyoto de 4 à 2 nuits supprime les jours 2 et 3.
+  it('libère les items des jours supprimés', () => {
+    const step = kyoto([
+      item('jour 0', { day_offset: 0 }),
+      item('jour 2', { day_offset: 2 }),
+      item('jour 3', { day_offset: 3 }),
+    ]);
+
+    expect(releasedBy(step, 2)).toEqual(['jour 2', 'jour 3']);
+  });
+
+  it('ne libère rien quand on ajoute des nuits', () => {
+    const step = kyoto([item('jour 3', { day_offset: 3 })]);
+    expect(releasedBy(step, 6)).toEqual([]);
+  });
+
+  // La dernière étape garde son jour de départ : le compte n'est pas le même,
+  // et libérer le check-out en retirant une nuit serait une surprise.
+  it('tient compte du jour de départ de la dernière étape', () => {
+    const step = kyoto([item('depart', { day_offset: 2 })]);
+    expect(releasedBy(step, 2, { isLast: true })).toEqual([]);
+    expect(releasedBy(step, 2, { isLast: false })).toEqual(['depart']);
+  });
+
+  it('ne touche pas à la réserve', () => {
+    const step = kyoto([item('en réserve')]);
+    expect(releasedBy(step, 1)).toEqual([]);
+  });
+});
+
+describe('reorderInDay', () => {
+  const items = [item('a'), item('b'), item('c')];
+
+  it('descend un item d’un cran', () => {
+    expect(reorderInDay(items, 'a', 1).map((i) => i.id)).toEqual(['b', 'a', 'c']);
+  });
+
+  it('monte un item d’un cran', () => {
+    expect(reorderInDay(items, 'c', -1).map((i) => i.id)).toEqual(['a', 'c', 'b']);
+  });
+
+  // Même contrat que reorderSteps : le tableau d'origine signale « rien à
+  // écrire », et l'appelant compare les références.
+  it('rend le tableau d’origine quand le mouvement est impossible', () => {
+    expect(reorderInDay(items, 'a', -1)).toBe(items);
+    expect(reorderInDay(items, 'c', 1)).toBe(items);
+    expect(reorderInDay(items, 'inconnu', 1)).toBe(items);
+  });
+});
+
+describe('positionsToUpdate', () => {
+  it('n’écrit que les rangs qui ont bougé', () => {
+    const ordered = [
+      item('a', { day_position: 1 }),
+      item('c', { day_position: 3 }),
+      item('b', { day_position: 2 }),
+    ];
+
+    expect(positionsToUpdate(ordered)).toEqual([
+      { id: 'c', day_position: 2 },
+      { id: 'b', day_position: 3 },
+    ]);
+  });
+
+  it('n’écrit rien quand l’ordre est déjà le bon', () => {
+    const ordered = [item('a', { day_position: 1 }), item('b', { day_position: 2 })];
+    expect(positionsToUpdate(ordered)).toEqual([]);
+  });
+
+  // Les items d'un jour jamais réordonné valent tous 0 : le premier passage
+  // doit leur donner un rang, sinon aucun déplacement ne serait jamais écrit.
+  it('numérote un jour qui n’a jamais été ordonné', () => {
+    const ordered = [item('a'), item('b')];
+    expect(positionsToUpdate(ordered)).toEqual([
+      { id: 'a', day_position: 1 },
+      { id: 'b', day_position: 2 },
+    ]);
+  });
+});

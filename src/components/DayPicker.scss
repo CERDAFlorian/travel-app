@@ -1,0 +1,73 @@
+@use '../theme/mixins';
+
+// Le sélecteur s'ouvre SOUS la ligne qu'il concerne, en pleine largeur : sur
+// un téléphone, quatre pastilles plus un libellé ne tiennent pas à côté d'un
+// titre d'activité.
+.daypick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: 6px;
+  padding: 6px 8px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+
+  &__label {
+    font-size: var(--fs-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  &__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  &__chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--hit);
+    padding: 2px 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-size: clamp(12px, 1.1vw, 13px);
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    // Le jour courant : visible, mais inerte.
+    &[data-on] {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent-deep);
+      cursor: default;
+    }
+
+    &:focus-visible { @include mixins.focus-ring; }
+    &:disabled:not([data-on]) { opacity: 0.5; cursor: progress; }
+  }
+
+  &__cancel {
+    margin-left: auto;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: var(--fs-xs);
+    text-decoration: underline;
+    cursor: pointer;
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+}

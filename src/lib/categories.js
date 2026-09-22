@@ -14,13 +14,18 @@
 //
 // `placeholder` est repris mot pour mot du design — il oriente la saisie mieux
 // qu'un « Ajouter » générique.
+//
+// `planifiable` dit si la catégorie se pose sur un jour du programme. Un hôtel
+// est le décor de toute l'étape, pas une case d'emploi du temps ; une note
+// perso n'a pas d'heure. Les quatre autres sont précisément ce qu'on organise
+// jour par jour.
 export const CATEGORIES = [
-  { key: 'hotel', label: 'Hôtel', onMap: true, budget: true, placeholder: "Nom de l'hôtel…" },
-  { key: 'activite', label: 'Activités', onMap: true, budget: true, placeholder: 'Une activité…' },
-  { key: 'restaurant', label: 'Restaurants', onMap: true, budget: false, placeholder: 'Un restaurant…' },
-  { key: 'shopping', label: 'Shopping', onMap: true, budget: false, placeholder: 'Une boutique, un quartier…' },
-  { key: 'lieu', label: 'Lieux touristiques', onMap: true, budget: true, placeholder: 'Un lieu à voir…' },
-  { key: 'note', label: 'Notes perso', onMap: false, budget: false, placeholder: 'Une note à retenir…' },
+  { key: 'hotel', label: 'Hôtel', onMap: true, budget: true, planifiable: false, placeholder: "Nom de l'hôtel…" },
+  { key: 'activite', label: 'Activités', onMap: true, budget: true, planifiable: true, placeholder: 'Une activité…' },
+  { key: 'restaurant', label: 'Restaurants', onMap: true, budget: false, planifiable: true, placeholder: 'Un restaurant…' },
+  { key: 'shopping', label: 'Shopping', onMap: true, budget: false, planifiable: true, placeholder: 'Une boutique, un quartier…' },
+  { key: 'lieu', label: 'Lieux touristiques', onMap: true, budget: true, planifiable: true, placeholder: 'Un lieu à voir…' },
+  { key: 'note', label: 'Notes perso', onMap: false, budget: false, planifiable: false, placeholder: 'Une note à retenir…' },
 ];
 
 const BY_KEY = new Map(CATEGORIES.map((category) => [category.key, category]));

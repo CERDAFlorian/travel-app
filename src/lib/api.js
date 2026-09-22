@@ -45,7 +45,8 @@ const TRIP_SELECT = `
     id, position, name, date_start, date_end, nights, lat, lng, images,
     items (
       id, category, title, url, address, price, currency,
-      booked, favorite, position, notes, lat, lng, geocoded_at
+      booked, favorite, position, notes, lat, lng, geocoded_at,
+      day_offset, day_slot, day_position, start_time
     )
   ),
   flights ( id, direction, from_code, to_code, stops, date, dep, arr, arrival_offset_days, airline, flight_no, ref, price, currency ),
