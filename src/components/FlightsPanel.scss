@@ -276,8 +276,12 @@
   }
 }
 .flights {
-  // Le titre devient bouton sur mobile : toute la ligne est cliquable, pas
-  // seulement un petit chevron au bord.
+  // Le titre EST le bouton, a toutes les largeurs : toute la ligne est
+  // cliquable, pas seulement un petit chevron au bord.
+  //
+  // `flex: 1` le fait occuper la ligne entiere, ce qui pousse le chevron a
+  // l'extreme droite ET renvoie le mot doux a la ligne suivante — il se lit
+  // mieux ainsi que serre entre le compteur et le bord.
   &__toggle {
     display: flex;
     align-items: baseline;
@@ -302,7 +306,7 @@
   }
 
   // Poussé tout à droite, après le compteur : c'est le repère qu'on cherche
-  // du pouce pour ouvrir ou refermer. Il pivote au lieu de changer de dessin.
+  // pour ouvrir ou refermer. Il pivote au lieu de changer de dessin.
   &__caret {
     display: grid;
     place-items: center;

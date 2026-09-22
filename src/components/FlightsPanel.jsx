@@ -57,9 +57,15 @@ export default function FlightsPanel({ trip, readOnly, onChanged }) {
   // autant de place qu'un vol réel alors qu'on l'utilise trois fois par voyage.
   const [adding, setAdding] = useState(false);
 
-  // Sur mobile, le bloc des vols est replié : il précède l'itinéraire, et
-  // quatre cartes de vol repoussaient la première étape hors de l'écran. Sur
-  // grand écran il reste ouvert, la place ne manque pas.
+  // Repliable a TOUTES les largeurs : le bloc precede l'itineraire, et quatre
+  // cartes de vol repoussent la premiere etape vers le bas quel que soit
+  // l'ecran. Ce qu'on regarde en preparant un voyage, ce sont les villes.
+  //
+  // L'etat de depart, lui, reste lie a la largeur : replie sur mobile ou la
+  // place manque, ouvert sur grand ecran ou elle ne manque pas. `useState` ne
+  // relit pas la requete media, donc un redimensionnement ne rebascule rien —
+  // c'est voulu : le pliage devient celui de l'utilisateur des son premier
+  // clic, et rien ne doit le lui reprendre.
   const isMobile = useMediaQuery(MOBILE_QUERY);
   const [open, setOpen] = useState(!isMobile);
 
@@ -67,34 +73,30 @@ export default function FlightsPanel({ trip, readOnly, onChanged }) {
 
   return (
     <section className="flights" id="vols">
-      <div className="flights__card" data-collapsed={isMobile && !open ? '' : undefined}>
+      <div className="flights__card" data-collapsed={open ? undefined : ''}>
         <div className="flights__head">
-          {/* Le titre devient le bouton de pliage, mais seulement là où le
-              pliage existe : sur grand écran, un bouton qui ne fait rien
-              serait un piège. */}
-          {isMobile ? (
-            <button
-              type="button"
-              className="flights__toggle"
-              aria-expanded={open}
-              onClick={() => setOpen((value) => !value)}
-            >
-              <h2 className="flights__title">Billets d'avion</h2>
-              <span className="flights__count">{flights.length}</span>
-              <span className="flights__caret" data-open={open || undefined}>
-                <ChevronIcon />
-              </span>
-            </button>
-          ) : (
+          {/* Le titre EST le bouton de pliage, partout. */}
+          <button
+            type="button"
+            className="flights__toggle"
+            aria-expanded={open}
+            onClick={() => setOpen((value) => !value)}
+          >
             <h2 className="flights__title">Billets d'avion</h2>
-          )}
-          {!isMobile && (
+            <span className="flights__count">{flights.length}</span>
+            <span className="flights__caret" data-open={open || undefined}>
+              <ChevronIcon />
+            </span>
+          </button>
+
+          {/* Le mot doux ne s'affiche que deplie : a cote d'un titre replie,
+              il passait pour le resume du contenu cache. */}
+          {open && (
             <span className="flights__hint">{whisperFor('flights', trip.id)}</span>
           )}
-
         </div>
 
-        {(!isMobile || open) && (
+        {open && (
         <div className="flights__grid">
           {flights.map((flight) => (
             <FlightCard
@@ -111,7 +113,7 @@ export default function FlightsPanel({ trip, readOnly, onChanged }) {
 
         {/* Après les vols déjà saisis : on ajoute à la suite de ce qu'on a,
             on ne commence pas par le formulaire. */}
-        {(!isMobile || open) && !readOnly && !adding && (
+        {open && !readOnly && !adding && (
           <button
             type="button"
             className="flights__add"
@@ -122,7 +124,7 @@ export default function FlightsPanel({ trip, readOnly, onChanged }) {
           </button>
         )}
 
-        {(!isMobile || open) && !readOnly && adding && (
+        {open && !readOnly && adding && (
           <FlightForm
             trip={trip}
             onChanged={onChanged}

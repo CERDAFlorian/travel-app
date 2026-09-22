@@ -4,6 +4,16 @@
   min-height: 100svh;
   background: var(--bg);
 
+  // Hauteur de la frise collante, en dur parce qu'elle est calculable : un
+  // segment fait 36px — 6px de padding de part et d'autre, une ligne de texte
+  // et son filet — auxquels s'ajoutent les 8px de padding de la frise de
+  // chaque cote, plus le filet du bas.
+  //
+  // Elle est fiable parce que les segments sont en `white-space: nowrap` avec
+  // ellipse : ils tiennent TOUJOURS sur une ligne, quel que soit le nom de la
+  // ville. `min-height` la garantit dans l'autre sens.
+  --timeline-h: 53px;
+
   // Rien ne doit élargir la page. `clip` et non `hidden` : `hidden` crée un
   // conteneur de défilement, ce qui casserait la frise collante à
   // l'intérieur — un élément `sticky` ne colle pas dans un ancêtre défilant.
@@ -35,21 +45,20 @@
   //
   // Le fond opaque n'est pas décoratif : sans lui, le contenu défilerait
   // visiblement sous des segments translucides.
+  //
+  // Collante a TOUTES les largeurs. Elle redevenait un element du flux au-dela
+  // de 768px, au motif que la carte collante tenait le role de repere : mais
+  // la carte dit ou sont les villes, pas ou l'on en est dans la lecture, et
+  // elle ne permet pas de sauter a une etape.
   &__timeline {
     position: sticky;
     top: 0;
     z-index: var(--z-sticky);
+    box-sizing: border-box;
+    min-height: var(--timeline-h);
     padding: var(--sp-2) clamp(16px, 3vw, 44px);
     background: var(--bg);
     border-bottom: 1px solid var(--border-soft);
-  }
-
-  // Au-delà, la colonne de gauche est plus courte et la carte collante tient
-  // déjà le rôle de repère : la frise redevient un élément du flux.
-  @include mixins.from('md') {
-    &__timeline {
-      position: static;
-    }
   }
 
   // Bandeau d'alerte. Vide et sans marge quand tout va bien : `:empty` évite
@@ -116,7 +125,9 @@
 
     @include mixins.from('md') {
       position: sticky;
-      top: 12px;
+      // Sous la frise, qui colle desormais a toutes les largeurs et couvre la
+      // pleine largeur de la page : a 12px du haut, la carte glissait dessous.
+      top: calc(var(--timeline-h) + var(--sp-3));
     }
     padding: clamp(11px, 1.2vw, 16px);
     border: 1.5px solid var(--border);
