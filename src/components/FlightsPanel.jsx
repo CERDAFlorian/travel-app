@@ -49,7 +49,7 @@ function splitFlightNumber(raw) {
   return { airline: airline || null, flightNo: rest.join(' ') || null };
 }
 
-export default function FlightsPanel({ trip, itinerary, readOnly, onChanged }) {
+export default function FlightsPanel({ trip, readOnly, onChanged }) {
   const flights = trip.flights;
   // Le formulaire est replié par défaut : déplié en permanence, il occupait
   // autant de place qu'un vol réel alors qu'on l'utilise trois fois par voyage.
@@ -92,10 +92,6 @@ export default function FlightsPanel({ trip, itinerary, readOnly, onChanged }) {
             </span>
           )}
 
-          {/* Les deux vols bornent le séjour. Si les nuits planifiées ne
-              remplissent pas la fenêtre, on le dit — sans rien corriger
-              d'autorité : c'est une décision de voyage, pas une erreur. */}
-          <NightsGap gap={itinerary?.nightsGap} />
           {!readOnly && (!isMobile || open) && (
             <button
               type="button"
@@ -132,21 +128,6 @@ export default function FlightsPanel({ trip, itinerary, readOnly, onChanged }) {
         )}
       </div>
     </section>
-  );
-}
-
-function NightsGap({ gap }) {
-  if (gap == null || gap === 0) return null;
-
-  const nights = Math.abs(gap);
-  const plural = nights > 1 ? 's' : '';
-
-  return (
-    <span className="flights__gap" data-over={gap < 0 || undefined}>
-      {gap > 0
-        ? `${nights} nuit${plural} encore à placer avant le vol retour`
-        : `${nights} nuit${plural} de trop : le séjour dépasse le vol retour`}
-    </span>
   );
 }
 

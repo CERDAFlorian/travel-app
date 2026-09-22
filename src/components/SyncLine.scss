@@ -18,7 +18,6 @@
     height: 8px;
     border-radius: var(--radius-pill);
 
-    .sync[data-state='ok'] &      { background: var(--ok); }
     .sync[data-state='offline'] & { background: var(--warn); }
     .sync[data-state='error'] &   { background: var(--danger); }
   }

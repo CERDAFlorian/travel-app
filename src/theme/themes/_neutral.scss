@@ -23,6 +23,7 @@ $grey-soft:  #56606a;
 $paper-3:    #f1f3f5; // panneaux encastrés
 $paper-4:    #e8ecef; // fonds d'action
 $paper-5:    #eef1f3; // emplacements vides
+$paper-6:    #d8dee4; // commandes
 $sea:        #eef3f6;
 $sea-edge:   #e2eaf0;
 $land:       #dfe4e2;
@@ -39,6 +40,7 @@ $theme: contract.validate('neutral', (
   surface-sunken:  $paper-3,
   surface-warm:    $paper-4,
   surface-tint:    $paper-5,
+  surface-action:  $paper-6,
 
   text:            $ink,
   text-heading:    $ink-strong,

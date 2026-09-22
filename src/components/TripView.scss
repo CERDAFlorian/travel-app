@@ -52,14 +52,24 @@
     }
   }
 
-  // Bandeau de service : fraîcheur de la donnée à gauche, partage à droite.
+  // Bandeau d'alerte. Vide et sans marge quand tout va bien : `:empty` évite
+  // qu'un conteneur silencieux laisse un espace inexpliqué.
   &__strip {
     display: flex;
     flex-wrap: wrap;
     gap: var(--sp-3);
     align-items: center;
-    justify-content: space-between;
     padding: var(--sp-2) clamp(16px, 3vw, 44px) 0;
+
+    &:empty {
+      display: none;
+    }
+  }
+
+  &__share {
+    display: flex;
+    justify-content: center;
+    padding: 0 clamp(16px, 3vw, 44px) clamp(16px, 2vw, 24px);
   }
 
   // Bandeau de la vue partagée : il remplace le retour « Mes voyages », qui

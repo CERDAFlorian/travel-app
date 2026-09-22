@@ -13,6 +13,7 @@ $creme-pur:   #fffdf7;
 $creme-ombre: #f8eed9; // panneaux encastrés
 $creme-chaud: #f6e3c4; // fonds d'action
 $creme-teint: #efe0c4; // segments, emplacements photo vides
+$brun-clair:  #e3c79c; // commandes, plus soutenu que le fond chaud
 $brou:        #8a6c47; // annotations italiques
 $vermillon-p: #7a2027; // petites capitales
 $mer:         #fbf3e3; // centre de la mer
@@ -36,6 +37,7 @@ $theme: contract.validate('japan', (
   surface-sunken:  $creme-ombre,
   surface-warm:    $creme-chaud,
   surface-tint:    $creme-teint,
+  surface-action:  $brun-clair,
 
   text:            $sumi,
   text-heading:    $sumi-deep,

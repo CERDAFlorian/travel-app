@@ -11,6 +11,7 @@ import HeroBanner from '@/components/HeroBanner.jsx';
 import Experiences from '@/components/Experiences.jsx';
 import BudgetPanel from '@/components/BudgetPanel.jsx';
 import ShareLink from '@/components/ShareLink.jsx';
+import NightsGap from '@/components/NightsGap.jsx';
 import AddStep from '@/components/AddStep.jsx';
 import StepLink from '@/components/StepLink.jsx';
 import { addStep, moveStep, removeStep, setStepNights } from '@/lib/mutations.js';
@@ -148,6 +149,8 @@ export default function TripView({
         />
       </div>
 
+      {/* Ne s'affiche que s'il y a quelque chose à signaler — hors ligne ou
+          synchronisation refusée. */}
       <div className="trip__strip">
         <SyncLine
           isOffline={isOffline}
@@ -156,10 +159,13 @@ export default function TripView({
           onRefresh={onRefresh}
           onSignIn={onRequestLogin}
         />
-        <ShareLink trip={view} readOnly={readOnly} onChanged={onChanged} />
       </div>
 
-      <FlightsPanel trip={view} itinerary={itinerary} readOnly={readOnly} onChanged={onChanged} />
+      <FlightsPanel trip={view} readOnly={readOnly} onChanged={onChanged} />
+
+      {/* Entre les vols et la première étape : l'écart parle des nuits
+          d'hôtel, pas des billets. */}
+      <NightsGap gap={itinerary.nightsGap} />
 
       <main className="trip__main">
         <section className="trip__steps">
@@ -220,6 +226,12 @@ export default function TripView({
       <HeroBanner steps={view.steps} />
       <Experiences experiences={view.experiences} />
       <BudgetPanel trip={view} />
+
+      {/* Le partage tout en bas : c'est ce qu'on fait une fois l'itinéraire
+          prêt, pas en le préparant. */}
+      <div className="trip__share">
+        <ShareLink trip={view} readOnly={readOnly} onChanged={onChanged} />
+      </div>
 
       <footer className="trip__foot">
         {view.steps.map((step) => step.name.split(' ')[0]).join(' → ')}

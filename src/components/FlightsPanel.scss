@@ -36,11 +36,12 @@
   // une seule au téléphone, sans point de rupture à maintenir.
   // Bouton d'ouverture du formulaire, dans l'en-tête plutôt qu'en carte : une
   // carte en pointillés juste pour un bouton occupait la place d'un vol réel.
+  // Sur mobile, le bouton passe à la ligne : sinon il se glisserait après la
+  // flèche de pliage, qui doit rester la dernière chose de l'en-tête.
   &__add {
-    // C'est le total qui poussait ce bouton à droite ; il est parti au budget
-    // global, la marge automatique prend le relais.
-    margin-left: auto;
     flex: none;
+    flex-basis: 100%;
+    margin-top: var(--sp-2);
     padding: 3px 11px;
     border: 1px solid var(--border-strong);
     border-radius: var(--radius-pill);
@@ -293,24 +294,6 @@
     font-size: var(--fs-xs);
   }
 }
-
-// Écart entre les nuits planifiées et la fenêtre imposée par les vols.
-// Informatif quand il reste des nuits à placer, alarmant quand le séjour
-// déborde le vol retour — on ne dort pas dans un avion déjà parti.
-.flights__gap {
-  padding: 2px 10px;
-  border: 1px solid var(--warn);
-  border-radius: var(--radius-pill);
-  color: var(--warn);
-  font-size: var(--fs-xs);
-  font-style: italic;
-
-  &[data-over] {
-    border-color: var(--danger);
-    color: var(--danger);
-  }
-}
-
 .flights {
   // Le titre devient bouton sur mobile : toute la ligne est cliquable, pas
   // seulement un petit chevron au bord.
@@ -337,9 +320,12 @@
     font-variant-numeric: tabular-nums;
   }
 
+  // Poussée tout à droite, après le compteur : c'est le repère qu'on cherche
+  // du pouce pour ouvrir ou refermer.
   &__caret {
     margin-left: auto;
-    color: var(--muted);
+    color: var(--accent);
+    font-size: var(--fs-md);
   }
 
   // Replié, la carte se resserre : elle ne doit pas garder la hauteur d'un

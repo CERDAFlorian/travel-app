@@ -1,0 +1,27 @@
+// Orange d'avertissement : il reste quelque chose à faire, sans que rien soit
+// cassé. Rouge seulement quand le séjour déborde le vol retour — là, on ne
+// dort nulle part.
+.nights-gap {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0 clamp(16px, 3vw, 44px) clamp(10px, 1.2vw, 14px);
+  padding: var(--sp-2) var(--sp-4);
+  border: 1px solid var(--warn);
+  border-left-width: 4px;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--warn);
+  font-size: clamp(12px, 1.2vw, 14.5px);
+  font-style: italic;
+
+  &::before {
+    content: '⚠';
+    font-style: normal;
+  }
+
+  &[data-over] {
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+}

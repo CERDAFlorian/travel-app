@@ -12,16 +12,20 @@ export default function SyncLine({ isOffline, syncError, lastSync, onRefresh, on
   const since = formatSince(lastSync);
   const refused = !isOffline && syncError;
 
+  // Rien à dire quand tout va bien. « Synchronisé à l'instant » occupait une
+  // ligne permanente pour annoncer que rien ne se passe — or personne ne
+  // consulte son itinéraire pour lire l'état de sa synchronisation. Le
+  // bandeau ne parle plus que lorsqu'il a une raison de le faire.
+  if (!isOffline && !syncError) return null;
+
   return (
-    <p className="sync" data-state={refused ? 'error' : isOffline ? 'offline' : 'ok'}>
+    <p className="sync" data-state={refused ? 'error' : 'offline'}>
       <span className="sync__dot" aria-hidden="true" />
 
       {refused ? (
         <>Synchronisation impossible · {syncError.message}</>
-      ) : isOffline ? (
-        <>Hors ligne{since ? ` · synchronisé ${since}` : ' · jamais synchronisé'}</>
       ) : (
-        <>Synchronisé {since ?? "à l'instant"}</>
+        <>Hors ligne{since ? ` · synchronisé ${since}` : ' · jamais synchronisé'}</>
       )}
 
       {/* Une session expirée ne se répare pas en réessayant : il faut se
@@ -33,8 +37,9 @@ export default function SyncLine({ isOffline, syncError, lastSync, onRefresh, on
       )}
 
       {/* Pas de bouton hors ligne : il ne ferait qu'échouer. Le hook
-          resynchronise de lui-même au retour du réseau. */}
-      {onRefresh && !isOffline && !(refused && syncError.kind === 'auth') && (
+          resynchronise de lui-même au retour du réseau. Et pas non plus sur
+          une session expirée : réessayer sur un jeton mort tourne en rond. */}
+      {onRefresh && !isOffline && !(syncError.kind === 'auth') && (
         <button className="sync__action" type="button" onClick={onRefresh}>
           Actualiser
         </button>

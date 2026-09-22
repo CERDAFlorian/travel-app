@@ -108,12 +108,14 @@ export default function StepCard({
           <h2 className="step__name">{step.name}</h2>
           <span className="step__dates">{formatStepDates(step.date_start, step.date_end)}</span>
           {/* Les nuits pilotent tout l'enchaînement : changer une nuit ici
-              décale les dates de toutes les étapes suivantes. */}
-          <span className="step__nights">
+              décale les dates de toutes les étapes suivantes.
+              Les deux commandes encadrent le compte au lieu d'y être
+              enfermées — elles se lisent alors comme des boutons. */}
+          <span className="step__nights-group">
             {!readOnly && onNights && (
               <button
                 type="button"
-                className="step__nights-step"
+                className="step__nights-btn"
                 title="Une nuit de moins"
                 disabled={step.nights === 0}
                 onClick={(event) => {
@@ -124,11 +126,15 @@ export default function StepCard({
                 −<span className="sr-only">Une nuit de moins</span>
               </button>
             )}
-            {step.nights} {step.nights > 1 ? 'nuits' : 'nuit'}
+
+            <span className="step__nights">
+              {step.nights} {step.nights > 1 ? 'nuits' : 'nuit'}
+            </span>
+
             {!readOnly && onNights && (
               <button
                 type="button"
-                className="step__nights-step"
+                className="step__nights-btn"
                 title="Une nuit de plus"
                 onClick={(event) => {
                   event.stopPropagation();

@@ -84,14 +84,16 @@
     color: var(--accent);
   }
 
-  // Elle enveloppe désormais deux cibles de 36 px : c'est une rangée de
-  // commandes, plus une simple étiquette.
-  &__nights {
+  &__nights-group {
     display: inline-flex;
     align-items: center;
-    gap: 2px;
+    gap: var(--sp-2);
     margin-left: auto;
-    padding: 0 var(--sp-2) 0 2px;
+  }
+
+  // L'étiquette ne porte plus les commandes : elle redevient une étiquette.
+  &__nights {
+    padding: 2px var(--sp-3);
     border: 1px solid var(--border-strong);
     border-radius: var(--radius-pill);
     background: var(--surface-sunken);
@@ -155,25 +157,32 @@
 }
 
 .step {
-  // Même cible que le rail : ces deux boutons se touchent aussi souvent que
-  // les flèches, et ils faisaient 6 px de large en padding.
-  &__nights-step {
+  // Boutons pleins, bordés, sur le fond soutenu des commandes. Sans fond ni
+  // bordure ils se confondaient avec le texte de l'étiquette : on ne voyait
+  // pas qu'ils étaient cliquables.
+  &__nights-btn {
     display: grid;
     place-items: center;
     width: var(--hit);
     height: var(--hit);
     padding: 0;
-    border: 0;
+    border: 1px solid var(--border-strong);
     border-radius: var(--radius-pill);
-    background: none;
+    background: var(--surface-action);
     color: var(--accent);
     font: inherit;
-    font-size: var(--fs-md);
+    font-size: var(--fs-lg);
     line-height: 1;
     cursor: pointer;
+    transition: background var(--dur-fast) var(--ease-out);
 
-    &:hover:not(:disabled) { background: var(--accent-soft); }
-    &:disabled { opacity: 0.3; cursor: default; }
+    &:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    &:focus-visible { @include mixins.focus-ring; }
+    &:disabled { opacity: 0.35; cursor: default; }
   }
 
   &__locate-row {

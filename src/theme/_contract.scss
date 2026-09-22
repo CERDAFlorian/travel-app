@@ -19,6 +19,9 @@ $required: (
   // Ajoutés en reprenant le design à l'identique : il en utilise cinq nuances
   // chaudes distinctes, les réduire à `surface` aplatissait la hiérarchie.
   surface-sunken, surface-warm, surface-tint,
+  // Fond des commandes qu'on doit voir du premier coup d'œil : plus soutenu
+  // que `surface-warm`, qui se confondait avec la carte qui le porte.
+  surface-action,
   // Texte
   text, text-heading, muted, text-invert,
   // Annotation italique, plus sombre que `muted` sans être du corps de texte.
