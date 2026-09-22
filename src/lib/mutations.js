@@ -28,7 +28,7 @@ import {
 // d'un item remonte à son étape puis au voyage, dont on est déjà membre au
 // moment de l'insertion. Sur `trips`, c'est le trigger AFTER qui crée
 // l'appartenance, donc trop tard pour un RETURNING — voir 0002_rls.sql.
-export async function addItem({ stepId, category, title, price, position }) {
+export async function addItem({ stepId, category, title, price, position, currency }) {
   const { data, error } = await supabase
     .from('items')
     .insert({
@@ -36,6 +36,9 @@ export async function addItem({ stepId, category, title, price, position }) {
       category,
       title: title.trim(),
       price: price ?? null,
+      // Le schéma met JPY par défaut ; on l'écrase quand la saisie se fait
+      // dans une autre devise.
+      ...(currency ? { currency } : {}),
       position,
     })
     .select('id')

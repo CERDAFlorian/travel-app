@@ -92,7 +92,11 @@
   }
 
   // L'étiquette ne porte plus les commandes : elle redevient une étiquette.
+  // Même hauteur que les boutons qui l'encadrent, sinon la rangée est bancale.
   &__nights {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--hit-dense);
     padding: 2px var(--sp-3);
     border: 1px solid var(--border-strong);
     border-radius: var(--radius-pill);
@@ -157,32 +161,16 @@
 }
 
 .step {
-  // Boutons pleins, bordés, sur le fond soutenu des commandes. Sans fond ni
-  // bordure ils se confondaient avec le texte de l'étiquette : on ne voyait
-  // pas qu'ils étaient cliquables.
+  // Même hauteur que l'étiquette qu'ils encadrent, et le style commun à
+  // tous les boutons d'action. Carrés plutôt que larges : ils ne portent
+  // qu'un signe.
   &__nights-btn {
-    display: grid;
-    place-items: center;
-    width: var(--hit);
-    height: var(--hit);
+    @include mixins.action-button;
+    width: var(--hit-dense);
     padding: 0;
-    border: 1px solid var(--border-strong);
     border-radius: var(--radius-pill);
-    background: var(--surface-action);
-    color: var(--accent);
-    font: inherit;
-    font-size: var(--fs-lg);
+    font-size: var(--fs-md);
     line-height: 1;
-    cursor: pointer;
-    transition: background var(--dur-fast) var(--ease-out);
-
-    &:hover:not(:disabled) {
-      border-color: var(--accent);
-      background: var(--accent-soft);
-    }
-
-    &:focus-visible { @include mixins.focus-ring; }
-    &:disabled { opacity: 0.35; cursor: default; }
   }
 
   &__locate-row {

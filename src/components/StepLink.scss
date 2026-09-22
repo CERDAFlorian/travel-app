@@ -130,18 +130,7 @@
   }
 
   &__save {
-    padding: 4px 12px;
-    border: 1px solid var(--border-strong);
-    border-radius: 7px;
-    background: var(--surface-warm);
-    color: var(--accent);
-    font: inherit;
-    font-size: var(--fs-sm);
-    cursor: pointer;
-
-    &:hover { border-color: var(--accent); }
-    &:focus-visible { @include mixins.focus-ring; }
-    &:disabled { opacity: 0.6; cursor: progress; }
+    @include mixins.action-button;
   }
 
   &__cancel {

@@ -47,3 +47,24 @@ export function formatEuros(amount) {
 export function priceInEuros(amount, currency = 'JPY') {
   return formatEuros(toEuros(amount, currency));
 }
+
+// Conversion inverse, pour la saisie.
+//
+// L'affichage est en euros ; il serait incohérent de taper des yens dans le
+// champ juste à côté. On convertit donc dans les deux sens, et la devise
+// d'origine de la ligne est préservée — un hôtel réservé en yens reste en
+// yens en base, c'est le montant qu'on présentera au comptoir.
+export function fromEuros(amount, currency = 'JPY') {
+  if (amount === null || amount === undefined) return null;
+  const rate = EUR_PER[currency];
+  if (rate === undefined) return null;
+  return Number(amount) / rate;
+}
+
+// Valeur à mettre dans un champ de saisie : des euros entiers, ou une chaîne
+// vide. Pas de centimes — le montant est déjà une estimation convertie à taux
+// fixe, et « 206,06 » donnerait une précision que le chiffre n'a pas.
+export function eurosInput(amount, currency = 'JPY') {
+  const euros = toEuros(amount, currency);
+  return euros === null ? '' : String(Math.round(euros));
+}

@@ -92,16 +92,6 @@ export default function FlightsPanel({ trip, readOnly, onChanged }) {
             </span>
           )}
 
-          {!readOnly && (!isMobile || open) && (
-            <button
-              type="button"
-              className="flights__add"
-              aria-expanded={adding}
-              onClick={() => setAdding((value) => !value)}
-            >
-              {adding ? 'Fermer' : '+ Ajouter un vol'}
-            </button>
-          )}
         </div>
 
         {(!isMobile || open) && (
@@ -117,6 +107,19 @@ export default function FlightsPanel({ trip, readOnly, onChanged }) {
           ))}
 
         </div>
+        )}
+
+        {/* Après les vols déjà saisis : on ajoute à la suite de ce qu'on a,
+            on ne commence pas par le formulaire. */}
+        {(!isMobile || open) && !readOnly && !adding && (
+          <button
+            type="button"
+            className="flights__add"
+            aria-expanded={adding}
+            onClick={() => setAdding(true)}
+          >
+            + Ajouter un vol
+          </button>
         )}
 
         {(!isMobile || open) && !readOnly && adding && (

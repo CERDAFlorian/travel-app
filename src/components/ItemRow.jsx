@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { priceInEuros } from '@/lib/currency.js';
+import { eurosInput, fromEuros, priceInEuros, toEuros } from '@/lib/currency.js';
 import { haversine, formatDistance, MAX_DISTANCE_FROM_STEP_KM } from '@/lib/geo.js';
 import { imageFor } from '@/lib/photos.js';
 import { deleteItem, setCoordinates, setFavorite, updateItem } from '@/lib/mutations.js';
@@ -175,18 +175,31 @@ export default function ItemRow({ item, step, tripTitle, readOnly, autoLocate, o
                 className="item__price"
                 type="text"
                 inputMode="numeric"
-                defaultValue={item.price ?? ''}
-                placeholder={item.currency === 'EUR' ? 'prix €' : 'prix ¥'}
-                title={`Saisie en ${item.currency ?? 'JPY'} — l'affichage est converti en euros`}
-                aria-label={`Prix de ${item.title} en ${item.currency ?? 'JPY'}`}
+                // Le champ parle la même langue que l'affichage : des euros.
+                // Taper des yens dans une interface qui montre des euros
+                // n'avait aucun sens.
+                defaultValue={eurosInput(item.price, item.currency)}
+                placeholder="prix €"
+                aria-label={`Prix de ${item.title}, en euros`}
                 onBlur={(event) => {
                   const parsed = parsePrice(event.target.value);
                   if (parsed.error) {
                     setError('Prix invalide.');
                     return;
                   }
-                  if (parsed.value !== (item.price ?? null)) {
-                    run(() => updateItem(item.id, { price: parsed.value }));
+                  // On compare EN EUROS, pas en devise d'origine : sinon
+                  // quitter un champ sans y toucher réécrirait la ligne, la
+                  // conversion aller-retour ne retombant pas au yen près.
+                  const current = item.price == null ? null : Math.round(toEuros(item.price, item.currency));
+                  if (parsed.value !== current) {
+                    run(() =>
+                      updateItem(item.id, {
+                        // La devise d'origine est préservée : un hôtel réservé
+                        // en yens reste en yens, c'est le montant qu'on
+                        // présentera au comptoir.
+                        price: parsed.value === null ? null : fromEuros(parsed.value, item.currency),
+                      }),
+                    );
                   }
                 }}
                 onKeyDown={(event) => {

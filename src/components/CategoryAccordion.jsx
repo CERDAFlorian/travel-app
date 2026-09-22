@@ -46,7 +46,11 @@ export default function CategoryAccordion({ category, items, step, tripTitle, re
         category: category.key,
         position: nextPosition,
         title: trimmed,
+        // Saisi en euros, donc stocké en euros : pas de conversion, pas de
+        // dérive. Les lignes du seed restent en yens, le budget ramène tout
+        // sur la même échelle de toute façon.
         price: parsePrice(price),
+        currency: 'EUR',
       });
       // Une note perso n'a pas de lieu : lui proposer une adresse n'a aucun
       // sens. Les cinq autres catégories, si.
@@ -111,7 +115,7 @@ export default function CategoryAccordion({ category, items, step, tripTitle, re
                   type="text"
                   inputMode="numeric"
                   value={price}
-                  placeholder={category.key === 'hotel' || category.key === 'activite' || category.key === 'lieu' ? 'prix ¥' : 'prix'}
+                  placeholder="prix €"
                   aria-label="Prix"
                   onChange={(event) => setPrice(event.target.value)}
                 />
