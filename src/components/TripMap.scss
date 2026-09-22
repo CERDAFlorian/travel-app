@@ -12,6 +12,10 @@
     display: block;
     width: 100%;
     height: auto;
+    // Sans ça, glisser la carte surligne les libellés en bleu : le navigateur
+    // interprète le mouvement comme une sélection de texte.
+    user-select: none;
+    -webkit-user-select: none;
     // Indispensable : sans ça, iOS intercepte le glisser pour faire défiler la
     // page et le pinch pour zoomer le document. La carte ne recevrait qu'une
     // partie des gestes.
@@ -106,7 +110,7 @@
   &__step-label {
     fill: var(--text-heading);
     font-family: var(--font-display);
-    font-size: 17px;
+    font-size: 19px;
     font-weight: 600;
     paint-order: stroke;
     stroke: var(--bg);
@@ -116,13 +120,13 @@
 
   // paint-order + contour de la couleur du fond : le texte reste lisible
   // par-dessus le trait de côte et les pointillés, sans cartouche opaque.
-  // 14 px et non 12 : à l'échelle de la carte, un nom d'hôtel de 12 px se
-  // devine plus qu'il ne se lit. Les libellés sont contre-échelonnés, donc
-  // cette taille vaut à tous les niveaux de zoom.
+  // 16 px : à l'échelle de la carte, un nom d'hôtel se lit de loin ou ne se
+  // lit pas. Les libellés sont contre-échelonnés, donc cette taille vaut à
+  // tous les niveaux de zoom.
   &__item-label {
     fill: var(--text);
     font-family: var(--font-body);
-    font-size: 14px;
+    font-size: 16px;
     paint-order: stroke;
     stroke: var(--bg);
     stroke-width: 3;

@@ -6,9 +6,6 @@ import { toEuros } from '@/lib/currency.js';
 // fausseraient une prévision.
 const BUDGETED = CATEGORIES.filter((category) => category.budget);
 
-export const BUDGET_HINT =
-  'vols, hôtels, activités et visites — restaurants et shopping restent hors budget';
-
 // Tout est ramené en euros avant d'être additionné.
 //
 // Le design cumulait `flightsSum` (euros) et les totaux d'items (yens) en un

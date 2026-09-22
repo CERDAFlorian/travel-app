@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BUDGET_HINT, buildBudget } from '@/lib/budget.js';
+import { buildBudget } from '@/lib/budget.js';
 import { RATE_NOTE, formatEuros } from '@/lib/currency.js';
 import './BudgetPanel.scss';
 
@@ -29,10 +29,6 @@ export default function BudgetPanel({ trip }) {
           </label>
         </div>
 
-        {/* Sur sa propre ligne : la règle d'inclusion est une explication, pas
-            un complément de titre. Collée au titre, elle le noyait. */}
-        <p className="budget__hint">{BUDGET_HINT}</p>
-
         {/* Jauge indicative : les parts comparent des montants bruts, sans
             conversion entre devises. C'est une proportion, pas une addition. */}
         <div className="budget__gauge">
@@ -52,9 +48,6 @@ export default function BudgetPanel({ trip }) {
             <div key={row.key} className="budget__row">
               <span className="budget__dot" data-cat={row.key} aria-hidden="true" />
               <span className="budget__label">{row.label}</span>
-              <span className="budget__count">
-                {row.count} ligne{row.count > 1 ? 's' : ''}
-              </span>
               <span className="budget__rule" aria-hidden="true" />
               <span className="budget__amount">{formatEuros(row.amount)}</span>
             </div>

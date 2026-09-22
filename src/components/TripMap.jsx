@@ -193,7 +193,7 @@ export default function TripMap({ trip, selectedStepId, onSelectStep }) {
     // pour les bonnes positions.
     const stepLabels = pins.map((pin) => {
       const name = pin.group.steps[0].name.split(' ')[0];
-      const placed = placeLabel(pin.cx, pin.cy, pin.radius, name, 17, hard);
+      const placed = placeLabel(pin.cx, pin.cy, pin.radius, name, 19, hard);
       hard.push(placed.box);
       return { ...pin, name, dx: placed.x - pin.cx, dy: placed.y - pin.cy, anchor: placed.anchor };
     });
@@ -212,7 +212,7 @@ export default function TripMap({ trip, selectedStepId, onSelectStep }) {
 
     const itemLabels = showItemLabels
       ? dots.map((dot) => {
-          const placed = placeLabel(dot.cx, dot.cy, 5, dot.title, 14, hard, soft);
+          const placed = placeLabel(dot.cx, dot.cy, 5, dot.title, 16, hard, soft);
           hard.push(placed.box);
           return { id: dot.id, dx: placed.x - dot.cx, dy: placed.y - dot.cy, anchor: placed.anchor, title: dot.title };
         })

@@ -54,16 +54,16 @@
   // Marges asymétriques : elles réservent la place du décor. Sur mobile, le
   // décor est réduit et les marges avec — sinon il ne reste rien pour le
   // titre.
-  // `baseline` et non `flex-end` : le titre et la première ligne du
-  // sous-titre partagent alors une ligne de base, ce que l'œil lit comme un
-  // alignement. Avec `flex-end`, c'étaient les BOÎTES qui s'alignaient — et
-  // comme le titre a une interligne de 0,92 et le sous-titre deux lignes,
-  // rien ne tombait juste.
+  // `center` : le titre se cale au milieu du bloc sous-titre + dates, pas sur
+  // la ligne de base de sa première ligne. Avec `baseline`, JAPON s'accrochait
+  // au haut du bloc et la date pendait en dessous — c'est le décalage qu'on
+  // voyait. `flex-end` alignait les boîtes, ce qui ne tombait pas juste non
+  // plus avec une interligne de 0,92.
   &__bar {
     position: relative;
     display: flex;
     flex-wrap: wrap;
-    align-items: baseline;
+    align-items: center;
     gap: clamp(4px, 1.6vw, 20px);
     padding:
       clamp(14px, 2.4vw, 30px)
