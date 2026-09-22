@@ -28,6 +28,8 @@ export default function TripHeader({ trip, back }) {
     0,
   );
 
+  const jours = countdown(trip.startDate);
+
   return (
     <header className="trip-header">
       <img className="trip-header__momiji" src="/img/deco-momiji.webp" alt="" aria-hidden="true" />
@@ -41,9 +43,14 @@ export default function TripHeader({ trip, back }) {
               voyage de noces, et c'est la premiere chose qu'on veut lire en
               ouvrant la page. Le sous-titre de la base reprend la main une
               fois le depart passe, quand compter n'a plus de sens. */}
-          <div className="trip-header__tagline">
-            {countdown(trip.startDate) ?? trip.subtitle}
-          </div>
+          {jours ? (
+            <div className="trip-header__tagline">
+              <span className="trip-header__count">{jours.compte}</span>
+              <span className="trip-header__vow">{jours.ligne}</span>
+            </div>
+          ) : (
+            <div className="trip-header__tagline">{trip.subtitle}</div>
+          )}
           <div className="trip-header__dates">{formatTripRange(trip.startDate, trip.endDate)}</div>
         </div>
       </div>

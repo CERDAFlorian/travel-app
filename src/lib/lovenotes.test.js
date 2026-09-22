@@ -57,8 +57,11 @@ describe('lovenotes', () => {
     // sous les commandes pour que le mot doux n'y fasse pas sauter le
     // contenu. Un message plus long passerait sur une troisieme ligne et
     // deborderait de la place reservee — le saut reviendrait.
-    for (const list of Object.values(WHISPERS)) {
-      for (const whisper of list) expect(whisper.length, whisper).toBeLessThanOrEqual(72);
+    for (const [kind, list] of Object.entries(WHISPERS)) {
+      // Les mots des nuits s'affichent en petit sous le nom d'une ville, sur
+      // UNE ligne reservee : ils ont leur propre plafond, plus bas.
+      const max = kind === 'nights' ? 40 : 72;
+      for (const whisper of list) expect(whisper.length, whisper).toBeLessThanOrEqual(max);
     }
   });
 
@@ -66,53 +69,59 @@ describe('lovenotes', () => {
     const DEPART = '2026-11-07';
 
     it('compte les jours qui restent', () => {
-      // Le nombre, pas le mot : selon le jour, la phrase parle de jours, de
-      // matins, de nuits ou de levers de soleil.
-      expect(countdown(DEPART, new Date(2026, 8, 22))).toContain('46');
+      expect(countdown(DEPART, new Date(2026, 8, 22)).compte).toBe('Dans 46 jours');
+    });
+
+    it('evite « Dans 1 jours » et « Dans 0 jours »', () => {
+      // Les deux dernieres tetes de phrase sont ecrites a la main : le gabarit
+      // « Dans N jours » ne se decline ni au singulier ni au jour meme.
+      expect(countdown(DEPART, new Date(2026, 10, 6)).compte).toBe('Demain');
+      expect(countdown(DEPART, new Date(2026, 10, 7)).compte).toBe("Aujourd'hui");
     });
 
     it('change de phrase chaque matin', () => {
-      // C'est tout l'interet : elle ouvre l'app et trouve autre chose qu'hier,
-      // sans qu'on ait rien a faire. Un tirage par empreinte faisait tomber
-      // trois jours d'affilee sur la meme ligne.
-      const veille = countdown(DEPART, new Date(2026, 9, 20));
-      const jour = countdown(DEPART, new Date(2026, 9, 21));
-      expect(veille).not.toBe(jour);
+      // C'est tout l'interet : elle ouvre l'app et trouve autre chose qu'hier.
+      const suite = [18, 19, 20, 21].map(
+        (jour) => countdown(DEPART, new Date(2026, 9, jour)).ligne,
+      );
+      expect(new Set(suite).size).toBe(suite.length);
+    });
+
+    it('a sa propre phrase le jour du depart', () => {
+      // Les autres se lisent comme la suite d'un decompte, et il n'y a plus
+      // rien a decompter.
+      const jourJ = countdown(DEPART, new Date(2026, 10, 7));
+      expect(jourJ.ligne).toContain('Prends ma main');
     });
 
     it('reste la meme toute la journee', () => {
       const matin = countdown(DEPART, new Date(2026, 8, 22, 7, 30));
       const soir = countdown(DEPART, new Date(2026, 8, 22, 23, 45));
-      expect(matin).toBe(soir);
+      expect(matin).toEqual(soir);
     });
 
-    it('tient dans la largeur de l\'en-tete', () => {
-      // Affichee jusqu'a 29px en italique a la place du sous-titre : au-dela
-      // d'une soixantaine de signes, elle passe sur trois lignes et pousse les
-      // dates hors du bloc de titre.
-      for (let jours = 0; jours <= 400; jours += 1) {
-        const jour = new Date(2026, 10, 7);
-        jour.setDate(jour.getDate() - jours);
-        expect(countdown(DEPART, jour).length, `J-${jours}`).toBeLessThanOrEqual(62);
-      }
-    });
-
-    it('change de ton à mesure qu\'on approche', () => {
-      const veille = countdown(DEPART, new Date(2026, 10, 6));
-      const jourJ = countdown(DEPART, new Date(2026, 10, 7));
-      expect(veille).toContain('Demain');
-      expect(jourJ).toContain('aujourd\u2019hui');
-    });
-
-    it('se tait une fois le voyage commencé', () => {
+    it('se tait une fois le voyage commence', () => {
       // Compter les jours n'a plus de sens quand on y est.
       expect(countdown(DEPART, new Date(2026, 10, 8))).toBeNull();
     });
 
-    it('se tait sans date de départ', () => {
+    it('se tait sans date de depart', () => {
       expect(countdown(null)).toBeNull();
       expect(countdown('')).toBeNull();
       expect(countdown('pas-une-date')).toBeNull();
+    });
+
+    it('tient dans la largeur de l\'en-tete', () => {
+      // La phrase s'affiche sous le decompte, en petit, avant les dates du
+      // voyage : au-dela d'environ 80 signes elle passerait sur trois lignes
+      // et repousserait les dates hors du bloc de titre.
+      for (let jours = 0; jours <= 400; jours += 1) {
+        const jour = new Date(2026, 10, 7);
+        jour.setDate(jour.getDate() - jours);
+        const { compte, ligne } = countdown(DEPART, jour);
+        expect(compte.length, `J-${jours}`).toBeLessThanOrEqual(16);
+        expect(ligne.length, `J-${jours}`).toBeLessThanOrEqual(80);
+      }
     });
   });
 });

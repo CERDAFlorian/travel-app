@@ -70,6 +70,15 @@ $flash-lines: 2;
   text-align: left;
 }
 
+// Sous le nom d'une ville, le mot accompagne un clic sur « + » : il doit se
+// faire oublier. Plus petit, et UNE ligne reservee au lieu de deux — les
+// messages de cette categorie sont courts, un test le verifie.
+.step__head > .love-note--flash {
+  min-height: calc(var(--fs-xs) * var(--lh-base));
+  margin-top: var(--sp-1);
+  font-size: var(--fs-xs);
+}
+
 @keyframes love-note-in {
   from {
     opacity: 0;

@@ -108,6 +108,27 @@
     color: var(--text);
   }
 
+  // Le decompte et sa phrase forment UNE phrase coupee en deux lignes :
+  // « Dans 47 jours » n'en est que le debut. D'ou le decompte en gras dans la
+  // police de titre, et la suite plus petite, juste en dessous.
+  &__count {
+    display: block;
+    font-family: var(--font-display);
+    font-style: normal;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  &__vow {
+    display: block;
+    margin-top: 2px;
+    // Nettement plus petite que le decompte : c'est une phrase entiere, elle
+    // doit tenir sur une ou deux lignes sans pousser les dates plus bas.
+    font-size: clamp(13px, 1.15vw, 16px);
+    line-height: 1.35;
+    color: var(--text-soft);
+  }
+
   // Plus haute qu'avant — elle disait l'essentiel dans un corps de note de bas
   // de page — et collée au sous-titre.
   &__dates {

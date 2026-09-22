@@ -205,11 +205,16 @@ export const WHISPERS = {
     'Le temps qu’on passera côte à côte',
     'Des heures de train, ta tête sur mon épaule',
   ],
-  // Le nombre de nuits d'une étape vient de changer.
+  // Le nombre de nuits d'une étape vient de changer. Ces messages-là tiennent
+  // sur UNE ligne sous le nom de la ville, en petit : ils accompagnent un clic
+  // sur « + », ils ne doivent pas s'installer. D'où la limite de 40 signes,
+  // que lovenotes.test.js verrouille.
   nights: [
-    'Une nuit de plus, c’est un matin de plus à te réveiller.',
-    'Reste autant que tu veux. Moi je suis bien, là.',
-    'Compte les nuits. Moi je ne compte plus rien depuis toi.',
+    'Une nuit de plus contre toi.',
+    'Reste. Je suis bien, là.',
+    'Un matin de plus à te réveiller.',
+    'Une nuit de gagnée sur le retour.',
+    'Bonne idée. Ne rentrons jamais.',
   ],
 };
 
@@ -239,57 +244,34 @@ export function whisperFor(kind, seed) {
 
 // Compte à rebours avant le départ.
 //
-// Il tient la place du sous-titre en en-tête, en grand et en italique : c'est
-// la premiere ligne qu'elle lit en ouvrant le voyage, et la seule qui change
-// toute seule. Un compteur suivi d'un « mon amour » ne suffisait pas — c'est
-// une phrase qu'on doit avoir envie de relire.
+// Il tient la place du sous-titre en en-tête : c'est la première chose qu'elle
+// lit en ouvrant le voyage, et la seule ligne qui change toute seule.
 //
-// Le tirage est semé par le nombre de jours : la ligne est stable toute la
-// journée, et change le lendemain. Elle a donc quelque chose de neuf à lire
-// chaque matin sans qu'on ait rien à faire.
-const COUNTDOWN = {
-  // Plus d'un mois : on a le temps, on rêve.
-  loin: [
-    (n) => `J\u2019ai attendu toute ma vie. Je peux bien attendre ${n} jours.`,
-    (n) => `Encore ${n} levers de soleil avant le premier avec toi.`,
-    (n) => `Dans ${n} jours, je t\u2019épouse une seconde fois, au Japon.`,
-    (n) => `${n} jours à t\u2019imaginer endormie contre le hublot.`,
-    (n) => `${n} jours avant de t\u2019emmener au bout du monde.`,
-  ],
-  // Le mois qui précède : ça devient concret.
-  proche: [
-    (n) => `Plus que ${n} matins avant de me réveiller près de toi, là-bas.`,
-    (n) => `${n} jours. Je compte, je recommence, et je compte encore.`,
-    (n) => `${n} jours, et le monde se réduit à toi et moi.`,
-    (n) => `${n} jours. Commence à rêver — moi, j\u2019ai déjà commencé.`,
-  ],
-  // La dernière semaine : on ne tient plus en place.
-  imminent: [
-    (n) => `Plus que ${n} jours. Je ne pense plus à rien d\u2019autre.`,
-    (n) => `${n} jours. J\u2019ai déjà le cœur qui décolle.`,
-    (n) => `Encore ${n} nuits ici. Toutes les autres, avec toi, là-bas.`,
-  ],
-  demain: [
-    () => 'Demain, je t\u2019emmène. Et je ne te rends plus.',
-    () => 'Demain, ma femme. Je ne dormirai pas de la nuit.',
-  ],
-  jourJ: [
-    () => 'C\u2019est aujourd\u2019hui. Prends ma main et ne la lâche plus.',
-    () => 'Aujourd\u2019hui, ma femme. Viens, le Japon nous attend.',
-  ],
-};
+// Deux parties : le décompte, puis la phrase. Elles se lisent l'une sous
+// l'autre, la seconde prolongeant la première — « Dans 47 jours » n'est pas
+// une phrase, c'est le début de celle du dessous.
+const LIGNES = [
+  'sous le ciel du Japon : toi et moi, encore et toujours. 🇯🇵❤️',
+  'nous partons célébrer ce « nous » que je choisirais encore mille fois. ❤️',
+  'Commence à rêver… moi, j’ai déjà commencé. ❤️',
+  'J’ai déjà le cœur qui décolle. ❤️',
+];
 
-function tier(days) {
-  if (days === 0) return 'jourJ';
-  if (days === 1) return 'demain';
-  if (days <= 7) return 'imminent';
-  if (days <= 30) return 'proche';
-  return 'loin';
+// Le jour du départ a sa propre phrase : les quatre autres se lisent comme la
+// suite d'un décompte, et il n'y a plus rien à décompter.
+const JOUR_J = 'Prends ma main et ne la lâche plus. 🇯🇵❤️';
+
+// « Dans 1 jours » n'existe pas, et « Dans 0 jours » encore moins. Les deux
+// derniers jours ont donc leur propre tête de phrase.
+function compte(days) {
+  if (days === 0) return "Aujourd'hui";
+  if (days === 1) return 'Demain';
+  return `Dans ${days} jours`;
 }
 
-// Renvoie null une fois le voyage commencé : compter les jours n'a plus de
-// sens quand on y est. `today` est injectable pour que le test ne dépende pas
-// du jour où il tourne.
+// Renvoie { compte, ligne }, ou null une fois le voyage commencé : compter les
+// jours n'a plus de sens quand on y est. `today` est injectable pour que le
+// test ne dépende pas du jour où il tourne.
 export function countdown(startIso, today = new Date()) {
   if (!startIso) return null;
   const [year, month, day] = String(startIso).split('-').map(Number);
@@ -303,8 +285,8 @@ export function countdown(startIso, today = new Date()) {
   if (days < 0) return null;
 
   // Le reste du nombre de jours, pas une empreinte : l'empreinte faisait
-  // tomber trois jours d'affilee sur la meme phrase. Le modulo garantit qu'on
-  // change de ligne chaque matin, en tournant dans la liste.
-  const lignes = COUNTDOWN[tier(days)];
-  return lignes[days % lignes.length](days);
+  // tomber plusieurs jours d'affilée sur la même ligne. Le modulo garantit
+  // qu'on alterne chaque matin.
+  if (days === 0) return { compte: compte(0), ligne: JOUR_J };
+  return { compte: compte(days), ligne: LIGNES[days % LIGNES.length] };
 }
