@@ -61,12 +61,14 @@ describe('buildBudget', () => {
     expect(budget.note).toMatch(/2 lignes encore sans prix/);
   });
 
-  it('annonce un budget complet quand tout est renseigné', () => {
+  // On ne signale que ce qui manque : annoncer « le total est complet »
+  // occupait une ligne pour dire que rien ne cloche.
+  it('ne dit rien quand tout est renseigné', () => {
     const budget = buildBudget(
       tripWith({ steps: [{ nights: 1, items: [item('hotel', 16500)] }] }),
     );
     expect(budget.blanks).toBe(0);
-    expect(budget.note).toMatch(/le total est complet/);
+    expect(budget.note).toBeNull();
   });
 
   // Les parts servent à la jauge : elles doivent faire 1, sinon la barre ne

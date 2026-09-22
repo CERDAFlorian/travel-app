@@ -55,9 +55,11 @@ export function buildBudget(trip) {
     total,
     nights,
     blanks,
+    // Pas de note quand tout est renseigné : « le total est complet » occupait
+    // une ligne pour dire que rien ne manque. On ne signale que ce qui manque.
     note: blanks
       ? `${blanks} ligne${blanks > 1 ? 's' : ''} encore sans prix — le total ne les compte pas.`
-      : 'Toutes les lignes ont un prix : le total est complet.',
+      : null,
   };
 }
 

@@ -17,7 +17,6 @@ export default function BudgetPanel({ trip }) {
       <div className="budget__card">
         <div className="budget__head">
           <h2 className="budget__title">Budget global</h2>
-          <span className="budget__hint">{BUDGET_HINT}</span>
           <label className="budget__travelers">
             Voyageurs
             <input
@@ -29,6 +28,10 @@ export default function BudgetPanel({ trip }) {
             />
           </label>
         </div>
+
+        {/* Sur sa propre ligne : la règle d'inclusion est une explication, pas
+            un complément de titre. Collée au titre, elle le noyait. */}
+        <p className="budget__hint">{BUDGET_HINT}</p>
 
         {/* Jauge indicative : les parts comparent des montants bruts, sans
             conversion entre devises. C'est une proportion, pas une addition. */}
@@ -75,7 +78,8 @@ export default function BudgetPanel({ trip }) {
           </div>
           <p className="budget__note">
             {budget.note}
-            {/* Le taux est affiché en clair : il est fixe, donc il vieillit. */}
+            {/* Le taux reste affiché quoi qu'il arrive : il est fixe, donc il
+                vieillit, et personne ne doit l'oublier. */}
             <span className="budget__rate">{RATE_NOTE}</span>
           </p>
         </div>
