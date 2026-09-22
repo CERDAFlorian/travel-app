@@ -39,9 +39,14 @@
   // Bouton d'ouverture du formulaire, dans l'en-tête plutôt qu'en carte : une
   // carte en pointillés juste pour un bouton occupait la place d'un vol réel.
   // Sous la grille des vols : on ajoute à la suite de ce qu'on a saisi.
+  // Aligné à droite, sous la grille. `margin-left: auto` n'a pas d'effet sur
+  // un `inline-flex` — le mixin en pose un —, d'où le passage en `flex` avec
+  // une largeur ajustée au contenu.
   &__add {
     @include mixins.action-button;
-    margin-top: clamp(8px, 1vw, 14px);
+    display: flex;
+    width: fit-content;
+    margin: clamp(8px, 1vw, 14px) 0 0 auto;
   }
 
   &__grid {
