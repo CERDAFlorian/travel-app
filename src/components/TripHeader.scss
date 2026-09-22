@@ -73,7 +73,11 @@
   }
 
   &__title {
-    margin: 0;
+    // Correction optique. Les deux blocs partagent la même marge gauche, mais
+    // l'approche du « J » de Playfair laisse un blanc avant son dessin : le
+    // titre paraissait rentré par rapport au bouton juste en dessous. En `em`,
+    // la correction suit la taille du titre à toutes les largeurs.
+    margin: 0 0 0 -0.045em;
     font-family: var(--font-display);
     font-weight: 700;
     font-size: clamp(40px, 6.2vw, 86px);

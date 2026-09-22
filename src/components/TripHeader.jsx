@@ -36,7 +36,7 @@ export default function TripHeader({ trip, back }) {
         <h1 className="trip-header__title">{trip.title}</h1>
 
         <div className="trip-header__subtitle">
-          <div className="trip-header__tagline">— {trip.subtitle}</div>
+          <div className="trip-header__tagline">{trip.subtitle}</div>
           <div className="trip-header__dates">{formatTripRange(trip.startDate, trip.endDate)}</div>
         </div>
       </div>
