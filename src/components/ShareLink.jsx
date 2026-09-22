@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { createShareToken, revokeShareToken } from '@/lib/mutations.js';
+import { whisperFor } from '@/lib/lovenotes.js';
 import './ShareLink.scss';
 
 // Lien de partage en lecture seule.
@@ -78,6 +79,8 @@ export default function ShareLink({ trip, readOnly, onChanged }) {
           {error}
         </span>
       )}
+
+      {url && <span className="share__note">{whisperFor('share', trip.id)}</span>}
     </div>
   );
 }

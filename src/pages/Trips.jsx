@@ -4,6 +4,7 @@ import { APP_THEME } from '@/theme/themes.js';
 import { formatPeriod } from '@/lib/dates.js';
 import SyncLine from '@/components/SyncLine.jsx';
 import PrepareOffline from '@/components/PrepareOffline.jsx';
+import { whisperFor } from '@/lib/lovenotes.js';
 import './Trips.scss';
 
 const plural = (n, one, many) => `${n} ${n > 1 ? many : one}`;
@@ -50,6 +51,9 @@ export default function Trips({
         <p className="trips__empty">
           Aucun voyage pour l'instant.
           {isOffline && " Reconnecte-toi au réseau pour aller les chercher."}
+          {!isOffline && (
+            <span className="trips__empty-note">{whisperFor('start', 'trips')}</span>
+          )}
         </p>
       ) : (
         <ul className="trips__list">

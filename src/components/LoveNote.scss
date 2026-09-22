@@ -1,0 +1,61 @@
+.love-note {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin: var(--sp-3) 0 0;
+  text-align: center;
+  color: var(--text-soft);
+  font-style: italic;
+
+  // Aucune police CJK n'est téléchargée : ce serait plusieurs mégaoctets pour
+  // douze proverbes, dans une app qui doit tenir hors ligne. On s'appuie sur
+  // les polices système, présentes partout où l'app tourne.
+  &__ja {
+    font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif JP', serif;
+    font-size: var(--fs-lg);
+    font-style: normal;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+  }
+
+  &__romaji {
+    font-size: var(--fs-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-style: normal;
+    color: var(--muted);
+  }
+
+  &__fr {
+    max-width: 44ch;
+    font-size: var(--fs-sm);
+    line-height: var(--lh-base);
+  }
+
+  // Passager : il arrive par en dessous, sans bouger ce qui l'entoure plus
+  // qu'une ligne de texte.
+  &--flash {
+    margin-top: var(--sp-2);
+    font-size: var(--fs-sm);
+    color: var(--accent);
+    animation: love-note-in var(--dur-slow) var(--ease-out);
+  }
+}
+
+@keyframes love-note-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .love-note--flash {
+    animation: none;
+  }
+}

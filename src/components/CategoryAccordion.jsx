@@ -4,6 +4,7 @@ import { sumInEuros } from '@/lib/budget.js';
 import { addItem } from '@/lib/mutations.js';
 import ItemRow from './ItemRow.jsx';
 import ChevronIcon from './ChevronIcon.jsx';
+import LoveNote from './LoveNote.jsx';
 import './CategoryAccordion.scss';
 
 function parsePrice(raw) {
@@ -25,6 +26,9 @@ export default function CategoryAccordion({ category, items, step, tripTitle, re
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState('');
   const [busy, setBusy] = useState(false);
+  // Dernier item ajouté, pour le mot doux. Voir AddStep : le compteur est là
+  // pour que deux ajouts identiques d'affilée relancent bien l'affichage.
+  const [added, setAdded] = useState({ count: 0, title: '' });
   const panelId = useId();
 
   // Total de la catégorie, en euros. Le design l'affiche à droite de l'en-tête :
@@ -59,6 +63,7 @@ export default function CategoryAccordion({ category, items, step, tripTitle, re
       await onChanged();
       setTitle('');
       setPrice('');
+      setAdded((last) => ({ count: last.count + 1, title: trimmed }));
     } finally {
       setBusy(false);
     }
@@ -126,6 +131,8 @@ export default function CategoryAccordion({ category, items, step, tripTitle, re
               </button>
             </form>
           )}
+
+          <LoveNote kind="item" seed={added.title} trigger={added.count} />
         </div>
       )}
     </div>

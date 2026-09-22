@@ -15,6 +15,7 @@ import NightsGap from '@/components/NightsGap.jsx';
 import LocateAll from '@/components/LocateAll.jsx';
 import AddStep from '@/components/AddStep.jsx';
 import StepLink from '@/components/StepLink.jsx';
+import LoveNote from '@/components/LoveNote.jsx';
 import { addStep, moveStep, removeStep, setStepNights } from '@/lib/mutations.js';
 import { resolveItinerary, timelineEntries } from '@/lib/itinerary.js';
 import './TripView.scss';
@@ -239,6 +240,7 @@ export default function TripView({
 
       <footer className="trip__foot">
         {view.steps.map((step) => step.name.split(' ')[0]).join(' → ')}
+        <LoveNote seed={trip.id ?? trip.slug} />
       </footer>
     </div>
   );

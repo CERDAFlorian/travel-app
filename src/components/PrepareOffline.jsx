@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { fetchTrip, fetchTrips } from '@/lib/api.js';
 import { requestPersistence, writeTrip, writeTripList } from '@/lib/db.js';
+import { whisperFor } from '@/lib/lovenotes.js';
 import './PrepareOffline.scss';
 
 // « Préparer le voyage » — la synchronisation explicite avant le départ.
@@ -89,6 +90,7 @@ export default function PrepareOffline() {
         <button className="prepare__again" type="button" onClick={run}>
           Recommencer
         </button>
+        <p className="prepare__note">{whisperFor('offline', 'prepare')}</p>
       </div>
     );
   }
