@@ -75,7 +75,11 @@ export default function FlightsPanel({ trip, readOnly, onChanged }) {
     <section className="flights" id="vols">
       <div className="flights__card" data-collapsed={open ? undefined : ''}>
         <div className="flights__head">
-          {/* Le titre EST le bouton de pliage, partout. */}
+          {/* Toute la ligne EST le bouton de pliage, mot doux compris.
+              Le mot doux etait auparavant a cote du bouton : celui-ci
+              s'arretait donc avant lui, et le chevron — cale a droite DU
+              BOUTON — tombait au milieu de la ligne. Il est maintenant dans
+              le meme conteneur que le reste, et va vraiment au bord. */}
           <button
             type="button"
             className="flights__toggle"
@@ -84,16 +88,13 @@ export default function FlightsPanel({ trip, readOnly, onChanged }) {
           >
             <h2 className="flights__title">Billets d'avion</h2>
             <span className="flights__count">{flights.length}</span>
+            {/* Visible plie ou deplie : c'est un mot doux, pas le resume du
+                contenu. Masque sous 768px, ou la ligne est deja pleine. */}
+            <span className="flights__hint">{whisperFor('flights', trip.id)}</span>
             <span className="flights__caret" data-open={open || undefined}>
               <ChevronIcon />
             </span>
           </button>
-
-          {/* Le mot doux ne s'affiche que deplie : a cote d'un titre replie,
-              il passait pour le resume du contenu cache. */}
-          {open && (
-            <span className="flights__hint">{whisperFor('flights', trip.id)}</span>
-          )}
         </div>
 
         {open && (

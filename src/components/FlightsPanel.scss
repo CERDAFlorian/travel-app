@@ -10,15 +10,14 @@
     background: var(--surface);
   }
 
+  // Le bouton occupe toute la ligne : l'en-tete n'a plus a disposer quoi que
+  // ce soit a cote de lui.
   &__head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: var(--sp-3);
     margin-bottom: var(--sp-3);
   }
 
   &__title {
+    flex: none;
     margin: 0;
     font-family: var(--font-display);
     font-weight: 600;
@@ -28,10 +27,24 @@
     color: var(--accent);
   }
 
+  // Sous 768px la ligne est deja pleine — titre, compteur, chevron — et le
+  // mot doux la ferait passer sur deux etages.
   &__hint {
+    display: none;
     font-size: clamp(12px, 1.2vw, 14.5px);
     font-style: italic;
     color: var(--text-soft);
+
+    @include mixins.from('md') {
+      // Il cede la place avant le chevron : sur une largeur intermediaire, il
+      // se tronque plutot que de repousser le chevron hors du bord.
+      display: block;
+      min-width: 0;
+      margin-left: var(--sp-2);
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
   }
 
   // auto-fit + minmax(min(100%, 270px)) : deux colonnes dès qu'il y a la place,
@@ -286,7 +299,7 @@
     display: flex;
     align-items: baseline;
     gap: var(--sp-2);
-    flex: 1;
+    width: 100%;
     padding: 0;
     border: 0;
     background: none;
@@ -310,6 +323,7 @@
   &__caret {
     display: grid;
     place-items: center;
+    flex: none;
     margin-left: auto;
     color: var(--accent);
     font-size: var(--fs-lg);
