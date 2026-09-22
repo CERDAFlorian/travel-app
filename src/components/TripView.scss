@@ -4,6 +4,16 @@
   min-height: 100svh;
   background: var(--bg);
 
+  // Rien ne doit élargir la page. `clip` et non `hidden` : `hidden` crée un
+  // conteneur de défilement, ce qui casserait la frise collante à
+  // l'intérieur — un élément `sticky` ne colle pas dans un ancêtre défilant.
+  // `clip` rogne sans rien scroller et laisse `sticky` fonctionner.
+  //
+  // C'est un filet, pas une excuse : un débordement reste un défaut à
+  // corriger à sa source. Mais un décor mal placé ou un libellé trop long ne
+  // doit pas pouvoir décaler tout le document.
+  overflow-x: clip;
+
   // Plus de position absolue : le lien vit dans le flux, sur la ligne des
   // chiffres du voyage.
   &__back {
