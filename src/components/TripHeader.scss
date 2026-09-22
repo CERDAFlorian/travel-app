@@ -131,11 +131,24 @@
 
   // Plus haute qu'avant — elle disait l'essentiel dans un corps de note de bas
   // de page — et collée au sous-titre.
+  // Dates et pastilles forment un bloc, a droite, en face du retour. Sur un
+  // ecran etroit les dates passent au-dessus des pastilles plutot que de les
+  // comprimer.
+  &__facts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: flex-end;
+    gap: var(--sp-1) var(--sp-3);
+  }
+
   &__dates {
-    margin-top: 1px;
-    font-size: clamp(15px, 1.7vw, 22px);
+    // Plus mesurees qu'avant : elles ne portent plus seules le poids de la
+    // ligne, elles voisinent trois pastilles.
+    font-size: clamp(14px, 1.5vw, 19px);
     line-height: 1.2;
     font-style: italic;
+    white-space: nowrap;
     color: var(--accent);
   }
 

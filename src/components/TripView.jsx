@@ -165,10 +165,6 @@ export default function TripView({
 
       <FlightsPanel trip={view} readOnly={readOnly} onChanged={onChanged} />
 
-      {/* Entre les vols et la première étape : l'écart parle des nuits
-          d'hôtel, pas des billets. */}
-      <NightsGap gap={itinerary.nightsGap} />
-
       <main className="trip__main">
         <section className="trip__steps">
           {view.steps.map((step, index) => {
@@ -209,6 +205,12 @@ export default function TripView({
               </Fragment>
             );
           })}
+
+          {/* Apres la derniere ville : on lit d'abord les nuits qu'on a
+              posees, ensuite celles qui manquent. Entre les vols et la
+              premiere etape, la remarque arrivait avant qu'on ait de quoi la
+              comprendre. */}
+          <NightsGap gap={itinerary.nightsGap} />
 
           {!readOnly && <AddStep onAdd={handleAddStep} />}
         </section>

@@ -51,7 +51,6 @@ export default function TripHeader({ trip, back }) {
           ) : (
             <div className="trip-header__tagline">{trip.subtitle}</div>
           )}
-          <div className="trip-header__dates">{formatTripRange(trip.startDate, trip.endDate)}</div>
         </div>
       </div>
 
@@ -62,13 +61,26 @@ export default function TripHeader({ trip, back }) {
       <div className="trip-header__summary">
         {back}
 
-        <ul className="trip-header__chips">
-          <li className="trip-header__chip">{plural(steps.length, 'étape', 'étapes')}</li>
-          <li className="trip-header__chip">{plural(nights, 'nuit', 'nuits')}</li>
-          {/* Les notes perso sont exclues : « Récupérer le JR Pass » n'est pas
-              un lieu. Le design les comptait, à tort. */}
-          <li className="trip-header__chip">{plural(places, 'lieu', 'lieux')}</li>
-        </ul>
+        {/* Les dates rejoignent les chiffres : periode, etapes, nuits et
+            lieux disent la meme chose — de quoi le voyage est fait. Sous la
+            phrase du compte a rebours, la date en coupait l'elan.
+
+            Elles sont groupees avec les pastilles, pas posees directement
+            dans la ligne : celle-ci est en `space-between`, un troisieme
+            enfant serait parti flotter en plein milieu. */}
+        <div className="trip-header__facts">
+          <span className="trip-header__dates">
+            {formatTripRange(trip.startDate, trip.endDate)}
+          </span>
+
+          <ul className="trip-header__chips">
+            <li className="trip-header__chip">{plural(steps.length, 'étape', 'étapes')}</li>
+            <li className="trip-header__chip">{plural(nights, 'nuit', 'nuits')}</li>
+            {/* Les notes perso sont exclues : « Récupérer le JR Pass » n'est
+                pas un lieu. Le design les comptait, à tort. */}
+            <li className="trip-header__chip">{plural(places, 'lieu', 'lieux')}</li>
+          </ul>
+        </div>
       </div>
     </header>
   );

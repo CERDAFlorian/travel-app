@@ -9,9 +9,13 @@
   display: flex;
   align-items: center;
   gap: var(--sp-1);
-  // L'espace est au-dessus : la remarque appartient a ce qui suit, elle
-  // annonce les nuits d'hotel.
-  margin: clamp(12px, 1.4vw, 18px) clamp(16px, 3vw, 44px) clamp(6px, 0.8vw, 10px);
+  // Plus de marge laterale : la remarque vit maintenant DANS la colonne des
+  // etapes, qui porte deja la gouttiere de page. La repeter la decalait vers
+  // la droite par rapport aux cartes de ville.
+  //
+  // `.trip__steps` est une colonne flex avec sa propre gouttiere ; il ne reste
+  // qu'un peu d'air au-dessus, pour detacher la remarque de la derniere ville.
+  margin: var(--sp-2) 0 0;
   color: var(--warn);
   font-size: var(--fs-xs);
   font-style: italic;
