@@ -68,7 +68,10 @@ $theme: contract.validate('japan', (
   map-land:        $terre,
   map-land-line:   $cote,
 
-  font-display:    ('Playfair Display', Georgia, serif),
+  // Lora plutôt que Playfair Display : le contraste de traits de Playfair —
+  // pleins épais, déliés presque invisibles — se lit mal à l'écran, surtout
+  // sur un fond crème peu contrasté.
+  font-display:    (Lora, Georgia, serif),
   font-body:       ('EB Garamond', Georgia, serif),
 
   radius-sm:       4px,

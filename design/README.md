@@ -57,7 +57,13 @@ pour un encodage 10× plus lent et un support limité à iOS 16+.
 | muted | `#a08050` — placeholders `#b39a72` |
 | text | `#3d2f24` — titres `#5c1b1b` |
 
-Polices : `Playfair Display` (600/700) et `EB Garamond` — déjà chargées dans `index.html`.
+Polices : le design emploie `Playfair Display` (600/700) et `EB Garamond`.
+
+**L'app a remplacé Playfair par `Lora`** (19 septembre 2026) : son contraste de
+traits — pleins épais, déliés presque invisibles — se lit mal à l'écran, a
+fortiori sur un fond crème peu contrasté. Lora garde le registre éditorial avec
+un contraste modéré et a été dessinée pour l'écran. Les deux familles sont
+hébergées en local, voir `scripts/build-fonts.mjs`.
 
 ## Couleurs de catégorie (`CATS`, ligne ~315 du .dc.html)
 

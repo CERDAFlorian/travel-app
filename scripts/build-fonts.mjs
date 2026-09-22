@@ -21,8 +21,15 @@ import { fileURLToPath } from 'node:url';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = resolve(ROOT, 'public/fonts');
 
+// Lora remplace Playfair Display pour les titres.
+//
+// Playfair a un contraste de traits très élevé : pleins épais, déliés presque
+// invisibles. C'est un caractère de maquette imprimée, et à l'écran ses
+// déliés disparaissent — d'autant plus sur un fond crème peu contrasté.
+// Lora garde le registre éditorial avec un contraste modéré, et elle a été
+// dessinée pour l'écran.
 const CSS_URL =
-  'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap';
+  'https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap';
 
 // Google sert des formats différents selon le User-Agent. Celui-ci obtient du
 // woff2, pris en charge partout depuis des années et le plus compact.
