@@ -28,30 +28,28 @@ export default function LoveNote({ kind, seed, trigger }) {
   }, [transient, trigger]);
 
   if (transient) {
-    if (!shown) return null;
-    const whisper = whisperFor(kind, `${seed ?? ''}${trigger}`);
-    if (!whisper) return null;
+    // La place est reservee en permanence, meme vide : sans ca, le mot doux
+    // pousse le contenu vers le bas en arrivant et le tire vers le haut en
+    // partant. Le bloc reste donc toujours monte, et seul son contenu change.
+    const whisper = shown ? whisperFor(kind, `${seed ?? ''}${trigger}`) : null;
     return (
-      <p className="love-note love-note--flash" role="status">
-        {whisper}
+      <p className="love-note love-note--flash" role="status" aria-hidden={!whisper}>
+        {whisper && <span className="love-note__flash-text">{whisper}</span>}
       </p>
     );
   }
 
-  // Le mot d'amour vient en premier et en grand : c'est lui qu'elle doit lire.
-  // Le proverbe l'accompagne, en dessous et plus discret.
+  // Le proverbe seul : les signes japonais et leur traduction se suffisent.
+  // Une ligne francaise au-dessus faisait redite — elle disait deja en clair
+  // ce que le proverbe dit mieux.
   const proverb = proverbFor(seed);
-  const sweet = whisperFor('footer', seed);
   return (
-    <div className="love-note">
-      {sweet && <p className="love-note__sweet">{sweet}</p>}
-      <p className="love-note__proverb">
-        <span className="love-note__ja" lang="ja">
-          {proverb.ja}
-        </span>
-        <span className="love-note__romaji">{proverb.romaji}</span>
-        <span className="love-note__fr">{proverb.fr}</span>
-      </p>
-    </div>
+    <p className="love-note love-note--proverb">
+      <span className="love-note__ja" lang="ja">
+        {proverb.ja}
+      </span>
+      <span className="love-note__romaji">{proverb.romaji}</span>
+      <span className="love-note__fr">{proverb.fr}</span>
+    </p>
   );
 }

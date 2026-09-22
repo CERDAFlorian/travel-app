@@ -1,5 +1,6 @@
 import { CATEGORIES } from '@/lib/categories.js';
 import { formatTripRange } from '@/lib/dates.js';
+import { countdown } from '@/lib/lovenotes.js';
 import './TripHeader.scss';
 
 const GEOGRAPHIC = new Set(CATEGORIES.filter((c) => c.onMap).map((c) => c.key));
@@ -36,7 +37,13 @@ export default function TripHeader({ trip, back }) {
         <h1 className="trip-header__title">{trip.title}</h1>
 
         <div className="trip-header__subtitle">
-          <div className="trip-header__tagline">{trip.subtitle}</div>
+          {/* Le compte a rebours prend la place du sous-titre : c'est un
+              voyage de noces, et c'est la premiere chose qu'on veut lire en
+              ouvrant la page. Le sous-titre de la base reprend la main une
+              fois le depart passe, quand compter n'a plus de sens. */}
+          <div className="trip-header__tagline">
+            {countdown(trip.startDate) ?? trip.subtitle}
+          </div>
           <div className="trip-header__dates">{formatTripRange(trip.startDate, trip.endDate)}</div>
         </div>
       </div>

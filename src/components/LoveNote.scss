@@ -1,39 +1,29 @@
+// Deux lignes de 14px a 1.6 d'interligne. C'est la hauteur reservee au mot
+// passager, et le plafond que les textes ne doivent pas franchir : au-dela, il
+// passerait sur une troisieme ligne et pousserait quand meme le contenu.
+// lovenotes.test.js verrouille la longueur maximale des messages.
+$flash-lines: 2;
+
 .love-note {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
   margin: var(--sp-3) 0 0;
   text-align: center;
   color: var(--text-soft);
   font-style: italic;
 
-  // Aucune police CJK n'est téléchargée : ce serait plusieurs mégaoctets pour
-  // douze proverbes, dans une app qui doit tenir hors ligne. On s'appuie sur
-  // les polices système, présentes partout où l'app tourne.
-  // Le mot d'amour, en grand : c'est la ligne qui compte. Le proverbe suit.
-  &__sweet {
-    margin: 0 0 var(--sp-2);
-    max-width: 44ch;
-    font-family: var(--font-display);
-    font-size: var(--fs-lg);
-    font-style: normal;
-    line-height: var(--lh-tight);
-    color: var(--accent);
-  }
-
-  &__proverb {
+  // Le proverbe du pied de page.
+  &--proverb {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 2px;
-    margin: 0;
-    opacity: 0.9;
   }
 
+  // Aucune police CJK n'est telechargee : ce serait plusieurs megaoctets pour
+  // dix-huit proverbes, dans une app qui doit tenir hors ligne. On s'appuie
+  // sur les polices systeme, presentes partout ou l'app tourne.
   &__ja {
     font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif JP', serif;
-    font-size: var(--fs-md);
+    font-size: var(--fs-lg);
     font-style: normal;
     letter-spacing: 0.08em;
     color: var(--accent);
@@ -53,14 +43,31 @@
     line-height: var(--lh-base);
   }
 
-  // Passager : il arrive par en dessous, sans bouger ce qui l'entoure plus
-  // qu'une ligne de texte.
+  // Le mot passager. Le bloc est TOUJOURS monte, meme vide : c'est ce qui
+  // evite le saut du contenu a l'arrivee et au depart du message.
   &--flash {
+    display: flex;
+    align-items: center;
+    min-height: calc(var(--fs-sm) * var(--lh-base) * #{$flash-lines});
     margin-top: var(--sp-2);
     font-size: var(--fs-sm);
+    line-height: var(--lh-base);
     color: var(--accent);
+  }
+
+  &__flash-text {
     animation: love-note-in var(--dur-slow) var(--ease-out);
   }
+}
+
+// Dans une ligne flex — en-tete d'etape, panneau de categorie — le mot prend
+// toute la largeur et passe dessous, au lieu de s'intercaler entre deux
+// commandes.
+.step__head > .love-note--flash,
+.cat__panel > .love-note--flash {
+  flex-basis: 100%;
+  width: 100%;
+  text-align: left;
 }
 
 @keyframes love-note-in {
@@ -75,17 +82,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .love-note--flash {
+  .love-note__flash-text {
     animation: none;
   }
-}
-
-// Dans une ligne flex — l'en-tete d'etape, la barre de localisation — le mot
-// doux prend toute la largeur et passe dessous, au lieu de s'intercaler entre
-// deux commandes.
-.step__head > .love-note--flash,
-.cat__panel > .love-note--flash {
-  flex-basis: 100%;
-  width: 100%;
-  text-align: left;
 }

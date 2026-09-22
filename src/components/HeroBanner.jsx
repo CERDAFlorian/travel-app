@@ -1,4 +1,4 @@
-import { countdown } from '@/lib/lovenotes.js';
+import { whisperFor } from '@/lib/lovenotes.js';
 import './HeroBanner.scss';
 
 // Bandeau pagode.
@@ -8,19 +8,16 @@ import './HeroBanner.scss';
 // préparer pour se projeter. Le dégradé part de la gauche et s'efface vers la
 // droite : le texte reste lisible sans masquer l'image.
 export default function HeroBanner({ steps, startDate }) {
-  const nights = steps.reduce((total, step) => total + (step.nights ?? 0), 0);
-  // Null une fois le depart passe : on cesse alors de compter les jours.
-  const days = countdown(startDate);
+  // Les chiffres du voyage ne sont plus affiches ici — ils sont deja dans les
+  // pastilles de l'en-tete. Le bandeau, lui, ne sert qu'a se projeter.
+  const seed = `${startDate ?? ''}${steps.length}`;
 
   return (
     <section className="hero">
       <img className="hero__img" src="/img/hero-pagode.webp" alt="" aria-hidden="true" />
       <div className="hero__veil">
-        <p className="hero__line">Des instants précieux, des souvenirs impérissables</p>
-        <p className="hero__sub">
-          {nights} nuits, {steps.length} étapes, un itinéraire qui vous ressemble
-        </p>
-        {days && <p className="hero__countdown">{days}</p>}
+        <p className="hero__line">{whisperFor('hero', seed)}</p>
+        <p className="hero__sub">{whisperFor('heroSub', seed)}</p>
       </div>
     </section>
   );

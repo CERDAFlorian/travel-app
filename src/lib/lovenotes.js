@@ -128,7 +128,7 @@ export const WHISPERS = {
     'Cette ville ne sait pas encore la chance qu’elle a.',
     'On va s’y perdre tous les deux. C’est tout ce que je demande.',
     'Chaque ville que tu ajoutes, c’est un jour de plus rien qu’à nous.',
-    'Ma vie a commencé le jour où tu es arrivée. Le reste, ce sont des voyages.',
+    'Ma vie a commencé avec toi. Le reste, ce sont des voyages.',
   ],
   // Un hôtel, un restaurant, une visite…
   item: [
@@ -166,12 +166,12 @@ export const WHISPERS = {
   // Préparation hors ligne.
   offline: [
     'Tout est dans ta poche, maintenant. Même sans réseau, on sait où on va.',
-    'Plus besoin d’antenne. On a déjà tout ce qu’il faut : l’itinéraire, et toi.',
+    'Plus besoin d’antenne. On a tout ce qu’il faut : l’itinéraire, et toi.',
     'Sans réseau, sans repères, sans un mot de japonais. Avec toi, ça ira.',
   ],
   // Liste de voyages vide, ou voyage sans aucune ville.
   start: [
-    'Une page blanche, et toute une vie pour la remplir. Commence quand tu veux.',
+    'Une page blanche, et toute une vie pour la remplir.',
   ],
   // Écran de connexion — la première chose qu'elle lit en ouvrant l'app.
   welcome: [
@@ -184,14 +184,26 @@ export const WHISPERS = {
     'Le seul vol qu’on prendra à regret.',
     'On rentrera. Mais on rentrera à deux, et c’est déjà tout.',
   ],
-  // Pied de page du voyage — la ligne qui reste sous les yeux.
-  footer: [
-    'Fait pour toi, avec tout mon amour.',
-    'Où qu’on aille, le voyage c’est toi.',
-    'Je t’aime — d’ici, de là-bas, et de partout où on ira.',
-    'Deux billets, une valise, toute une vie.',
-    'Merci de m’emmener avec toi.',
-    'Je signerais pour dix mille kilomètres de plus, tant que tu es à côté.',
+  // Bandeau pagode — la grande ligne, puis la ligne du dessous.
+  hero: [
+    'Notre voyage de noces',
+    'Le premier voyage de notre vie à deux',
+    'Deux alliances et un aller simple pour le bonheur',
+  ],
+  heroSub: [
+    'Tout ce qu’on s’est promis, on va le vivre là-bas.',
+    'Un itinéraire pour deux, écrit à quatre mains.',
+    'Le début de tout, à dix mille kilomètres d’ici.',
+  ],
+  // Panneau des billets d'avion.
+  flights: [
+    'Deux billets, un aller, toute une vie',
+    'Les deux places les mieux occupées de l’avion',
+  ],
+  // Temps de trajet entre deux villes.
+  travel: [
+    'Le temps qu’on passera côte à côte',
+    'Des heures de train, ta tête sur mon épaule',
   ],
   // Le nombre de nuits d'une étape vient de changer.
   nights: [
@@ -225,11 +237,13 @@ export function whisperFor(kind, seed) {
   return list[fingerprint(seed) % list.length];
 }
 
-// Compte à rebours avant le départ, en langage d'amoureux plutôt qu'en chiffre
-// sec. Renvoie null une fois le voyage commencé : compter les jours n'a plus
-// de sens quand on y est.
+// Compte à rebours avant le départ. C'est un voyage de noces : il tient la
+// place du sous-titre en en-tête, et c'est donc la première chose qu'elle lit
+// en ouvrant le voyage. Le ton se resserre à mesure qu'on approche.
 //
-// `today` est injectable pour que le test ne dépende pas du jour où il tourne.
+// Renvoie null une fois le voyage commencé : compter les jours n'a plus de
+// sens quand on y est. `today` est injectable pour que le test ne dépende pas
+// du jour où il tourne.
 export function countdown(startIso, today = new Date()) {
   if (!startIso) return null;
   const [year, month, day] = String(startIso).split('-').map(Number);
@@ -242,9 +256,9 @@ export function countdown(startIso, today = new Date()) {
   const days = Math.round((departure - now) / 86400000);
 
   if (days < 0) return null;
-  if (days === 0) return "C'est aujourd'hui. Prends ma main.";
-  if (days === 1) return 'Demain. Demain, on y est.';
-  if (days <= 7) return `Plus que ${days} jours avant de partir avec toi.`;
-  if (days <= 30) return `${days} jours. Je compte, figure-toi.`;
-  return `${days} jours avant de poser nos valises ensemble.`;
+  if (days === 0) return 'C\u2019est aujourd\u2019hui. Donne-moi ta main, ma femme.';
+  if (days === 1) return 'Demain, je pars en voyage de noces avec toi.';
+  if (days <= 7) return `Plus que ${days} jours avant de t\u2019emmener en voyage de noces.`;
+  if (days <= 30) return `${days} jours avant notre voyage de noces. Je compte, figure-toi.`;
+  return `${days} jours avant notre voyage de noces, mon amour.`;
 }

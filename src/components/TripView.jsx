@@ -239,7 +239,6 @@ export default function TripView({
       </div>
 
       <footer className="trip__foot">
-        {view.steps.map((step) => step.name.split(' ')[0]).join(' → ')}
         <LoveNote seed={trip.id ?? trip.slug} />
       </footer>
     </div>

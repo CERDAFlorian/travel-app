@@ -53,8 +53,12 @@ describe('lovenotes', () => {
     for (const proverb of PROVERBS) {
       expect(proverb.fr.length).toBeLessThan(140);
     }
+    // 72 caracteres, et pas un de plus : LoveNote.scss reserve DEUX lignes
+    // sous les commandes pour que le mot doux n'y fasse pas sauter le
+    // contenu. Un message plus long passerait sur une troisieme ligne et
+    // deborderait de la place reservee — le saut reviendrait.
     for (const list of Object.values(WHISPERS)) {
-      for (const whisper of list) expect(whisper.length).toBeLessThan(90);
+      for (const whisper of list) expect(whisper.length, whisper).toBeLessThanOrEqual(72);
     }
   });
 
@@ -65,11 +69,24 @@ describe('lovenotes', () => {
       expect(countdown(DEPART, new Date(2026, 8, 22))).toContain('46 jours');
     });
 
+    it('parle de voyage de noces a chaque palier', () => {
+      // Le compte a rebours tient la place du sous-titre en en-tete : c'est la
+      // premiere ligne qu'elle lit, elle doit porter l'intention a tous les
+      // paliers, pas seulement au dernier.
+      const paliers = [
+        new Date(2026, 8, 22), new Date(2026, 9, 20),
+        new Date(2026, 10, 3), new Date(2026, 10, 6), new Date(2026, 10, 7),
+      ];
+      for (const jour of paliers) {
+        expect(countdown(DEPART, jour)).toMatch(/noces|ma femme/);
+      }
+    });
+
     it('change de ton à mesure qu\'on approche', () => {
       const veille = countdown(DEPART, new Date(2026, 10, 6));
       const jourJ = countdown(DEPART, new Date(2026, 10, 7));
-      expect(veille).toBe('Demain. Demain, on y est.');
-      expect(jourJ).toContain("aujourd'hui");
+      expect(veille).toContain('Demain');
+      expect(jourJ).toContain('aujourd\u2019hui');
     });
 
     it('se tait une fois le voyage commencé', () => {

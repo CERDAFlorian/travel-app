@@ -89,9 +89,7 @@ export default function FlightsPanel({ trip, readOnly, onChanged }) {
             <h2 className="flights__title">Billets d'avion</h2>
           )}
           {!isMobile && (
-            <span className="flights__hint">
-              le voyage commence à l'arrivée du vol aller
-            </span>
+            <span className="flights__hint">{whisperFor('flights', trip.id)}</span>
           )}
 
         </div>
