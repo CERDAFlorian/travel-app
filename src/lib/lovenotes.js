@@ -195,10 +195,13 @@ export const WHISPERS = {
     'Un itinéraire pour deux, écrit à quatre mains.',
     'Le début de tout, à dix mille kilomètres d’ici.',
   ],
-  // Panneau des billets d'avion.
+  // Panneau des billets d'avion. Le tirage est seme par l'identifiant du
+  // voyage : une seule de ces lignes s'affichera, toujours la meme. Elles
+  // disent donc toutes la meme chose, chacune a sa facon.
   flights: [
-    'Deux billets, un aller, toute une vie',
-    'Les deux places les mieux occupées de l’avion',
+    'Les deux places les plus amoureuses de l’avion',
+    'Tout l’amour de cet avion tiendra sur deux sièges',
+    'Nulle part ailleurs dans cet avion on ne s’aimera autant',
   ],
   // Temps de trajet entre deux villes.
   travel: [
