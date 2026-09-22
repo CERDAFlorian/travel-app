@@ -301,12 +301,18 @@
     font-variant-numeric: tabular-nums;
   }
 
-  // Poussée tout à droite, après le compteur : c'est le repère qu'on cherche
-  // du pouce pour ouvrir ou refermer.
+  // Poussé tout à droite, après le compteur : c'est le repère qu'on cherche
+  // du pouce pour ouvrir ou refermer. Il pivote au lieu de changer de dessin.
   &__caret {
+    display: grid;
+    place-items: center;
     margin-left: auto;
     color: var(--accent);
-    font-size: var(--fs-md);
+    font-size: var(--fs-lg);
+    transform: rotate(-90deg);
+    transition: transform var(--dur-base) var(--ease-out);
+
+    &[data-open] { transform: none; }
   }
 
   // Replié, la carte se resserre : elle ne doit pas garder la hauteur d'un

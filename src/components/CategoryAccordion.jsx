@@ -3,6 +3,7 @@ import { formatEuros } from '@/lib/currency.js';
 import { sumInEuros } from '@/lib/budget.js';
 import { addItem } from '@/lib/mutations.js';
 import ItemRow from './ItemRow.jsx';
+import ChevronIcon from './ChevronIcon.jsx';
 import './CategoryAccordion.scss';
 
 function parsePrice(raw) {
@@ -76,8 +77,8 @@ export default function CategoryAccordion({ category, items, step, tripTitle, re
         <span className="cat__label">{category.label}</span>
         <span className="cat__count">{items.length}</span>
         <span className="cat__total">{total}</span>
-        <span className="cat__caret" aria-hidden="true">
-          {open ? '▾' : '▸'}
+        <span className="cat__caret" data-open={open || undefined}>
+          <ChevronIcon />
         </span>
       </button>
 

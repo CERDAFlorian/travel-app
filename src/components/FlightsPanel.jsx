@@ -5,6 +5,7 @@ import { priceInEuros } from '@/lib/currency.js';
 import { addFlight, deleteFlight, updateFlight } from '@/lib/mutations.js';
 import { MOBILE_QUERY, useMediaQuery } from '@/hooks/useMediaQuery.js';
 import ConfirmDialog from './ConfirmDialog.jsx';
+import ChevronIcon from './ChevronIcon.jsx';
 import TrashIcon from './TrashIcon.jsx';
 import './FlightsPanel.scss';
 
@@ -79,8 +80,8 @@ export default function FlightsPanel({ trip, readOnly, onChanged }) {
             >
               <h2 className="flights__title">Billets d'avion</h2>
               <span className="flights__count">{flights.length}</span>
-              <span className="flights__caret" aria-hidden="true">
-                {open ? '▾' : '▸'}
+              <span className="flights__caret" data-open={open || undefined}>
+                <ChevronIcon />
               </span>
             </button>
           ) : (
