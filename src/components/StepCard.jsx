@@ -7,6 +7,7 @@ import ConfirmDialog from './ConfirmDialog.jsx';
 import TrashIcon from './TrashIcon.jsx';
 import PhotoStrip from './PhotoStrip.jsx';
 import CategoryAccordion from './CategoryAccordion.jsx';
+import LoveNote from './LoveNote.jsx';
 import './StepCard.scss';
 
 // Une étape : rail à gauche, contenu à droite.
@@ -29,6 +30,7 @@ export default function StepCard({
   onChanged,
 }) {
   const [asking, setAsking] = useState(false);
+  const [nightsAdded, setNightsAdded] = useState(0);
   const [removing, setRemoving] = useState(false);
   // Vrai au montage de l'étape qu'on vient d'ajouter : elle cherche sa
   // position toute seule.
@@ -139,12 +141,17 @@ export default function StepCard({
                 onClick={(event) => {
                   event.stopPropagation();
                   onNights(step.id, step.nights + 1);
+                  setNightsAdded((count) => count + 1);
                 }}
               >
                 +<span className="sr-only">Une nuit de plus</span>
               </button>
             )}
           </span>
+
+          {/* Seulement sur la nuit ajoutee : retirer une nuit, c'est raccourcir
+              le voyage, et le moment se prete moins au compliment. */}
+          <LoveNote kind="nights" seed={step.id} trigger={nightsAdded} />
         </div>
 
         {/* Une étape ajoutée depuis l'app n'a pas de coordonnées : elle

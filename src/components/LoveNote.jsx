@@ -38,14 +38,20 @@ export default function LoveNote({ kind, seed, trigger }) {
     );
   }
 
+  // Le mot d'amour vient en premier et en grand : c'est lui qu'elle doit lire.
+  // Le proverbe l'accompagne, en dessous et plus discret.
   const proverb = proverbFor(seed);
+  const sweet = whisperFor('footer', seed);
   return (
-    <p className="love-note">
-      <span className="love-note__ja" lang="ja">
-        {proverb.ja}
-      </span>
-      <span className="love-note__romaji">{proverb.romaji}</span>
-      <span className="love-note__fr">{proverb.fr}</span>
-    </p>
+    <div className="love-note">
+      {sweet && <p className="love-note__sweet">{sweet}</p>}
+      <p className="love-note__proverb">
+        <span className="love-note__ja" lang="ja">
+          {proverb.ja}
+        </span>
+        <span className="love-note__romaji">{proverb.romaji}</span>
+        <span className="love-note__fr">{proverb.fr}</span>
+      </p>
+    </div>
   );
 }

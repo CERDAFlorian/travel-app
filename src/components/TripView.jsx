@@ -228,7 +228,7 @@ export default function TripView({
         </aside>
       </main>
 
-      <HeroBanner steps={view.steps} />
+      <HeroBanner steps={view.steps} startDate={view.startDate} />
       <Experiences experiences={view.experiences} />
       <BudgetPanel trip={view} />
 

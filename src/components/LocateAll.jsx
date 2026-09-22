@@ -3,6 +3,7 @@ import { categoryOf } from '@/lib/categories.js';
 import { geocode } from '@/lib/geocode.js';
 import { MAX_DISTANCE_FROM_STEP_KM, haversine } from '@/lib/geo.js';
 import { setCoordinates, setStepCoordinates } from '@/lib/mutations.js';
+import { whisperFor } from '@/lib/lovenotes.js';
 import './LocateAll.scss';
 
 // Localisation en lot.
@@ -121,6 +122,9 @@ export default function LocateAll({ trip, readOnly, onChanged }) {
         <button type="button" className="locate-all__again" onClick={run}>
           Relancer
         </button>
+        {state.placed > 0 && (
+          <span className="locate-all__note">{whisperFor('locate', state.placed)}</span>
+        )}
       </span>
     );
   }

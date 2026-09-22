@@ -1,3 +1,4 @@
+import { countdown } from '@/lib/lovenotes.js';
 import './HeroBanner.scss';
 
 // Bandeau pagode.
@@ -6,8 +7,10 @@ import './HeroBanner.scss';
 // l'en-tête. Il ouvre la partie « inspiration » de la page, là où l'on cesse de
 // préparer pour se projeter. Le dégradé part de la gauche et s'efface vers la
 // droite : le texte reste lisible sans masquer l'image.
-export default function HeroBanner({ steps }) {
+export default function HeroBanner({ steps, startDate }) {
   const nights = steps.reduce((total, step) => total + (step.nights ?? 0), 0);
+  // Null une fois le depart passe : on cesse alors de compter les jours.
+  const days = countdown(startDate);
 
   return (
     <section className="hero">
@@ -17,6 +20,7 @@ export default function HeroBanner({ steps }) {
         <p className="hero__sub">
           {nights} nuits, {steps.length} étapes, un itinéraire qui vous ressemble
         </p>
+        {days && <p className="hero__countdown">{days}</p>}
       </div>
     </section>
   );

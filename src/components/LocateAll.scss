@@ -67,3 +67,15 @@
     &:focus-visible { @include mixins.focus-ring; }
   }
 }
+
+// .locate-all est une ligne flex qui passe a la ligne : flex-basis pousse la
+// note sous les commandes plutot que de la serrer entre deux boutons.
+.locate-all__note {
+  flex-basis: 100%;
+  color: var(--text-soft);
+  font-size: var(--fs-xs);
+  font-style: italic;
+  text-align: right;
+  text-transform: none;
+  letter-spacing: normal;
+}

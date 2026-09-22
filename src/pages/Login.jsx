@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { whisperFor } from '@/lib/lovenotes.js';
 import './Login.scss';
 
 // Écran de connexion — email + mot de passe.
@@ -39,6 +40,7 @@ export default function Login({ onSignIn, onDismiss }) {
       <form className="login__card" onSubmit={handleSubmit} noValidate>
         <p className="eyebrow">Itinéraire</p>
         <h1 className="login__title">Connexion</h1>
+        <p className="login__welcome">{whisperFor('welcome', 'login')}</p>
         <p className="login__intro">
           Les comptes sont créés à la main. Une fois connecté, tu le restes :
           l'app se rouvre sans redemander le mot de passe.

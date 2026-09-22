@@ -7,6 +7,7 @@ import { MOBILE_QUERY, useMediaQuery } from '@/hooks/useMediaQuery.js';
 import ConfirmDialog from './ConfirmDialog.jsx';
 import ChevronIcon from './ChevronIcon.jsx';
 import TrashIcon from './TrashIcon.jsx';
+import { whisperFor } from '@/lib/lovenotes.js';
 import './FlightsPanel.scss';
 
 const DIRECTIONS = [
@@ -256,6 +257,10 @@ function FlightCard({ trip, flight, readOnly, onChanged }) {
         <p className="flight__error" role="alert">
           {error}
         </p>
+      )}
+
+      {flight.direction === 'retour' && (
+        <p className="flight__note">{whisperFor('comeback', flight.id)}</p>
       )}
     </article>
   );

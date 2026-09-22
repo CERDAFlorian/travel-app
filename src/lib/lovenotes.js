@@ -68,6 +68,38 @@ export const PROVERBS = [
     fr: 'Même la route de mille lieues commence par un pas.',
   },
   {
+    ja: '愛は無限',
+    romaji: 'Ai wa mugen',
+    fr: 'L\u2019amour est sans limite.',
+  },
+  {
+    ja: '一蓮托生',
+    romaji: 'Ichiren takushō',
+    fr: 'Portés par le même lotus — quoi qu\u2019il advienne, le même sort.',
+  },
+  {
+    ja: '比翼連理',
+    romaji: 'Hiyoku renri',
+    fr: 'Deux oiseaux d\u2019une seule aile, deux arbres d\u2019une seule branche : '
+      + 'ils ne volent, ils ne poussent, qu\u2019ensemble.',
+  },
+  {
+    ja: '袖振り合うも多生の縁',
+    romaji: 'Sode furiau mo tashō no en',
+    fr: 'Même deux manches qui se frôlent tiennent d\u2019un lien ancien.',
+  },
+  {
+    ja: '恋に上下の隔てなし',
+    romaji: 'Koi ni jōge no hedate nashi',
+    fr: 'L\u2019amour ne connaît ni rang ni distance.',
+  },
+  {
+    ja: '愛屋烏に及ぶ',
+    romaji: 'Aioku karasu ni oyobu',
+    fr: 'Qui aime la maison finit par aimer jusqu\u2019aux corbeaux sur son toit.'
+      + ' On aime quelqu\u2019un avec tout ce qui vient avec.',
+  },
+  {
     // Anecdote, pas une citation : aucun texte de Sōseki ne la contient. Elle
     // se raconte depuis un siècle, et c'est très bien ainsi — mais la formule
     // ci-dessous ne lui attribue pas la phrase, seulement la légende.
@@ -87,30 +119,85 @@ export const WHISPERS = {
     'Encore un endroit du monde qui ne nous connaît pas encore.',
     'Tu poses les villes, je porte les valises.',
     'Va pour celle-là. J’irais n’importe où, du moment que tu y es.',
+    'Celle-là, c’est toi qui l’as trouvée. Comme d’habitude.',
+    'Une ville de plus, une nuit de plus contre toi.',
+    'Je ne sais pas ce qu’on y fera. Je sais avec qui.',
+    'Où tu veux. Vraiment, où tu veux.',
+    'Tu dessines nos journées. Moi je te regarde faire, et je t’aime.',
+    'Je t’aime. C’était juste pour le dire, profite qu’on en soit là.',
+    'Cette ville ne sait pas encore la chance qu’elle a.',
+    'On va s’y perdre tous les deux. C’est tout ce que je demande.',
+    'Chaque ville que tu ajoutes, c’est un jour de plus rien qu’à nous.',
+    'Ma vie a commencé le jour où tu es arrivée. Le reste, ce sont des voyages.',
   ],
   // Un hôtel, un restaurant, une visite…
   item: [
     'Bien choisi. Tu as toujours eu l’œil.',
     'Noté. J’ai hâte d’y être avec toi.',
-    'Ça nous fera un souvenir de plus.',
     'Encore une chose qu’on fera ensemble pour la première fois.',
+    'Je nous y vois déjà, tous les deux.',
+    'Si c’est toi qui le choisis, c’est que ce sera bien.',
+    'Celui-là, on s’en souviendra dans vingt ans.',
+    'Ajouté. Et moi je t’ajoute un baiser.',
+    'Ce sera notre endroit, maintenant.',
+    'Tu prépares tout ça avec tant de soin. Je t’aime pour ça aussi.',
+    'Je t’aime, tiens. Ça n’a rien à voir, et pourtant si.',
+    'Dix mille kilomètres pour un dîner avec toi. Ça les vaut largement.',
+    'Tu ne le sais pas, mais tu es en train de me rendre très heureux.',
+    'Je regarderai ça, et je te regarderai le regarder.',
+    'Avec toi, même la file d’attente sera un bon souvenir.',
+    'Merci de faire de nos vies quelque chose d’aussi joli.',
   ],
   // Un lieu vient d'être situé sur la carte.
   locate: [
     'Un point de plus sur la carte, un fil de plus entre nous.',
     'Te voilà en train de dessiner nos deux semaines.',
+    'Épinglé. Comme le jour où tu m’as épinglé, moi.',
+    'La carte se remplit. Ma vie aussi, depuis toi.',
+    'Où que ce soit sur cette carte, mon nord c’est toi.',
+    'Tu sais toujours où on va. C’est bien pratique, je t’aime.',
   ],
   // Le lien de partage.
   share: [
-    'Montre-leur où on s’en va.',
+    'Montre-leur où on s’en va. Ils ne sauront pas à quel point on est bien.',
+    'Partage l’itinéraire. Le reste, c’est entre nous.',
+    'Ils verront le voyage. Ils ne verront pas comme je te regarde.',
   ],
   // Préparation hors ligne.
   offline: [
     'Tout est dans ta poche, maintenant. Même sans réseau, on sait où on va.',
+    'Plus besoin d’antenne. On a déjà tout ce qu’il faut : l’itinéraire, et toi.',
+    'Sans réseau, sans repères, sans un mot de japonais. Avec toi, ça ira.',
   ],
   // Liste de voyages vide, ou voyage sans aucune ville.
   start: [
-    'Une page blanche, et toute une vie pour la remplir.',
+    'Une page blanche, et toute une vie pour la remplir. Commence quand tu veux.',
+  ],
+  // Écran de connexion — la première chose qu'elle lit en ouvrant l'app.
+  welcome: [
+    'Te revoilà. Notre voyage t’attendait, et moi aussi.',
+    'Bonjour toi. Le Japon n’a pas bougé, mon amour non plus.',
+    'Reviens quand tu veux. C’est chez toi, ici comme ailleurs.',
+  ],
+  // Le vol du retour, dans le panneau des vols.
+  comeback: [
+    'Le seul vol qu’on prendra à regret.',
+    'On rentrera. Mais on rentrera à deux, et c’est déjà tout.',
+  ],
+  // Pied de page du voyage — la ligne qui reste sous les yeux.
+  footer: [
+    'Fait pour toi, avec tout mon amour.',
+    'Où qu’on aille, le voyage c’est toi.',
+    'Je t’aime — d’ici, de là-bas, et de partout où on ira.',
+    'Deux billets, une valise, toute une vie.',
+    'Merci de m’emmener avec toi.',
+    'Je signerais pour dix mille kilomètres de plus, tant que tu es à côté.',
+  ],
+  // Le nombre de nuits d'une étape vient de changer.
+  nights: [
+    'Une nuit de plus, c’est un matin de plus à te réveiller.',
+    'Reste autant que tu veux. Moi je suis bien, là.',
+    'Compte les nuits. Moi je ne compte plus rien depuis toi.',
   ],
 };
 
@@ -136,4 +223,28 @@ export function whisperFor(kind, seed) {
   const list = WHISPERS[kind];
   if (!Array.isArray(list) || list.length === 0) return null;
   return list[fingerprint(seed) % list.length];
+}
+
+// Compte à rebours avant le départ, en langage d'amoureux plutôt qu'en chiffre
+// sec. Renvoie null une fois le voyage commencé : compter les jours n'a plus
+// de sens quand on y est.
+//
+// `today` est injectable pour que le test ne dépende pas du jour où il tourne.
+export function countdown(startIso, today = new Date()) {
+  if (!startIso) return null;
+  const [year, month, day] = String(startIso).split('-').map(Number);
+  if (!year || !month || !day) return null;
+
+  // Minuit local des deux côtés : comparer une date nue à un instant ferait
+  // basculer le compte selon l'heure de la journée.
+  const departure = new Date(year, month - 1, day);
+  const now = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const days = Math.round((departure - now) / 86400000);
+
+  if (days < 0) return null;
+  if (days === 0) return "C'est aujourd'hui. Prends ma main.";
+  if (days === 1) return 'Demain. Demain, on y est.';
+  if (days <= 7) return `Plus que ${days} jours avant de partir avec toi.`;
+  if (days <= 30) return `${days} jours. Je compte, figure-toi.`;
+  return `${days} jours avant de poser nos valises ensemble.`;
 }

@@ -325,3 +325,13 @@
     margin-bottom: 0;
   }
 }
+
+// Le vol du retour, et lui seul, porte un mot. Discret : c'est un soupir, pas
+// une information.
+.flight__note {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-soft);
+  font-size: var(--fs-xs);
+  font-style: italic;
+  text-align: right;
+}
