@@ -97,15 +97,21 @@
     min-width: 0;
   }
 
+  // Interligne resserrée : les deux lignes forment un seul bloc sous le
+  // titre, elles n'ont pas à respirer comme deux paragraphes.
   &__tagline {
     font-size: clamp(17px, 2.1vw, 29px);
+    line-height: 1.15;
     font-style: italic;
     color: var(--text);
   }
 
+  // Plus haute qu'avant — elle disait l'essentiel dans un corps de note de bas
+  // de page — et collée au sous-titre.
   &__dates {
-    margin-top: 3px;
-    font-size: clamp(13px, 1.4vw, 18px);
+    margin-top: 1px;
+    font-size: clamp(15px, 1.7vw, 22px);
+    line-height: 1.2;
     font-style: italic;
     color: var(--accent);
   }
