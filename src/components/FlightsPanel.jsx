@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { formatDay, formatStepDates } from '@/lib/dates.js';
 import { flightArrival } from '@/lib/itinerary.js';
-import { formatEuros, priceInEuros, toEuros } from '@/lib/currency.js';
+import { priceInEuros } from '@/lib/currency.js';
 import { addFlight, deleteFlight, updateFlight } from '@/lib/mutations.js';
 import { MOBILE_QUERY, useMediaQuery } from '@/hooks/useMediaQuery.js';
 import ConfirmDialog from './ConfirmDialog.jsx';
+import ChevronIcon from './ChevronIcon.jsx';
+import TrashIcon from './TrashIcon.jsx';
+import { whisperFor } from '@/lib/lovenotes.js';
 import './FlightsPanel.scss';
 
 const DIRECTIONS = [
@@ -48,82 +51,53 @@ function splitFlightNumber(raw) {
   return { airline: airline || null, flightNo: rest.join(' ') || null };
 }
 
-export default function FlightsPanel({ trip, itinerary, readOnly, onChanged }) {
+export default function FlightsPanel({ trip, readOnly, onChanged }) {
   const flights = trip.flights;
   // Le formulaire est replié par défaut : déplié en permanence, il occupait
   // autant de place qu'un vol réel alors qu'on l'utilise trois fois par voyage.
   const [adding, setAdding] = useState(false);
 
-  // Sur mobile, le bloc des vols est replié : il précède l'itinéraire, et
-  // quatre cartes de vol repoussaient la première étape hors de l'écran. Sur
-  // grand écran il reste ouvert, la place ne manque pas.
+  // Repliable a TOUTES les largeurs : le bloc precede l'itineraire, et quatre
+  // cartes de vol repoussent la premiere etape vers le bas quel que soit
+  // l'ecran. Ce qu'on regarde en preparant un voyage, ce sont les villes.
+  //
+  // L'etat de depart, lui, reste lie a la largeur : replie sur mobile ou la
+  // place manque, ouvert sur grand ecran ou elle ne manque pas. `useState` ne
+  // relit pas la requete media, donc un redimensionnement ne rebascule rien —
+  // c'est voulu : le pliage devient celui de l'utilisateur des son premier
+  // clic, et rien ne doit le lui reprendre.
   const isMobile = useMediaQuery(MOBILE_QUERY);
   const [open, setOpen] = useState(!isMobile);
-
-  const sum = flights.reduce(
-    (amount, flight) => amount + (toEuros(flight.price, flight.currency ?? 'EUR') ?? 0),
-    0,
-  );
-  const total = sum > 0 ? formatEuros(sum) : 'à renseigner';
 
   if (flights.length === 0 && readOnly) return null;
 
   return (
-    <section className="flights">
-      <div className="flights__card" data-collapsed={isMobile && !open ? '' : undefined}>
+    <section className="flights" id="vols">
+      <div className="flights__card" data-collapsed={open ? undefined : ''}>
         <div className="flights__head">
-          {/* Le titre devient le bouton de pliage, mais seulement là où le
-              pliage existe : sur grand écran, un bouton qui ne fait rien
-              serait un piège. */}
-          {isMobile ? (
-            <button
-              type="button"
-              className="flights__toggle"
-              aria-expanded={open}
-              onClick={() => setOpen((value) => !value)}
-            >
-              <h2 className="flights__title">Billets d'avion</h2>
-              <span className="flights__count">{flights.length}</span>
-              <span className="flights__caret" aria-hidden="true">
-                {open ? '▾' : '▸'}
-              </span>
-            </button>
-          ) : (
+          {/* Toute la ligne EST le bouton de pliage, mot doux compris.
+              Le mot doux etait auparavant a cote du bouton : celui-ci
+              s'arretait donc avant lui, et le chevron — cale a droite DU
+              BOUTON — tombait au milieu de la ligne. Il est maintenant dans
+              le meme conteneur que le reste, et va vraiment au bord. */}
+          <button
+            type="button"
+            className="flights__toggle"
+            aria-expanded={open}
+            onClick={() => setOpen((value) => !value)}
+          >
             <h2 className="flights__title">Billets d'avion</h2>
-          )}
-          {!isMobile && (
-            <span className="flights__hint">
-              le voyage commence à l'arrivée du vol aller
+            <span className="flights__count">{flights.length}</span>
+            {/* Visible plie ou deplie : c'est un mot doux, pas le resume du
+                contenu. Masque sous 768px, ou la ligne est deja pleine. */}
+            <span className="flights__hint">{whisperFor('flights', trip.id)}</span>
+            <span className="flights__caret" data-open={open || undefined}>
+              <ChevronIcon />
             </span>
-          )}
-
-          {/* Les deux vols bornent le séjour. Si les nuits planifiées ne
-              remplissent pas la fenêtre, on le dit — sans rien corriger
-              d'autorité : c'est une décision de voyage, pas une erreur. */}
-          <NightsGap gap={itinerary?.nightsGap} />
-          {/* Le total disparaît quand le bloc est replié : le bouton de pliage
-              occupe toute la ligne, le total passait donc en dessous et
-              l'en-tête changeait de hauteur selon l'état. Replié, on veut une
-              seule ligne, toujours la même. */}
-          {(!isMobile || open) && (
-            <span className="flights__total">
-              Total vols <em>{total}</em>
-            </span>
-          )}
-
-          {!readOnly && (!isMobile || open) && (
-            <button
-              type="button"
-              className="flights__add"
-              aria-expanded={adding}
-              onClick={() => setAdding((value) => !value)}
-            >
-              {adding ? 'Fermer' : '+ Ajouter un vol'}
-            </button>
-          )}
+          </button>
         </div>
 
-        {(!isMobile || open) && (
+        {open && (
         <div className="flights__grid">
           {flights.map((flight) => (
             <FlightCard
@@ -138,7 +112,20 @@ export default function FlightsPanel({ trip, itinerary, readOnly, onChanged }) {
         </div>
         )}
 
-        {(!isMobile || open) && !readOnly && adding && (
+        {/* Après les vols déjà saisis : on ajoute à la suite de ce qu'on a,
+            on ne commence pas par le formulaire. */}
+        {open && !readOnly && !adding && (
+          <button
+            type="button"
+            className="flights__add"
+            aria-expanded={adding}
+            onClick={() => setAdding(true)}
+          >
+            + Ajouter un vol
+          </button>
+        )}
+
+        {open && !readOnly && adding && (
           <FlightForm
             trip={trip}
             onChanged={onChanged}
@@ -147,21 +134,6 @@ export default function FlightsPanel({ trip, itinerary, readOnly, onChanged }) {
         )}
       </div>
     </section>
-  );
-}
-
-function NightsGap({ gap }) {
-  if (gap == null || gap === 0) return null;
-
-  const nights = Math.abs(gap);
-  const plural = nights > 1 ? 's' : '';
-
-  return (
-    <span className="flights__gap" data-over={gap < 0 || undefined}>
-      {gap > 0
-        ? `${nights} nuit${plural} encore à placer avant le vol retour`
-        : `${nights} nuit${plural} de trop : le séjour dépasse le vol retour`}
-    </span>
   );
 }
 
@@ -202,7 +174,8 @@ function FlightCard({ trip, flight, readOnly, onChanged }) {
             title="Supprimer ce vol"
             onClick={() => setAsking(true)}
           >
-            ✕<span className="sr-only">Supprimer ce vol</span>
+            <TrashIcon />
+            <span className="sr-only">Supprimer ce vol</span>
           </button>
         )}
       </div>
@@ -285,6 +258,10 @@ function FlightCard({ trip, flight, readOnly, onChanged }) {
         <p className="flight__error" role="alert">
           {error}
         </p>
+      )}
+
+      {flight.direction === 'retour' && (
+        <p className="flight__note">{whisperFor('comeback', flight.id)}</p>
       )}
     </article>
   );

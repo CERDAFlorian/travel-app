@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   addDays,
+  canMoveStep,
   chainDates,
   datesToUpdate,
   flightArrival,
+  reorderSteps,
   resolveItinerary,
   tripEndDate,
+  timelineEntries,
   tripEndFromFlights,
   tripStartFromFlights,
 } from './itinerary.js';
@@ -211,5 +214,126 @@ describe('resolveItinerary', () => {
     const resolved = resolveItinerary({ startDate: '2026-11-07', steps, flights: [] });
     expect(resolved.availableNights).toBeNull();
     expect(resolved.nightsGap).toBeNull();
+  });
+});
+
+describe('timelineEntries', () => {
+  const steps = [
+    { id: 'tokyo', name: 'Tokyo', date_start: '2026-11-08', nights: 2 },
+    { id: 'kyoto', name: 'Kyoto', date_start: '2026-11-10', nights: 4 },
+    { id: 'fukuoka', name: 'Fukuoka', date_start: '2026-11-14', nights: 3 },
+  ];
+
+  it('encadre les étapes par l’aller et le retour', () => {
+    const flights = [
+      { id: 'out', direction: 'aller', date: '2026-11-07' },
+      { id: 'back', direction: 'retour', date: '2026-11-17' },
+    ];
+    expect(timelineEntries(steps, flights).map((e) => e.id)).toEqual([
+      'out',
+      'tokyo',
+      'kyoto',
+      'fukuoka',
+      'back',
+    ]);
+  });
+
+  // Le cas qui justifie le tri plutôt qu'une concaténation : un vol intérieur
+  // se place tout seul, sans qu'on ait à savoir quelles étapes il relie.
+  it('intercale un vol intérieur à sa date', () => {
+    const flights = [{ id: 'dom', direction: 'interieur', date: '2026-11-14' }];
+    expect(timelineEntries(steps, flights).map((e) => e.id)).toEqual([
+      'tokyo',
+      'kyoto',
+      'dom',
+      'fukuoka',
+    ]);
+  });
+
+  // On prend l'avion AVANT d'arriver : à date égale, le vol passe devant
+  // l'étape qui commence ce jour-là.
+  it('place un vol avant l’étape du même jour', () => {
+    const flights = [{ id: 'dom', direction: 'interieur', date: '2026-11-10' }];
+    const order = timelineEntries(steps, flights).map((e) => e.id);
+    expect(order.indexOf('dom')).toBeLessThan(order.indexOf('kyoto'));
+  });
+
+  // Sauf le retour : il part de la dernière étape, donc après elle.
+  it('place le retour après l’étape du même jour', () => {
+    const flights = [{ id: 'back', direction: 'retour', date: '2026-11-14' }];
+    const order = timelineEntries(steps, flights).map((e) => e.id);
+    expect(order.indexOf('back')).toBeGreaterThan(order.indexOf('fukuoka'));
+  });
+
+  // Un vol sans date n'a pas de place dans une chronologie : il reste dans
+  // son panneau plutôt que d'atterrir au hasard.
+  it('écarte les vols sans date', () => {
+    const flights = [{ id: 'orphan', direction: 'aller', date: null }];
+    expect(timelineEntries(steps, flights).map((e) => e.id)).toEqual(['tokyo', 'kyoto', 'fukuoka']);
+  });
+
+  it('distingue les deux natures d’entrée', () => {
+    const entries = timelineEntries(steps, [{ id: 'out', direction: 'aller', date: '2026-11-07' }]);
+    expect(entries[0].kind).toBe('flight');
+    expect(entries[1].kind).toBe('step');
+  });
+
+  it('accepte un voyage sans vol', () => {
+    expect(timelineEntries(steps).map((e) => e.kind)).toEqual(['step', 'step', 'step']);
+  });
+});
+
+describe('reorderSteps', () => {
+  const steps = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
+
+  it('remonte une étape d’un cran', () => {
+    expect(reorderSteps(steps, 'b', -1).map((s) => s.id)).toEqual(['b', 'a', 'c']);
+  });
+
+  it('descend une étape d’un cran', () => {
+    expect(reorderSteps(steps, 'b', 1).map((s) => s.id)).toEqual(['a', 'c', 'b']);
+  });
+
+  // Rendre le tableau d'origine, et non une copie, permet à l'appelant de
+  // savoir qu'il n'y a rien à écrire en comparant les références.
+  it('rend le tableau d’origine quand le mouvement est impossible', () => {
+    expect(reorderSteps(steps, 'a', -1)).toBe(steps);
+    expect(reorderSteps(steps, 'c', 1)).toBe(steps);
+    expect(reorderSteps(steps, 'inconnue', 1)).toBe(steps);
+  });
+
+  it('ne modifie pas le tableau reçu', () => {
+    reorderSteps(steps, 'b', -1);
+    expect(steps.map((s) => s.id)).toEqual(['a', 'b', 'c']);
+  });
+});
+
+describe('canMoveStep', () => {
+  const steps = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
+
+  it.each([
+    ['a', -1, false],
+    ['a', 1, true],
+    ['b', -1, true],
+    ['b', 1, true],
+    ['c', -1, true],
+    ['c', 1, false],
+  ])('%s vers %i → %s', (id, delta, expected) => {
+    expect(canMoveStep(steps, id, delta)).toBe(expected);
+  });
+
+  // Le déplacement change les DATES, pas seulement l'ordre : une étape de
+  // quatre nuits qui passe devant une d'une nuit décale tout ce qui suit.
+  it('le réordonnancement recale la chaîne des dates', () => {
+    const withNights = [
+      { id: 'a', nights: 2 },
+      { id: 'b', nights: 4 },
+      { id: 'c', nights: 1 },
+    ];
+    const moved = reorderSteps(withNights, 'c', -1);
+    const dates = chainDates('2026-11-08', moved);
+
+    expect(moved.map((s) => s.id)).toEqual(['a', 'c', 'b']);
+    expect(dates.map((d) => d.date_start)).toEqual(['2026-11-08', '2026-11-10', '2026-11-11']);
   });
 });

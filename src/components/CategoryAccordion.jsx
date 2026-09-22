@@ -3,6 +3,8 @@ import { formatEuros } from '@/lib/currency.js';
 import { sumInEuros } from '@/lib/budget.js';
 import { addItem } from '@/lib/mutations.js';
 import ItemRow from './ItemRow.jsx';
+import ChevronIcon from './ChevronIcon.jsx';
+import LoveNote from './LoveNote.jsx';
 import './CategoryAccordion.scss';
 
 function parsePrice(raw) {
@@ -24,6 +26,9 @@ export default function CategoryAccordion({ category, items, step, tripTitle, re
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState('');
   const [busy, setBusy] = useState(false);
+  // Dernier item ajouté, pour le mot doux. Voir AddStep : le compteur est là
+  // pour que deux ajouts identiques d'affilée relancent bien l'affichage.
+  const [added, setAdded] = useState({ count: 0, title: '' });
   const panelId = useId();
 
   // Total de la catégorie, en euros. Le design l'affiche à droite de l'en-tête :
@@ -46,7 +51,11 @@ export default function CategoryAccordion({ category, items, step, tripTitle, re
         category: category.key,
         position: nextPosition,
         title: trimmed,
+        // Saisi en euros, donc stocké en euros : pas de conversion, pas de
+        // dérive. Les lignes du seed restent en yens, le budget ramène tout
+        // sur la même échelle de toute façon.
         price: parsePrice(price),
+        currency: 'EUR',
       });
       // Une note perso n'a pas de lieu : lui proposer une adresse n'a aucun
       // sens. Les cinq autres catégories, si.
@@ -54,6 +63,7 @@ export default function CategoryAccordion({ category, items, step, tripTitle, re
       await onChanged();
       setTitle('');
       setPrice('');
+      setAdded((last) => ({ count: last.count + 1, title: trimmed }));
     } finally {
       setBusy(false);
     }
@@ -72,8 +82,8 @@ export default function CategoryAccordion({ category, items, step, tripTitle, re
         <span className="cat__label">{category.label}</span>
         <span className="cat__count">{items.length}</span>
         <span className="cat__total">{total}</span>
-        <span className="cat__caret" aria-hidden="true">
-          {open ? '▾' : '▸'}
+        <span className="cat__caret" data-open={open || undefined}>
+          <ChevronIcon />
         </span>
       </button>
 
@@ -111,7 +121,7 @@ export default function CategoryAccordion({ category, items, step, tripTitle, re
                   type="text"
                   inputMode="numeric"
                   value={price}
-                  placeholder={category.key === 'hotel' || category.key === 'activite' || category.key === 'lieu' ? 'prix ¥' : 'prix'}
+                  placeholder="prix €"
                   aria-label="Prix"
                   onChange={(event) => setPrice(event.target.value)}
                 />
@@ -121,6 +131,8 @@ export default function CategoryAccordion({ category, items, step, tripTitle, re
               </button>
             </form>
           )}
+
+          <LoveNote kind="item" seed={added.title} trigger={added.count} />
         </div>
       )}
     </div>

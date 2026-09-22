@@ -100,3 +100,11 @@
     &:focus-visible { @include mixins.focus-ring; }
   }
 }
+
+// Premiere ligne qu'elle lit en ouvrant l'app.
+.login__welcome {
+  margin: 0 0 var(--sp-2);
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+}

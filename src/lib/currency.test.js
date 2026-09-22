@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EUR_PER, formatEuros, priceInEuros, toEuros } from './currency.js';
+import { EUR_PER, eurosInput, formatEuros, fromEuros, priceInEuros, toEuros } from './currency.js';
 
 const plain = (value) => value?.replace(/[  ]/g, ' ');
 
@@ -45,5 +45,44 @@ describe('priceInEuros', () => {
 
   it('garde le taux documenté cohérent avec la constante', () => {
     expect(1 / EUR_PER.JPY).toBe(165);
+  });
+});
+
+describe('fromEuros', () => {
+  it('reconvertit vers la devise d’origine', () => {
+    expect(fromEuros(100, 'JPY')).toBeCloseTo(16500, 6);
+  });
+
+  it('laisse un montant déjà en euros', () => {
+    expect(fromEuros(890, 'EUR')).toBe(890);
+  });
+
+  it('refuse une devise inconnue', () => {
+    expect(fromEuros(100, 'USD')).toBeNull();
+  });
+});
+
+describe('eurosInput', () => {
+  // Le champ de saisie parle la même langue que l'affichage : on ne tape pas
+  // des yens dans une interface qui montre des euros.
+  it('convertit les yens en euros entiers', () => {
+    expect(eurosInput(34000, 'JPY')).toBe('206');
+  });
+
+  it('rend une chaîne vide pour un prix absent', () => {
+    expect(eurosInput(null, 'JPY')).toBe('');
+    expect(eurosInput(undefined, 'EUR')).toBe('');
+  });
+
+  it('garde le zéro, qui est un prix', () => {
+    expect(eurosInput(0, 'JPY')).toBe('0');
+  });
+
+  // L'aller-retour ne doit pas deriver : rouvrir un champ sans y toucher puis
+  // le quitter ne doit rien reecrire en base.
+  it('revient sur lui-même à l’euro près', () => {
+    const stored = 34000;
+    const shown = Number(eurosInput(stored, 'JPY'));
+    expect(Math.round(toEuros(fromEuros(shown, 'JPY'), 'JPY'))).toBe(shown);
   });
 });

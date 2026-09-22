@@ -1,0 +1,32 @@
+// Orange d'avertissement : il reste quelque chose a faire, sans que rien soit
+// casse. Rouge seulement quand le sejour deborde le vol retour — la, on ne
+// dort nulle part.
+//
+// Ni cadre ni bandeau : c'est une remarque en passant, pas une alerte. Le
+// bandeau pleine largeur lui donnait le poids d'une panne, et coupait la page
+// en deux entre les vols et la premiere etape.
+.nights-gap {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  // Plus de marge laterale : la remarque vit maintenant DANS la colonne des
+  // etapes, qui porte deja la gouttiere de page. La repeter la decalait vers
+  // la droite par rapport aux cartes de ville.
+  //
+  // `.trip__steps` est une colonne flex avec sa propre gouttiere ; il ne reste
+  // qu'un peu d'air au-dessus, pour detacher la remarque de la derniere ville.
+  margin: var(--sp-2) 0 0;
+  color: var(--warn);
+  font-size: var(--fs-xs);
+  font-style: italic;
+
+  &::before {
+    content: '⚠';
+    font-style: normal;
+    font-size: 0.9em;
+  }
+
+  &[data-over] {
+    color: var(--danger);
+  }
+}

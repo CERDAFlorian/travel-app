@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import LoveNote from './LoveNote.jsx';
 import './AddStep.scss';
 
 // « Ajouter une ville ».
@@ -13,6 +14,10 @@ export default function AddStep({ onAdd }) {
   const [nights, setNights] = useState(2);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+  // Ville tout juste posée : elle déclenche le mot doux et en choisit le
+  // tirage. Le compteur distingue deux ajouts de la même ville — sans lui, le
+  // second ne relancerait rien, le déclencheur n'ayant pas changé.
+  const [added, setAdded] = useState({ count: 0, name: '' });
 
   async function submit(event) {
     event.preventDefault();
@@ -25,6 +30,7 @@ export default function AddStep({ onAdd }) {
       await onAdd({ name: trimmed, nights });
       setName('');
       setNights(2);
+      setAdded((last) => ({ count: last.count + 1, name: trimmed }));
     } catch (failure) {
       setError(failure.message);
     } finally {
@@ -70,6 +76,8 @@ export default function AddStep({ onAdd }) {
           {error}
         </p>
       )}
+
+      <LoveNote kind="step" seed={added.name} trigger={added.count} />
     </form>
   );
 }

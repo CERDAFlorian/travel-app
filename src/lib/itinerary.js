@@ -140,3 +140,68 @@ export function resolveItinerary(trip) {
     nightsGap: availableNights == null ? null : availableNights - plannedNights,
   };
 }
+
+// Le fil chronologique complet : vols ET étapes, dans l'ordre où on les vit.
+//
+// Le tri se fait sur la date, avec un départage quand elle est la même. On
+// prend l'avion AVANT d'arriver à l'étape qui commence ce jour-là — le vol
+// passe donc devant. Le retour fait exception : il part de la dernière étape,
+// donc après elle.
+//
+// Un vol intérieur s'intercale tout seul : daté du 15, il se place entre
+// l'étape qui commence le 12 et celle qui commence le 16, sans qu'on ait à
+// savoir laquelle il relie.
+const RANK = { aller: -1, interieur: -0.5, retour: 1 };
+
+export function timelineEntries(steps = [], flights = []) {
+  const entries = [
+    ...steps.map((step) => ({
+      kind: 'step',
+      id: step.id,
+      date: step.date_start,
+      rank: 0,
+      step,
+    })),
+    ...flights
+      // Un vol sans date n'a pas de place dans une chronologie. Il reste
+      // visible dans son panneau, pas ici.
+      .filter((flight) => flight.date)
+      .map((flight) => ({
+        kind: 'flight',
+        id: flight.id,
+        date: flight.date,
+        rank: RANK[flight.direction] ?? 0,
+        flight,
+      })),
+  ];
+
+  return entries.sort((a, b) => {
+    if (a.date !== b.date) return (a.date ?? '').localeCompare(b.date ?? '');
+    return a.rank - b.rank;
+  });
+}
+
+// Déplace une étape d'un cran dans l'itinéraire.
+//
+// Rend un NOUVEAU tableau, ou le tableau d'origine si le mouvement est
+// impossible — première étape vers le haut, dernière vers le bas. L'appelant
+// peut donc comparer les références pour savoir s'il y a quelque chose à
+// écrire.
+//
+// Les dates ne sont pas touchées ici : elles se recalculent depuis l'ordre et
+// les nuits, c'est `datesToUpdate` qui s'en charge.
+export function reorderSteps(steps, stepId, delta) {
+  const index = steps.findIndex((step) => step.id === stepId);
+  const target = index + delta;
+
+  if (index < 0 || target < 0 || target >= steps.length) return steps;
+
+  const next = [...steps];
+  [next[index], next[target]] = [next[target], next[index]];
+  return next;
+}
+
+export function canMoveStep(steps, stepId, delta) {
+  const index = steps.findIndex((step) => step.id === stepId);
+  return index >= 0 && index + delta >= 0 && index + delta < steps.length;
+}

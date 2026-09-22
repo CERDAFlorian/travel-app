@@ -57,8 +57,14 @@
   }
 
   &__caret {
-    font-size: clamp(12px, 1.15vw, 13.5px);
+    display: grid;
+    place-items: center;
     color: var(--muted);
+    font-size: var(--fs-md);
+    transform: rotate(-90deg);
+    transition: transform var(--dur-base) var(--ease-out);
+
+    &[data-open] { transform: none; }
   }
 
   &__panel {
@@ -105,18 +111,8 @@
   &__add-price { width: 74px; }
 
   &__add-submit {
-    padding: 3px 10px;
-    border: 1px solid var(--border-strong);
-    border-radius: 7px;
-    background: var(--surface-warm);
-    color: var(--accent);
-    font: inherit;
-    font-size: clamp(12px, 1.25vw, 15px);
-    white-space: nowrap;
-    cursor: pointer;
-
-    &:focus-visible { @include mixins.focus-ring; }
-    &:disabled { opacity: 0.6; cursor: progress; }
+    @include mixins.action-button;
+    min-width: var(--hit-dense);
   }
 }
 

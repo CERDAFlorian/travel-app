@@ -6,9 +6,6 @@ import { toEuros } from '@/lib/currency.js';
 // fausseraient une prévision.
 const BUDGETED = CATEGORIES.filter((category) => category.budget);
 
-export const BUDGET_HINT =
-  'vols, hôtels, activités et visites — restaurants et shopping restent hors budget';
-
 // Tout est ramené en euros avant d'être additionné.
 //
 // Le design cumulait `flightsSum` (euros) et les totaux d'items (yens) en un
@@ -55,9 +52,11 @@ export function buildBudget(trip) {
     total,
     nights,
     blanks,
+    // Pas de note quand tout est renseigné : « le total est complet » occupait
+    // une ligne pour dire que rien ne manque. On ne signale que ce qui manque.
     note: blanks
       ? `${blanks} ligne${blanks > 1 ? 's' : ''} encore sans prix — le total ne les compte pas.`
-      : 'Toutes les lignes ont un prix : le total est complet.',
+      : null,
   };
 }
 

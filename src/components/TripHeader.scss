@@ -2,8 +2,9 @@
 
 .trip-header {
   position: relative;
+  // Rogne le décor qui déborde volontairement du cadre. C'est aussi ce qui
+  // interdit d'y placer la frise collante — elle est dans TripView.
   overflow: hidden;
-  border-bottom: 1px solid var(--border-soft);
 
   // Le décor sort du cadre, c'est voulu : `overflow: hidden` sur l'en-tête le
   // recoupe proprement et donne l'impression d'une estampe débordante.
@@ -17,10 +18,14 @@
   // Le décor déborde, mais il ne doit pas manger le contenu. Sur un écran
   // étroit il rétrécit fortement : à 375 px, les tailles du design
   // laissaient 91 px au titre.
+  // En filigrane derrière le titre. La marge qui lui était réservée —
+  // jusqu'à 130 px — désalignait tout l'en-tête du reste de la page. Il garde
+  // son coin, le texte passe devant.
   &__momiji {
-    left: -22px;
-    top: -12px;
-    width: clamp(64px, 11vw, 168px);
+    left: -24px;
+    top: -16px;
+    width: clamp(64px, 10vw, 150px);
+    opacity: 0.4;
   }
 
   &__fuji {
@@ -37,6 +42,7 @@
   // Ligne du retour et des chiffres, sous le titre. Le z-index la garde
   // au-dessus du décor : le Fuji descend bas à droite et intercepterait le
   // clic sur une pastille.
+  // Même marge que le titre, et donc que tout le contenu de la page.
   &__summary {
     position: relative;
     z-index: var(--z-sticky);
@@ -44,28 +50,41 @@
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: var(--sp-2);
+    gap: var(--sp-3);
     padding: 0 clamp(16px, 3vw, 44px) var(--sp-3);
   }
 
   // Marges asymétriques : elles réservent la place du décor. Sur mobile, le
   // décor est réduit et les marges avec — sinon il ne reste rien pour le
   // titre.
+  // `center` : le titre se cale au milieu du bloc sous-titre + dates, pas sur
+  // la ligne de base de sa première ligne. Avec `baseline`, JAPON s'accrochait
+  // au haut du bloc et la date pendait en dessous — c'est le décalage qu'on
+  // voyait. `flex-end` alignait les boîtes, ce qui ne tombait pas juste non
+  // plus avec une interligne de 0,92.
   &__bar {
     position: relative;
     display: flex;
     flex-wrap: wrap;
-    align-items: flex-end;
-    gap: clamp(8px, 1.6vw, 20px);
+    align-items: center;
+    gap: clamp(4px, 1.6vw, 20px);
     padding:
       clamp(14px, 2.4vw, 30px)
       clamp(110px, 26vw, 375px)
       var(--sp-3)
-      clamp(16px, 8vw, 130px);
+      clamp(16px, 3vw, 44px);
   }
 
+  // Au-dessus du décor : sans `position`, le momiji recouvrirait le « J ».
   &__title {
-    margin: 0;
+    position: relative;
+    // Correction optique : l'approche de la première lettre laisse un blanc
+    // avant son dessin, et le titre paraît rentré par rapport au bouton juste
+    // en dessous. En `em`, elle suit la taille du titre à toutes les largeurs.
+    //
+    // Recalée pour Lora, dont les approches sont plus sobres que celles de
+    // Playfair — la valeur précédente, -0.045em, mordait désormais trop.
+    margin: 0 0 0 -0.02em;
     font-family: var(--font-display);
     font-weight: 700;
     font-size: clamp(40px, 6.2vw, 86px);
@@ -74,27 +93,73 @@
     text-transform: uppercase;
   }
 
+  // Plus de calage manuel : c'est la ligne de base qui aligne désormais.
   &__subtitle {
-    padding-bottom: clamp(4px, 0.8vw, 10px);
+    position: relative;
+    min-width: 0;
   }
 
+  // Interligne resserrée : les deux lignes forment un seul bloc sous le
+  // titre, elles n'ont pas à respirer comme deux paragraphes.
   &__tagline {
     font-size: clamp(17px, 2.1vw, 29px);
+    line-height: 1.15;
     font-style: italic;
     color: var(--text);
   }
 
+  // Le decompte et sa phrase forment UNE phrase coupee en deux lignes :
+  // « Dans 47 jours » n'en est que le debut. D'ou le decompte en gras dans la
+  // police de titre, et la suite plus petite, juste en dessous.
+  &__count {
+    display: block;
+    font-family: var(--font-display);
+    font-style: normal;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  &__vow {
+    display: block;
+    margin-top: 2px;
+    // Nettement plus petite que le decompte : c'est une phrase entiere, elle
+    // doit tenir sur une ou deux lignes sans pousser les dates plus bas.
+    font-size: clamp(13px, 1.15vw, 16px);
+    line-height: 1.35;
+    color: var(--text-soft);
+  }
+
+  // Plus haute qu'avant — elle disait l'essentiel dans un corps de note de bas
+  // de page — et collée au sous-titre.
+  // Dates et pastilles forment un bloc, a droite, en face du retour. Sur un
+  // ecran etroit les dates passent au-dessus des pastilles plutot que de les
+  // comprimer.
+  &__facts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: flex-end;
+    gap: var(--sp-1) var(--sp-3);
+  }
+
   &__dates {
-    margin-top: 3px;
-    font-size: clamp(13px, 1.4vw, 18px);
+    // Plus mesurees qu'avant : elles ne portent plus seules le poids de la
+    // ligne, elles voisinent trois pastilles.
+    font-size: clamp(14px, 1.5vw, 19px);
+    line-height: 1.2;
     font-style: italic;
+    white-space: nowrap;
     color: var(--accent);
   }
 
   // En ligne, jamais empilés : trois pastilles l'une sous l'autre prenaient
   // un tiers de l'écran sur mobile.
+  // Alignées à droite, sur la même ligne que le retour. `flex-end` les garde
+  // groupées quand la ligne se casse en deux sur un écran étroit.
   &__chips {
     display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
     gap: var(--sp-2);
     margin: 0;
     padding: 0;
@@ -113,8 +178,4 @@
     white-space: nowrap;
   }
 
-  &__timeline {
-    position: relative;
-    padding: 0 clamp(16px, 3vw, 44px) clamp(12px, 1.6vw, 18px);
-  }
 }

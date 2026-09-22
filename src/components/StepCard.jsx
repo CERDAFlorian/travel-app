@@ -4,8 +4,10 @@ import { formatStepDates } from '@/lib/dates.js';
 import { setStepCoordinates } from '@/lib/mutations.js';
 import GeocodePicker from './GeocodePicker.jsx';
 import ConfirmDialog from './ConfirmDialog.jsx';
+import TrashIcon from './TrashIcon.jsx';
 import PhotoStrip from './PhotoStrip.jsx';
 import CategoryAccordion from './CategoryAccordion.jsx';
+import LoveNote from './LoveNote.jsx';
 import './StepCard.scss';
 
 // Une étape : rail à gauche, contenu à droite.
@@ -20,11 +22,15 @@ export default function StepCard({
   selected,
   onSelect,
   onRemove,
+  onMove,
+  canMoveUp,
+  canMoveDown,
   onNights,
   autoLocate,
   onChanged,
 }) {
   const [asking, setAsking] = useState(false);
+  const [nightsAdded, setNightsAdded] = useState(0);
   const [removing, setRemoving] = useState(false);
   // Vrai au montage de l'étape qu'on vient d'ajouter : elle cherche sa
   // position toute seule.
@@ -45,6 +51,39 @@ export default function StepCard({
       <div className="step__rail">
         <div className="step__number">{step.position}</div>
 
+        {!readOnly && onMove && (
+          <div className="step__order">
+            {/* Grisées plutôt que masquées : une commande qui disparaît sur la
+                première et la dernière étape ferait sauter la colonne, et on
+                chercherait ce qui a bougé. */}
+            <button
+              type="button"
+              className="step__arrow"
+              disabled={!canMoveUp}
+              title={canMoveUp ? 'Monter cette étape' : 'Déjà en premier'}
+              onClick={(event) => {
+                event.stopPropagation();
+                onMove(step.id, -1);
+              }}
+            >
+              ▲<span className="sr-only">Monter {step.name}</span>
+            </button>
+
+            <button
+              type="button"
+              className="step__arrow"
+              disabled={!canMoveDown}
+              title={canMoveDown ? 'Descendre cette étape' : 'Déjà en dernier'}
+              onClick={(event) => {
+                event.stopPropagation();
+                onMove(step.id, 1);
+              }}
+            >
+              ▼<span className="sr-only">Descendre {step.name}</span>
+            </button>
+          </div>
+        )}
+
         {!readOnly && onRemove && (
           <button
             type="button"
@@ -58,7 +97,8 @@ export default function StepCard({
               setAsking(true);
             }}
           >
-            ✕<span className="sr-only">Retirer {step.name}</span>
+            <TrashIcon />
+            <span className="sr-only">Retirer {step.name}</span>
           </button>
         )}
 
@@ -70,12 +110,14 @@ export default function StepCard({
           <h2 className="step__name">{step.name}</h2>
           <span className="step__dates">{formatStepDates(step.date_start, step.date_end)}</span>
           {/* Les nuits pilotent tout l'enchaînement : changer une nuit ici
-              décale les dates de toutes les étapes suivantes. */}
-          <span className="step__nights">
+              décale les dates de toutes les étapes suivantes.
+              Les deux commandes encadrent le compte au lieu d'y être
+              enfermées — elles se lisent alors comme des boutons. */}
+          <span className="step__nights-group">
             {!readOnly && onNights && (
               <button
                 type="button"
-                className="step__nights-step"
+                className="step__nights-btn"
                 title="Une nuit de moins"
                 disabled={step.nights === 0}
                 onClick={(event) => {
@@ -86,21 +128,30 @@ export default function StepCard({
                 −<span className="sr-only">Une nuit de moins</span>
               </button>
             )}
-            {step.nights} {step.nights > 1 ? 'nuits' : 'nuit'}
+
+            <span className="step__nights">
+              {step.nights} {step.nights > 1 ? 'nuits' : 'nuit'}
+            </span>
+
             {!readOnly && onNights && (
               <button
                 type="button"
-                className="step__nights-step"
+                className="step__nights-btn"
                 title="Une nuit de plus"
                 onClick={(event) => {
                   event.stopPropagation();
                   onNights(step.id, step.nights + 1);
+                  setNightsAdded((count) => count + 1);
                 }}
               >
                 +<span className="sr-only">Une nuit de plus</span>
               </button>
             )}
           </span>
+
+          {/* Seulement sur la nuit ajoutee : retirer une nuit, c'est raccourcir
+              le voyage, et le moment se prete moins au compliment. */}
+          <LoveNote kind="nights" seed={step.id} trigger={nightsAdded} />
         </div>
 
         {/* Une étape ajoutée depuis l'app n'a pas de coordonnées : elle

@@ -29,6 +29,9 @@
 
   // Le résumé est un bouton, pas un texte : cliquer dessus rouvre la saisie.
   &__label {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--hit-dense);
     padding: 2px var(--sp-3);
     border: 1px solid var(--border);
     border-radius: var(--radius-pill);
@@ -49,7 +52,10 @@
   // action attendue. Sept intervalles, sept boutons — ils ne doivent pas
   // hacher la lecture de l'itinéraire.
   &__add {
+    display: inline-flex;
+    align-items: center;
     flex: none;
+    min-height: var(--hit-dense);
     padding: 1px var(--sp-3);
     border: 1px dashed var(--border-strong);
     border-radius: var(--radius-pill);
@@ -65,13 +71,18 @@
   }
 
   &__delete {
+    display: grid;
+    place-items: center;
     flex: none;
-    padding: 0 3px;
+    width: var(--hit-dense);
+    height: var(--hit-dense);
+    padding: 0;
     border: 0;
+    border-radius: var(--radius-sm);
     background: none;
     color: var(--border-strong);
     font: inherit;
-    font-size: var(--fs-xs);
+    font-size: var(--fs-sm);
     cursor: pointer;
 
     &:hover { color: var(--danger); }
@@ -119,18 +130,7 @@
   }
 
   &__save {
-    padding: 4px 12px;
-    border: 1px solid var(--border-strong);
-    border-radius: 7px;
-    background: var(--surface-warm);
-    color: var(--accent);
-    font: inherit;
-    font-size: var(--fs-sm);
-    cursor: pointer;
-
-    &:hover { border-color: var(--accent); }
-    &:focus-visible { @include mixins.focus-ring; }
-    &:disabled { opacity: 0.6; cursor: progress; }
+    @include mixins.action-button;
   }
 
   &__cancel {

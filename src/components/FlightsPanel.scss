@@ -1,3 +1,5 @@
+@use '../theme/mixins';
+
 .flights {
   padding: clamp(14px, 1.8vw, 22px) clamp(16px, 3vw, 44px) 0;
 
@@ -8,15 +10,14 @@
     background: var(--surface);
   }
 
+  // Le bouton occupe toute la ligne : l'en-tete n'a plus a disposer quoi que
+  // ce soit a cote de lui.
   &__head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: var(--sp-3);
     margin-bottom: var(--sp-3);
   }
 
   &__title {
+    flex: none;
     margin: 0;
     font-family: var(--font-display);
     font-weight: 600;
@@ -26,39 +27,39 @@
     color: var(--accent);
   }
 
+  // Sous 768px la ligne est deja pleine — titre, compteur, chevron — et le
+  // mot doux la ferait passer sur deux etages.
   &__hint {
+    display: none;
     font-size: clamp(12px, 1.2vw, 14.5px);
     font-style: italic;
     color: var(--text-soft);
-  }
 
-  &__total {
-    margin-left: auto;
-    font-size: clamp(12.5px, 1.3vw, 16px);
-    color: var(--text-soft);
-
-    em { color: var(--accent); }
+    @include mixins.from('md') {
+      // Il cede la place avant le chevron : sur une largeur intermediaire, il
+      // se tronque plutot que de repousser le chevron hors du bord.
+      display: block;
+      min-width: 0;
+      margin-left: var(--sp-2);
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
   }
 
   // auto-fit + minmax(min(100%, 270px)) : deux colonnes dès qu'il y a la place,
   // une seule au téléphone, sans point de rupture à maintenir.
   // Bouton d'ouverture du formulaire, dans l'en-tête plutôt qu'en carte : une
   // carte en pointillés juste pour un bouton occupait la place d'un vol réel.
+  // Sous la grille des vols : on ajoute à la suite de ce qu'on a saisi.
+  // Aligné à droite, sous la grille. `margin-left: auto` n'a pas d'effet sur
+  // un `inline-flex` — le mixin en pose un —, d'où le passage en `flex` avec
+  // une largeur ajustée au contenu.
   &__add {
-    flex: none;
-    padding: 3px 11px;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-pill);
-    background: var(--surface-warm);
-    color: var(--accent);
-    font: inherit;
-    font-size: var(--fs-xs);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    white-space: nowrap;
-    cursor: pointer;
-
-    &:hover { border-color: var(--accent); }
+    @include mixins.action-button;
+    display: flex;
+    width: fit-content;
+    margin: clamp(8px, 1vw, 14px) 0 0 auto;
   }
 
   &__grid {
@@ -161,14 +162,18 @@
 
 .flight {
   &__delete {
+    display: grid;
+    place-items: center;
     margin-left: auto;
-    padding: 0 3px;
+    width: var(--hit-dense);
+    height: var(--hit-dense);
+    padding: 0;
     border: 0;
     border-radius: var(--radius-sm);
     background: none;
     color: var(--border-strong);
     font: inherit;
-    font-size: 13px;
+    font-size: var(--fs-sm);
     cursor: pointer;
 
     &:hover { color: var(--danger); }
@@ -249,19 +254,8 @@
   }
 
   &__submit {
+    @include mixins.action-button;
     flex: none;
-    padding: 4px 12px;
-    border: 1px solid var(--border-strong);
-    border-radius: 7px;
-    background: var(--surface-warm);
-    color: var(--accent);
-    font: inherit;
-    font-size: clamp(12.5px, 1.25vw, 15px);
-    white-space: nowrap;
-    cursor: pointer;
-
-    &:hover { border-color: var(--accent); }
-    &:disabled { opacity: 0.6; cursor: progress; }
   }
 
   &__time {
@@ -294,32 +288,18 @@
     font-size: var(--fs-xs);
   }
 }
-
-// Écart entre les nuits planifiées et la fenêtre imposée par les vols.
-// Informatif quand il reste des nuits à placer, alarmant quand le séjour
-// déborde le vol retour — on ne dort pas dans un avion déjà parti.
-.flights__gap {
-  padding: 2px 10px;
-  border: 1px solid var(--warn);
-  border-radius: var(--radius-pill);
-  color: var(--warn);
-  font-size: var(--fs-xs);
-  font-style: italic;
-
-  &[data-over] {
-    border-color: var(--danger);
-    color: var(--danger);
-  }
-}
-
 .flights {
-  // Le titre devient bouton sur mobile : toute la ligne est cliquable, pas
-  // seulement un petit chevron au bord.
+  // Le titre EST le bouton, a toutes les largeurs : toute la ligne est
+  // cliquable, pas seulement un petit chevron au bord.
+  //
+  // `flex: 1` le fait occuper la ligne entiere, ce qui pousse le chevron a
+  // l'extreme droite ET renvoie le mot doux a la ligne suivante — il se lit
+  // mieux ainsi que serre entre le compteur et le bord.
   &__toggle {
     display: flex;
     align-items: baseline;
     gap: var(--sp-2);
-    flex: 1;
+    width: 100%;
     padding: 0;
     border: 0;
     background: none;
@@ -338,9 +318,19 @@
     font-variant-numeric: tabular-nums;
   }
 
+  // Poussé tout à droite, après le compteur : c'est le repère qu'on cherche
+  // pour ouvrir ou refermer. Il pivote au lieu de changer de dessin.
   &__caret {
+    display: grid;
+    place-items: center;
+    flex: none;
     margin-left: auto;
-    color: var(--muted);
+    color: var(--accent);
+    font-size: var(--fs-lg);
+    transform: rotate(-90deg);
+    transition: transform var(--dur-base) var(--ease-out);
+
+    &[data-open] { transform: none; }
   }
 
   // Replié, la carte se resserre : elle ne doit pas garder la hauteur d'un
@@ -352,4 +342,14 @@
   &__card[data-collapsed] &__head {
     margin-bottom: 0;
   }
+}
+
+// Le vol du retour, et lui seul, porte un mot. Discret : c'est un soupir, pas
+// une information.
+.flight__note {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-soft);
+  font-size: var(--fs-xs);
+  font-style: italic;
+  text-align: right;
 }

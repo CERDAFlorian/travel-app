@@ -1,3 +1,5 @@
+@use '../theme/mixins';
+
 .photo-strip {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -23,9 +25,11 @@
   }
 
   &__slot {
-    position: relative;
-    display: grid;
-    place-items: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2);
     padding: var(--sp-2);
     // Hachures : l'emplacement se lit comme une place à remplir, pas comme une
     // image qui aurait échoué à charger.
@@ -36,24 +40,25 @@
     );
   }
 
+  // Une seule ligne : le titre complet est déjà sous la tuile, en cartouche.
+  // Sur deux lignes il pousserait le bouton hors des 70px de la tuile basse.
   &__slot-name {
+    max-width: 100%;
     font-size: var(--fs-xs);
     color: var(--muted);
     text-align: center;
+    @include mixins.truncate;
   }
 
-  &__search {
-    position: absolute;
-    right: 4px;
-    top: 4px;
-    padding: 1px 7px;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-pill);
-    background: var(--surface);
-    color: var(--accent);
-    font-size: 12px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+  // Même style que les autres « ajouter » de la page : la pastille en coin se
+  // lisait comme une décoration, elle prend maintenant sa place au centre.
+  &__add {
+    @include mixins.action-button;
+    // Le mixin pose --sp-3 de chaque cote. Ici la tuile fait ~92px de large sur
+    // un ecran de 320px : le libelle tient, ses marges non. On les resserre.
+    padding-inline: var(--sp-2);
+    max-width: 100%;
+    font-size: var(--fs-xs);
     text-decoration: none;
   }
 

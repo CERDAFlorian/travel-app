@@ -57,7 +57,19 @@ pour un encodage 10× plus lent et un support limité à iOS 16+.
 | muted | `#a08050` — placeholders `#b39a72` |
 | text | `#3d2f24` — titres `#5c1b1b` |
 
-Polices : `Playfair Display` (600/700) et `EB Garamond` — déjà chargées dans `index.html`.
+Polices : le design emploie `Playfair Display` (600/700) et `EB Garamond`.
+
+**L'app s'écarte des deux** (22 septembre 2026), pour la même raison : ce sont
+des caractères de papier, à faible hauteur d'œil et traits déliés, qu'on
+déchiffre plutôt qu'on ne lit sur un écran de train.
+
+- Titres : **`Lora`**, même registre éditorial, contraste modéré, dessinée pour
+  l'écran. Hébergée en local, voir `scripts/build-fonts.mjs`.
+- Texte courant : **la police du système** — SF sur iPhone, Roboto sur Android.
+  Rien à télécharger, et 222 Ko de moins à précacher avant de partir.
+
+L'identité du voyage tient aux couleurs, au décor et aux titres, pas au corps
+de texte.
 
 ## Couleurs de catégorie (`CATS`, ligne ~315 du .dc.html)
 

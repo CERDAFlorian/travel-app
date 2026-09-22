@@ -12,6 +12,10 @@
     display: block;
     width: 100%;
     height: auto;
+    // Sans ça, glisser la carte surligne les libellés en bleu : le navigateur
+    // interprète le mouvement comme une sélection de texte.
+    user-select: none;
+    -webkit-user-select: none;
     // Indispensable : sans ça, iOS intercepte le glisser pour faire défiler la
     // page et le pinch pour zoomer le document. La carte ne recevrait qu'une
     // partie des gestes.
@@ -103,10 +107,12 @@
     pointer-events: none;
   }
 
+  // Un cran au-dessus, sans rattraper les lieux : une ville est un repère
+  // qu'on identifie d'un coup d'œil, pas un nom qu'on épelle.
   &__step-label {
     fill: var(--text-heading);
     font-family: var(--font-display);
-    font-size: 15px;
+    font-size: 18px;
     font-weight: 600;
     paint-order: stroke;
     stroke: var(--bg);
@@ -116,10 +122,14 @@
 
   // paint-order + contour de la couleur du fond : le texte reste lisible
   // par-dessus le trait de côte et les pointillés, sans cartouche opaque.
+  // 22 px : c'est ce qu'on cherche sur la carte — le nom d'un hôtel ou d'une
+  // activité. Les libellés sont contre-échelonnés, donc cette taille vaut à
+  // tous les niveaux de zoom, et l'algorithme de déport écarte ce qui se
+  // chevauche.
   &__item-label {
     fill: var(--text);
     font-family: var(--font-body);
-    font-size: 12px;
+    font-size: 22px;
     paint-order: stroke;
     stroke: var(--bg);
     stroke-width: 3;

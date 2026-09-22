@@ -140,3 +140,12 @@
   color: var(--muted);
   text-align: center;
 }
+
+// Mot doux sous la liste vide : la première fois qu'on ouvre l'app, il n'y a
+// rien d'autre à lire. Autant que ce vide dise quelque chose.
+.trips__empty-note {
+  display: block;
+  margin-top: var(--sp-2);
+  color: var(--text-soft);
+  font-style: italic;
+}

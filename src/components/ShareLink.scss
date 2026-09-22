@@ -53,3 +53,12 @@
     font-size: var(--fs-xs);
   }
 }
+
+// La grille de .share aligne les commandes ; la note prend toute la largeur,
+// sous elles, pour ne pas se retrouver coincée entre deux boutons.
+.share__note {
+  flex-basis: 100%;
+  color: var(--text-soft);
+  font-size: var(--fs-sm);
+  font-style: italic;
+}

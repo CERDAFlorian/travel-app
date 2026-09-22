@@ -34,3 +34,40 @@ $breakpoints: (
     overflow: hidden;
   }
 }
+
+// Bouton d'action : ajouter, retirer une nuit, enregistrer.
+//
+// Un seul endroit le décrit. Six composants le recopiaient, avec chacun sa
+// nuance de fond et son arrondi — « le même style » tenait à la vigilance de
+// qui touchait au dernier. Il tient maintenant à ce mixin.
+@mixin action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  min-height: var(--hit-dense);
+  padding: 2px var(--sp-3);
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  background: var(--surface-action);
+  color: var(--accent);
+  font: inherit;
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+
+  &:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+}

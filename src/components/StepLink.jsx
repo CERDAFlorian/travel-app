@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { TRANSPORT_MODES, durationBetween, formatClock, formatDuration, modeLabel } from '@/lib/transport.js';
 import { deleteLeg, saveLeg } from '@/lib/mutations.js';
 import ConfirmDialog from './ConfirmDialog.jsx';
+import TrashIcon from './TrashIcon.jsx';
 import './StepLink.scss';
 
 // Le trajet entre deux étapes.
@@ -142,7 +143,8 @@ export default function StepLink({ trip, fromStep, toStep, leg, readOnly, onChan
               title="Supprimer ce trajet"
               onClick={() => setAsking(true)}
             >
-              ✕<span className="sr-only">Supprimer le trajet</span>
+              <TrashIcon />
+              <span className="sr-only">Supprimer le trajet</span>
             </button>
           )}
         </span>

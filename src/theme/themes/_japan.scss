@@ -13,6 +13,7 @@ $creme-pur:   #fffdf7;
 $creme-ombre: #f8eed9; // panneaux encastrés
 $creme-chaud: #f6e3c4; // fonds d'action
 $creme-teint: #efe0c4; // segments, emplacements photo vides
+$brun-clair:  #e3c79c; // commandes, plus soutenu que le fond chaud
 $brou:        #8a6c47; // annotations italiques
 $vermillon-p: #7a2027; // petites capitales
 $mer:         #fbf3e3; // centre de la mer
@@ -36,6 +37,7 @@ $theme: contract.validate('japan', (
   surface-sunken:  $creme-ombre,
   surface-warm:    $creme-chaud,
   surface-tint:    $creme-teint,
+  surface-action:  $brun-clair,
 
   text:            $sumi,
   text-heading:    $sumi-deep,
@@ -66,8 +68,21 @@ $theme: contract.validate('japan', (
   map-land:        $terre,
   map-land-line:   $cote,
 
-  font-display:    ('Playfair Display', Georgia, serif),
-  font-body:       ('EB Garamond', Georgia, serif),
+  // Lora plutôt que Playfair Display : le contraste de traits de Playfair —
+  // pleins épais, déliés presque invisibles — se lit mal à l'écran, surtout
+  // sur un fond crème peu contrasté.
+  font-display:    (Lora, Georgia, serif),
+  // Police du système pour le texte courant.
+  //
+  // EB Garamond a été écartée pour la même raison que Playfair : une faible
+  // hauteur d'œil et des traits déliés, dessinés pour le papier. À 13 px sur
+  // un écran de train, on déchiffre au lieu de lire.
+  //
+  // La police du système — SF sur iPhone, Roboto sur Android — est ce que
+  // l'œil lit le plus vite, et elle ne coûte rien à télécharger : 222 Ko de
+  // moins à précacher avant de partir. L'identité du voyage tient aux
+  // couleurs, au décor et aux titres en Lora, pas au corps de texte.
+  font-body:       (system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif),
 
   radius-sm:       4px,
   radius-md:       8px,

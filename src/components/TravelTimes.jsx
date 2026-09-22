@@ -1,6 +1,7 @@
+import { whisperFor } from '@/lib/lovenotes.js';
 import './TravelTimes.scss';
 
-// « Temps de trajet approximatifs ».
+// Les temps de trajet entre deux villes.
 //
 // Les durées sont saisies à la main dans `legs` : le vol d'oiseau ne dit rien
 // d'un Shinkansen, et aucune API ne couvre correctement les correspondances
@@ -23,7 +24,7 @@ export default function TravelTimes({ steps, legs }) {
 
   return (
     <div className="travel-times">
-      <p className="travel-times__title">Temps de trajet approximatifs</p>
+      <p className="travel-times__title">{whisperFor('travel', legs.length)}</p>
       {ordered.map((leg) => (
         <div key={leg.id} className="travel-times__row">
           <span className="travel-times__label">

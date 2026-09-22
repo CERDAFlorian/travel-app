@@ -4,6 +4,26 @@
   min-height: 100svh;
   background: var(--bg);
 
+  // Hauteur de la frise collante, en dur parce qu'elle est calculable : un
+  // segment fait 36px — 6px de padding de part et d'autre, une ligne de texte
+  // et son filet — auxquels s'ajoutent les 8px de padding de la frise de
+  // chaque cote, plus le filet du bas.
+  //
+  // Elle est fiable parce que les segments sont en `white-space: nowrap` avec
+  // ellipse : ils tiennent TOUJOURS sur une ligne, quel que soit le nom de la
+  // ville. `min-height` la garantit dans l'autre sens.
+  --timeline-h: 53px;
+
+  // Rien ne doit élargir la page. `clip` et non `hidden` : `hidden` crée un
+  // conteneur de défilement, ce qui casserait la frise collante à
+  // l'intérieur — un élément `sticky` ne colle pas dans un ancêtre défilant.
+  // `clip` rogne sans rien scroller et laisse `sticky` fonctionner.
+  //
+  // C'est un filet, pas une excuse : un débordement reste un défaut à
+  // corriger à sa source. Mais un décor mal placé ou un libellé trop long ne
+  // doit pas pouvoir décaler tout le document.
+  overflow-x: clip;
+
   // Plus de position absolue : le lien vit dans le flux, sur la ligne des
   // chiffres du voyage.
   &__back {
@@ -20,14 +40,45 @@
     &:focus-visible { @include mixins.focus-ring; }
   }
 
-  // Bandeau de service : fraîcheur de la donnée à gauche, partage à droite.
+  // Collante en haut de l'écran sur mobile : sept étapes défilent longtemps,
+  // et la frise dit à la fois où l'on en est et comment sauter ailleurs.
+  //
+  // Le fond opaque n'est pas décoratif : sans lui, le contenu défilerait
+  // visiblement sous des segments translucides.
+  //
+  // Collante a TOUTES les largeurs. Elle redevenait un element du flux au-dela
+  // de 768px, au motif que la carte collante tenait le role de repere : mais
+  // la carte dit ou sont les villes, pas ou l'on en est dans la lecture, et
+  // elle ne permet pas de sauter a une etape.
+  &__timeline {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+    box-sizing: border-box;
+    min-height: var(--timeline-h);
+    padding: var(--sp-2) clamp(16px, 3vw, 44px);
+    background: var(--bg);
+    border-bottom: 1px solid var(--border-soft);
+  }
+
+  // Bandeau d'alerte. Vide et sans marge quand tout va bien : `:empty` évite
+  // qu'un conteneur silencieux laisse un espace inexpliqué.
   &__strip {
     display: flex;
     flex-wrap: wrap;
     gap: var(--sp-3);
     align-items: center;
-    justify-content: space-between;
     padding: var(--sp-2) clamp(16px, 3vw, 44px) 0;
+
+    &:empty {
+      display: none;
+    }
+  }
+
+  &__share {
+    display: flex;
+    justify-content: center;
+    padding: 0 clamp(16px, 3vw, 44px) clamp(16px, 2vw, 24px);
   }
 
   // Bandeau de la vue partagée : il remplace le retour « Mes voyages », qui
@@ -65,11 +116,19 @@
     min-width: 0;
   }
 
-  // Collante : en faisant défiler une liste de sept étapes, la carte reste
-  // sous les yeux. C'est ce qui rend la sélection croisée utile.
+  // Collante seulement à deux colonnes : la carte reste alors sous les yeux
+  // pendant qu'on fait défiler les étapes, ce qui rend la sélection croisée
+  // utile. En colonne unique elle est tout en bas, il n'y a rien à suivre — et
+  // deux éléments collants se disputeraient le haut de l'écran avec la frise.
   &__map-card {
-    position: sticky;
-    top: 12px;
+    position: static;
+
+    @include mixins.from('md') {
+      position: sticky;
+      // Sous la frise, qui colle desormais a toutes les largeurs et couvre la
+      // pleine largeur de la page : a 12px du haut, la carte glissait dessous.
+      top: calc(var(--timeline-h) + var(--sp-3));
+    }
     padding: clamp(11px, 1.2vw, 16px);
     border: 1.5px solid var(--border);
     border-radius: var(--radius-lg);
@@ -92,11 +151,6 @@
     color: var(--accent);
   }
 
-  &__map-hint {
-    font-size: clamp(12px, 1.2vw, 14.5px);
-    font-style: italic;
-    color: var(--text-soft);
-  }
 
   &__foot {
     padding: clamp(12px, 1.6vw, 20px) clamp(16px, 3vw, 44px) clamp(30px, 3.4vw, 46px);

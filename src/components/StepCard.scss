@@ -1,8 +1,15 @@
+@use '../theme/mixins';
+
 .step {
   position: relative;
-  // Respiration quand on arrive ici par défilement, depuis la carte ou la
-  // frise : sans ça la carte d'étape vient coller le bord haut de l'écran.
-  scroll-margin-top: var(--sp-4);
+  // Marge de défilement : on arrive ici depuis la carte ou la frise. Sur
+  // mobile elle doit dégager la hauteur de la frise collante, sinon l'étape
+  // sélectionnée atterrit DERRIÈRE elle.
+  scroll-margin-top: 60px;
+
+  @include mixins.from('md') {
+    scroll-margin-top: var(--sp-4);
+  }
   display: grid;
   grid-template-columns: auto 1fr;
   gap: clamp(10px, 1.2vw, 16px);
@@ -77,9 +84,20 @@
     color: var(--accent);
   }
 
-  &__nights {
+  &__nights-group {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
     margin-left: auto;
-    padding: 2px 8px;
+  }
+
+  // L'étiquette ne porte plus les commandes : elle redevient une étiquette.
+  // Même hauteur que les boutons qui l'encadrent, sinon la rangée est bancale.
+  &__nights {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--hit-dense);
+    padding: 2px var(--sp-3);
     border: 1px solid var(--border-strong);
     border-radius: var(--radius-pill);
     background: var(--surface-sunken);
@@ -96,34 +114,63 @@
   }
 }
 
-// Retrait d'une étape. Discret par défaut — le geste emporte les items et les
-// liaisons —, franc une fois armé.
+// Commandes du rail — monter, descendre, retirer.
+//
+// Taille de cible : voir --hit dans base/_invariants.scss.
+
+.step__order {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.step__arrow,
 .step__remove {
-  padding: 0 var(--sp-1);
+  display: grid;
+  place-items: center;
+  width: var(--hit);
+  height: var(--hit);
+  padding: 0;
   border: 0;
+  border-radius: var(--radius-sm);
   background: none;
   color: var(--border-strong);
   font: inherit;
-  font-size: var(--fs-sm);
+  font-size: var(--fs-xs);
   line-height: 1;
   cursor: pointer;
 
-  &:hover { color: var(--danger); }
+  &:hover:not(:disabled) {
+    background: var(--surface-tint);
+    color: var(--accent);
+  }
+
+  // Grisée, pas masquée : la colonne garde sa hauteur d'une étape à l'autre.
+  &:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+}
+
+// Le retrait est le seul geste destructeur du rail : il vire au rouge.
+.step__remove {
+  font-size: var(--fs-sm);
+
+  &:hover:not(:disabled) { color: var(--danger); }
   &:disabled { opacity: 0.5; cursor: progress; }
 }
 
 .step {
-  &__nights-step {
-    padding: 0 3px;
-    border: 0;
-    background: none;
-    color: var(--accent);
-    font: inherit;
-    font-size: var(--fs-sm);
+  // Même hauteur que l'étiquette qu'ils encadrent, et le style commun à
+  // tous les boutons d'action. Carrés plutôt que larges : ils ne portent
+  // qu'un signe.
+  &__nights-btn {
+    @include mixins.action-button;
+    width: var(--hit-dense);
+    padding: 0;
+    border-radius: var(--radius-pill);
+    font-size: var(--fs-md);
     line-height: 1;
-    cursor: pointer;
-
-    &:disabled { opacity: 0.3; cursor: default; }
   }
 
   &__locate-row {

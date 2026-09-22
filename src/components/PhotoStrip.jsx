@@ -6,10 +6,13 @@ import './PhotoStrip.scss';
 // Les photos ne sont pas portées par l'étape : elles viennent de ses items, par
 // appariement de mots-clés (voir lib/photos.js).
 //
-// Une tuile sans image garde sa place et affiche le nom du lieu, avec un lien
-// de recherche. Ce lien n'est pas un gadget : il dit quoi chercher pour combler
-// le trou, et l'image déposée ensuite dans design/img/ apparaîtra sans toucher
-// au code.
+// Une tuile sans image garde sa place : le nom du lieu, puis « Une photo ? »
+// centré. La question invite au lieu d'ordonner, et surtout elle ne promet pas
+// un import de fichier : le clic ouvre une recherche d'images pré-remplie, et
+// l'image posée ensuite dans design/img/ apparaîtra sans toucher au code.
+//
+// Le libellé reste court par contrainte : une tuile fait un tiers de la carte,
+// soit ~110px sur mobile, ce qui laisse une dizaine de caractères.
 export default function PhotoStrip({ items, stepName }) {
   const tiles = photoStripFor(items);
 
@@ -34,14 +37,14 @@ export default function PhotoStrip({ items, stepName }) {
             <div className="photo-strip__slot">
               <span className="photo-strip__slot-name">{tile.title}</span>
               <a
-                className="photo-strip__search"
+                className="photo-strip__add"
                 href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(`${tile.title} ${stepName} Japon`)}`}
                 target="_blank"
                 rel="noreferrer"
                 onClick={(event) => event.stopPropagation()}
-                title="Chercher une photo de ce lieu"
+                title={`Trouver une photo de ${tile.title}`}
               >
-                chercher
+                Une photo ?
               </a>
             </div>
           )}

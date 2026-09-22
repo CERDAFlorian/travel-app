@@ -5,6 +5,7 @@ import {
   addDays,
   datesToUpdate,
   tripEndDate,
+  reorderSteps,
   tripStartFromFlights,
 } from '@/lib/itinerary.js';
 
@@ -27,7 +28,7 @@ import {
 // d'un item remonte à son étape puis au voyage, dont on est déjà membre au
 // moment de l'insertion. Sur `trips`, c'est le trigger AFTER qui crée
 // l'appartenance, donc trop tard pour un RETURNING — voir 0002_rls.sql.
-export async function addItem({ stepId, category, title, price, position }) {
+export async function addItem({ stepId, category, title, price, position, currency }) {
   const { data, error } = await supabase
     .from('items')
     .insert({
@@ -35,6 +36,9 @@ export async function addItem({ stepId, category, title, price, position }) {
       category,
       title: title.trim(),
       price: price ?? null,
+      // Le schéma met JPY par défaut ; on l'écrase quand la saisie se fait
+      // dans une autre devise.
+      ...(currency ? { currency } : {}),
       position,
     })
     .select('id')
@@ -196,6 +200,26 @@ export async function setStepNights(trip, stepId, nights) {
 export async function setStepCoordinates(stepId, { lat, lng }) {
   const { error } = await supabase.from('steps').update({ lat, lng }).eq('id', stepId);
   if (error) fail(error, 'Enregistrement des coordonnées');
+}
+
+// Déplace une étape d'un cran.
+//
+// Les dates suivent : une étape de quatre nuits qui passe devant une d'une
+// nuit décale tout ce qui vient après. C'est `persistItinerary` qui s'en
+// charge, comme pour un ajout ou un retrait.
+//
+// Les trajets ne sont PAS touchés. Un trajet relie deux villes, et le fait que
+// l'ordre change ne l'annule pas : Kyoto → Hiroshima reste un trajet réel même
+// si les deux ne se suivent plus. Il cesse simplement d'apparaître entre les
+// deux cartes, et reste listé dans les temps de trajet. Le supprimer
+// d'autorité détruirait une saisie que personne n'a demandé d'effacer.
+export async function moveStep(trip, stepId, delta) {
+  const reordered = reorderSteps(trip.steps, stepId, delta);
+  // `reorderSteps` rend le tableau d'origine quand le mouvement est
+  // impossible : rien à écrire.
+  if (reordered === trip.steps) return;
+
+  await persistItinerary(trip, reordered);
 }
 
 // Retire une étape de l'itinéraire.
