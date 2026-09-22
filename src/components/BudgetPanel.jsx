@@ -61,28 +61,29 @@ export default function BudgetPanel({ trip }) {
           ))}
         </div>
 
+        {/* Grille à plat, pas trois blocs côte à côte : les libellés occupent
+            la première rangée, les montants la seconde. C'est ce qui les fait
+            partager une ligne de base malgré des corps très différents — un
+            total de 46 px à côté d'un sous-total de 30. Empilés par paires,
+            ils dérivaient les uns par rapport aux autres. */}
         <div className="budget__totals">
-          <div>
-            <div className="budget__caption">Total du voyage</div>
-            <div className="budget__grand">{formatEuros(budget.total)}</div>
-          </div>
-          <div>
-            <div className="budget__caption">Par voyageur</div>
-            <div className="budget__sub">{formatEuros(budget.total / travelers)}</div>
-          </div>
-          <div>
-            <div className="budget__caption">Par nuit</div>
-            <div className="budget__sub">
-              {budget.nights > 0 ? formatEuros(budget.total / budget.nights) : "—"}
-            </div>
-          </div>
-          <p className="budget__note">
-            {budget.note}
-            {/* Le taux reste affiché quoi qu'il arrive : il est fixe, donc il
-                vieillit, et personne ne doit l'oublier. */}
-            <span className="budget__rate">{RATE_NOTE}</span>
-          </p>
+          <span className="budget__caption">Total du voyage</span>
+          <span className="budget__caption">Par voyageur</span>
+          <span className="budget__caption">Par nuit</span>
+
+          <span className="budget__grand">{formatEuros(budget.total)}</span>
+          <span className="budget__sub">{formatEuros(budget.total / travelers)}</span>
+          <span className="budget__sub">
+            {budget.nights > 0 ? formatEuros(budget.total / budget.nights) : '—'}
+          </span>
         </div>
+
+        <p className="budget__note">
+          {budget.note}
+          {/* Le taux reste affiché quoi qu'il arrive : il est fixe, donc il
+              vieillit, et personne ne doit l'oublier. */}
+          <span className="budget__rate">{RATE_NOTE}</span>
+        </p>
       </div>
     </section>
   );

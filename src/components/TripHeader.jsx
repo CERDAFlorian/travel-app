@@ -4,6 +4,10 @@ import './TripHeader.scss';
 
 const GEOGRAPHIC = new Set(CATEGORIES.filter((c) => c.onMap).map((c) => c.key));
 
+// « 1 lieu », pas « 1 lieux ». Un pluriel en dur se voit dès le premier
+// singulier, et le premier singulier arrive toujours.
+const plural = (n, one, many) => `${n} ${n > 1 ? many : one}`;
+
 // En-tête du voyage — titre, chiffres.
 //
 // La frise n'est PAS ici : elle doit pouvoir rester collée en haut de l'écran
@@ -45,11 +49,11 @@ export default function TripHeader({ trip, back }) {
         {back}
 
         <ul className="trip-header__chips">
-          <li className="trip-header__chip">{steps.length} étapes</li>
-          <li className="trip-header__chip">{nights} nuits</li>
+          <li className="trip-header__chip">{plural(steps.length, 'étape', 'étapes')}</li>
+          <li className="trip-header__chip">{plural(nights, 'nuit', 'nuits')}</li>
           {/* Les notes perso sont exclues : « Récupérer le JR Pass » n'est pas
               un lieu. Le design les comptait, à tort. */}
-          <li className="trip-header__chip">{places} lieux</li>
+          <li className="trip-header__chip">{plural(places, 'lieu', 'lieux')}</li>
         </ul>
       </div>
     </header>

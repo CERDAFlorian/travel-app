@@ -123,11 +123,16 @@
     white-space: nowrap;
   }
 
+  // Trois colonnes égales sur toute la largeur. `align-items: baseline` aligne
+  // RANGÉE PAR RANGÉE : les trois libellés partagent une ligne de base, les
+  // trois montants une autre, quels que soient leurs corps — 46 px pour le
+  // total contre 30 pour les sous-totaux.
   &__totals {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: clamp(12px, 2vw, 30px);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    align-items: baseline;
+    column-gap: clamp(12px, 2vw, 30px);
+    row-gap: 2px;
     margin-top: clamp(12px, 1.4vw, 18px);
     padding-top: clamp(10px, 1.2vw, 14px);
     border-top: 1px solid var(--border);
@@ -142,6 +147,7 @@
 
   &__grand {
     font-family: var(--font-display);
+    font-variant-numeric: tabular-nums;
     font-size: clamp(26px, 3.4vw, 46px);
     line-height: 1.05;
     color: var(--accent);
@@ -149,23 +155,31 @@
 
   &__sub {
     font-family: var(--font-display);
+    font-variant-numeric: tabular-nums;
     font-size: clamp(19px, 2.2vw, 30px);
     line-height: 1.1;
     color: var(--text);
   }
 
+  // Sous la grille, sur toute la largeur : coincée dans une quatrième colonne
+  // elle repoussait les montants vers la gauche et laissait un grand vide.
   &__note {
-    margin: 0 0 0 auto;
-    max-width: 320px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--sp-2);
+    margin: var(--sp-3) 0 0;
     font-size: clamp(12px, 1.2vw, 14.5px);
     font-style: italic;
     color: var(--text-soft);
+
+    &:empty { display: none; }
   }
 }
 
+// Poussé à droite : il complète la note sans lui voler la première place.
 .budget__rate {
-  display: block;
-  margin-top: 4px;
+  margin-left: auto;
   font-style: normal;
   font-size: var(--fs-xs);
   letter-spacing: 0.04em;

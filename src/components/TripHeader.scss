@@ -38,6 +38,8 @@
   // Ligne du retour et des chiffres, sous le titre. Le z-index la garde
   // au-dessus du décor : le Fuji descend bas à droite et intercepterait le
   // clic sur une pastille.
+  // Même marge gauche que le titre : le retour se cale sous le « J » de
+  // JAPON plutôt que sur le bord de la page.
   &__summary {
     position: relative;
     z-index: var(--z-sticky);
@@ -45,19 +47,24 @@
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: var(--sp-2);
-    padding: 0 clamp(16px, 3vw, 44px) var(--sp-3);
+    gap: var(--sp-3);
+    padding: 0 clamp(16px, 3vw, 44px) var(--sp-3) clamp(16px, 8vw, 130px);
   }
 
   // Marges asymétriques : elles réservent la place du décor. Sur mobile, le
   // décor est réduit et les marges avec — sinon il ne reste rien pour le
   // titre.
+  // `baseline` et non `flex-end` : le titre et la première ligne du
+  // sous-titre partagent alors une ligne de base, ce que l'œil lit comme un
+  // alignement. Avec `flex-end`, c'étaient les BOÎTES qui s'alignaient — et
+  // comme le titre a une interligne de 0,92 et le sous-titre deux lignes,
+  // rien ne tombait juste.
   &__bar {
     position: relative;
     display: flex;
     flex-wrap: wrap;
-    align-items: flex-end;
-    gap: clamp(8px, 1.6vw, 20px);
+    align-items: baseline;
+    gap: clamp(4px, 1.6vw, 20px);
     padding:
       clamp(14px, 2.4vw, 30px)
       clamp(110px, 26vw, 375px)
@@ -75,8 +82,9 @@
     text-transform: uppercase;
   }
 
+  // Plus de calage manuel : c'est la ligne de base qui aligne désormais.
   &__subtitle {
-    padding-bottom: clamp(4px, 0.8vw, 10px);
+    min-width: 0;
   }
 
   &__tagline {
@@ -94,8 +102,12 @@
 
   // En ligne, jamais empilés : trois pastilles l'une sous l'autre prenaient
   // un tiers de l'écran sur mobile.
+  // Alignées à droite, sur la même ligne que le retour. `flex-end` les garde
+  // groupées quand la ligne se casse en deux sur un écran étroit.
   &__chips {
     display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
     gap: var(--sp-2);
     margin: 0;
     padding: 0;
