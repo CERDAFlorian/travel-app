@@ -70,7 +70,11 @@
     color: var(--text-soft);
   }
 
+  // Assez haute pour être touchée : la pilule était large mais plate.
   &__map {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--hit-dense);
     padding: 1px 8px;
     border: 1px solid var(--border-strong);
     border-radius: var(--radius-pill);
@@ -100,13 +104,20 @@
     gap: 6px;
   }
 
+  // Même cible que la corbeille voisine : l'étoile se touche autant, et elle
+  // ne faisait que quelques pixels de haut.
   &__star {
+    display: grid;
+    place-items: center;
+    width: var(--hit-dense);
+    height: var(--hit-dense);
     padding: 0;
     border: 0;
+    border-radius: var(--radius-pill);
     background: none;
     color: var(--muted);
     font: inherit;
-    font-size: 14px;
+    font-size: var(--fs-md);
     line-height: 1;
     cursor: pointer;
 
@@ -118,6 +129,9 @@
   // Pilule bleutée, distincte des tons chauds de la page : localiser est une
   // action technique, pas une décision de voyage.
   &__locate {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--hit-dense);
     padding: 1px 8px;
     border: 1px dashed var(--info);
     border-radius: var(--radius-pill);
@@ -167,8 +181,8 @@
   &__delete {
     display: grid;
     place-items: center;
-    width: 28px;
-    height: 28px;
+    width: var(--hit-dense);
+    height: var(--hit-dense);
     padding: 0;
     border: 0;
     border-radius: var(--radius-sm);

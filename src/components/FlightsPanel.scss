@@ -159,8 +159,8 @@
     display: grid;
     place-items: center;
     margin-left: auto;
-    width: 28px;
-    height: 28px;
+    width: var(--hit-dense);
+    height: var(--hit-dense);
     padding: 0;
     border: 0;
     border-radius: var(--radius-sm);

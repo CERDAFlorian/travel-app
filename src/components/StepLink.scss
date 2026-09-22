@@ -29,6 +29,9 @@
 
   // Le résumé est un bouton, pas un texte : cliquer dessus rouvre la saisie.
   &__label {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--hit-dense);
     padding: 2px var(--sp-3);
     border: 1px solid var(--border);
     border-radius: var(--radius-pill);
@@ -49,7 +52,10 @@
   // action attendue. Sept intervalles, sept boutons — ils ne doivent pas
   // hacher la lecture de l'itinéraire.
   &__add {
+    display: inline-flex;
+    align-items: center;
     flex: none;
+    min-height: var(--hit-dense);
     padding: 1px var(--sp-3);
     border: 1px dashed var(--border-strong);
     border-radius: var(--radius-pill);
@@ -68,8 +74,8 @@
     display: grid;
     place-items: center;
     flex: none;
-    width: 28px;
-    height: 28px;
+    width: var(--hit-dense);
+    height: var(--hit-dense);
     padding: 0;
     border: 0;
     border-radius: var(--radius-sm);

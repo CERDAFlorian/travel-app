@@ -84,9 +84,14 @@
     color: var(--accent);
   }
 
+  // Elle enveloppe désormais deux cibles de 36 px : c'est une rangée de
+  // commandes, plus une simple étiquette.
   &__nights {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
     margin-left: auto;
-    padding: 2px 8px;
+    padding: 0 var(--sp-2) 0 2px;
     border: 1px solid var(--border-strong);
     border-radius: var(--radius-pill);
     background: var(--surface-sunken);
@@ -105,13 +110,7 @@
 
 // Commandes du rail — monter, descendre, retirer.
 //
-// 36 px de côté partout, mobile comme bureau. C'est en dessous des 44 px que
-// recommande Apple, mais le rail est étroit et trois cibles s'y empilent ;
-// 36 px reste au-dessus du seuil où l'on rate une fois sur trois, et la
-// hauteur totale de la colonne reste raisonnable. Surtout : la même taille aux
-// deux tailles d'écran, parce qu'un écran tactile n'est pas réservé au
-// téléphone.
-$rail-hit: 36px;
+// Taille de cible : voir --hit dans base/_invariants.scss.
 
 .step__order {
   display: flex;
@@ -123,8 +122,8 @@ $rail-hit: 36px;
 .step__remove {
   display: grid;
   place-items: center;
-  width: $rail-hit;
-  height: $rail-hit;
+  width: var(--hit);
+  height: var(--hit);
   padding: 0;
   border: 0;
   border-radius: var(--radius-sm);
@@ -156,16 +155,24 @@ $rail-hit: 36px;
 }
 
 .step {
+  // Même cible que le rail : ces deux boutons se touchent aussi souvent que
+  // les flèches, et ils faisaient 6 px de large en padding.
   &__nights-step {
-    padding: 0 3px;
+    display: grid;
+    place-items: center;
+    width: var(--hit);
+    height: var(--hit);
+    padding: 0;
     border: 0;
+    border-radius: var(--radius-pill);
     background: none;
     color: var(--accent);
     font: inherit;
-    font-size: var(--fs-sm);
+    font-size: var(--fs-md);
     line-height: 1;
     cursor: pointer;
 
+    &:hover:not(:disabled) { background: var(--accent-soft); }
     &:disabled { opacity: 0.3; cursor: default; }
   }
 

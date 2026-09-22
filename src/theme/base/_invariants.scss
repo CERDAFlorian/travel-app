@@ -48,6 +48,17 @@
 
   // Plans. La carte de L5 se superpose au contenu, le bandeau offline de L3
   // doit rester au-dessus d'elle.
+  // Cibles tactiles. Deux tailles, parce qu'une seule ne tient pas partout :
+  // --hit          là où la place existe — rail d'étape, commandes isolées ;
+  // --hit-dense    sur une ligne qui aligne déjà trois ou quatre contrôles.
+  //
+  // Les deux sont sous les 44 px que recommande Apple, et c'est assumé : une
+  // ligne d'item alignerait 176 px de boutons. Elles restent au-dessus du
+  // seuil où l'on rate une fois sur trois, et valent sur TOUS les écrans —
+  // un portable convertible a le même doigt qu'un téléphone.
+  --hit:       36px;
+  --hit-dense: 28px;
+
   --z-base:    0;
   --z-map:     10;
   --z-sticky:  20;
