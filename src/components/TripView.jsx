@@ -12,6 +12,7 @@ import Experiences from '@/components/Experiences.jsx';
 import BudgetPanel from '@/components/BudgetPanel.jsx';
 import ShareLink from '@/components/ShareLink.jsx';
 import NightsGap from '@/components/NightsGap.jsx';
+import LocateAll from '@/components/LocateAll.jsx';
 import AddStep from '@/components/AddStep.jsx';
 import StepLink from '@/components/StepLink.jsx';
 import { addStep, moveStep, removeStep, setStepNights } from '@/lib/mutations.js';
@@ -215,7 +216,10 @@ export default function TripView({
           <div className="trip__map-card">
             <div className="trip__map-head">
               <h2 className="trip__map-title">La carte du voyage</h2>
-              <span className="trip__map-hint">molette pour zoomer · glisser pour déplacer</span>
+              {/* L'indication « molette pour zoomer » disait ce que tout le
+                  monde essaie de toute façon. La place sert mieux à une
+                  action. */}
+              <LocateAll trip={view} readOnly={readOnly} onChanged={onChanged} />
             </div>
             <TripMap trip={view} selectedStepId={selectedStepId} onSelectStep={selectStep} />
             <TravelTimes steps={view.steps} legs={view.legs} />

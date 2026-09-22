@@ -106,7 +106,7 @@
   &__step-label {
     fill: var(--text-heading);
     font-family: var(--font-display);
-    font-size: 15px;
+    font-size: 17px;
     font-weight: 600;
     paint-order: stroke;
     stroke: var(--bg);
@@ -116,10 +116,13 @@
 
   // paint-order + contour de la couleur du fond : le texte reste lisible
   // par-dessus le trait de côte et les pointillés, sans cartouche opaque.
+  // 14 px et non 12 : à l'échelle de la carte, un nom d'hôtel de 12 px se
+  // devine plus qu'il ne se lit. Les libellés sont contre-échelonnés, donc
+  // cette taille vaut à tous les niveaux de zoom.
   &__item-label {
     fill: var(--text);
     font-family: var(--font-body);
-    font-size: 12px;
+    font-size: 14px;
     paint-order: stroke;
     stroke: var(--bg);
     stroke-width: 3;

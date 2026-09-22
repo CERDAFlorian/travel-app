@@ -140,11 +140,6 @@
     color: var(--accent);
   }
 
-  &__map-hint {
-    font-size: clamp(12px, 1.2vw, 14.5px);
-    font-style: italic;
-    color: var(--text-soft);
-  }
 
   &__foot {
     padding: clamp(12px, 1.6vw, 20px) clamp(16px, 3vw, 44px) clamp(30px, 3.4vw, 46px);

@@ -1,0 +1,69 @@
+@use '../theme/mixins';
+
+// Pilule bleutée, comme les autres commandes de localisation : situer est une
+// action technique, pas une décision de voyage.
+.locate-all__start {
+  margin-left: auto;
+  padding: 3px 11px;
+  border: 1px solid var(--info);
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised);
+  color: var(--info);
+  font: inherit;
+  font-size: var(--fs-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  min-height: var(--hit-dense);
+
+  &:hover { border-color: var(--accent); color: var(--accent); }
+  &:focus-visible { @include mixins.focus-ring; }
+}
+
+.locate-all {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-left: auto;
+  font-size: var(--fs-xs);
+  color: var(--text-soft);
+
+  &__bar {
+    flex: 1 1 90px;
+    height: 4px;
+    overflow: hidden;
+    border-radius: var(--radius-pill);
+    background: var(--surface-tint);
+
+    span {
+      display: block;
+      height: 100%;
+      background: var(--info);
+      transition: width var(--dur-base) var(--ease-out);
+    }
+  }
+
+  // Le nom en cours de traitement défile : une largeur libre ferait sauter
+  // toute la ligne à chaque lieu.
+  &__label {
+    flex: 0 1 auto;
+    max-width: 14em;
+    @include mixins.truncate;
+  }
+
+  &__stop,
+  &__again {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent);
+    font: inherit;
+    font-size: var(--fs-xs);
+    text-decoration: underline;
+    cursor: pointer;
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+}
