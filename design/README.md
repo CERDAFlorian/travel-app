@@ -59,11 +59,17 @@ pour un encodage 10× plus lent et un support limité à iOS 16+.
 
 Polices : le design emploie `Playfair Display` (600/700) et `EB Garamond`.
 
-**L'app a remplacé Playfair par `Lora`** (19 septembre 2026) : son contraste de
-traits — pleins épais, déliés presque invisibles — se lit mal à l'écran, a
-fortiori sur un fond crème peu contrasté. Lora garde le registre éditorial avec
-un contraste modéré et a été dessinée pour l'écran. Les deux familles sont
-hébergées en local, voir `scripts/build-fonts.mjs`.
+**L'app s'écarte des deux** (22 septembre 2026), pour la même raison : ce sont
+des caractères de papier, à faible hauteur d'œil et traits déliés, qu'on
+déchiffre plutôt qu'on ne lit sur un écran de train.
+
+- Titres : **`Lora`**, même registre éditorial, contraste modéré, dessinée pour
+  l'écran. Hébergée en local, voir `scripts/build-fonts.mjs`.
+- Texte courant : **la police du système** — SF sur iPhone, Roboto sur Android.
+  Rien à télécharger, et 222 Ko de moins à précacher avant de partir.
+
+L'identité du voyage tient aux couleurs, au décor et aux titres, pas au corps
+de texte.
 
 ## Couleurs de catégorie (`CATS`, ligne ~315 du .dc.html)
 

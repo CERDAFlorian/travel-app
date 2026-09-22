@@ -10,6 +10,10 @@
 // Sous-ensemble latin uniquement : le seul dont l'app a besoin. Les jeux
 // cyrillique, grec et vietnamien pèseraient sans jamais servir.
 //
+// Une seule famille téléchargée, pour les titres. Le texte courant utilise la
+// police du système : EB Garamond pesait 222 Ko et se lisait mal en petit —
+// faible hauteur d'œil, traits déliés, un caractère de livre.
+//
 // La sortie est commitée : `npm run build` n'a pas besoin de réseau.
 //
 //   node scripts/build-fonts.mjs
@@ -28,8 +32,7 @@ const OUT = resolve(ROOT, 'public/fonts');
 // déliés disparaissent — d'autant plus sur un fond crème peu contrasté.
 // Lora garde le registre éditorial avec un contraste modéré, et elle a été
 // dessinée pour l'écran.
-const CSS_URL =
-  'https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap';
+const CSS_URL = 'https://fonts.googleapis.com/css2?family=Lora:wght@600;700&display=swap';
 
 // Google sert des formats différents selon le User-Agent. Celui-ci obtient du
 // woff2, pris en charge partout depuis des années et le plus compact.

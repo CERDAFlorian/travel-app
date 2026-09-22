@@ -72,7 +72,17 @@ $theme: contract.validate('japan', (
   // pleins épais, déliés presque invisibles — se lit mal à l'écran, surtout
   // sur un fond crème peu contrasté.
   font-display:    (Lora, Georgia, serif),
-  font-body:       ('EB Garamond', Georgia, serif),
+  // Police du système pour le texte courant.
+  //
+  // EB Garamond a été écartée pour la même raison que Playfair : une faible
+  // hauteur d'œil et des traits déliés, dessinés pour le papier. À 13 px sur
+  // un écran de train, on déchiffre au lieu de lire.
+  //
+  // La police du système — SF sur iPhone, Roboto sur Android — est ce que
+  // l'œil lit le plus vite, et elle ne coûte rien à télécharger : 222 Ko de
+  // moins à précacher avant de partir. L'identité du voyage tient aux
+  // couleurs, au décor et aux titres en Lora, pas au corps de texte.
+  font-body:       (system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif),
 
   radius-sm:       4px,
   radius-md:       8px,
