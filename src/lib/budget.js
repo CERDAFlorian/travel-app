@@ -1,5 +1,6 @@
 import { CATEGORIES } from '@/lib/categories.js';
 import { toEuros } from '@/lib/currency.js';
+import { chosenHotel } from '@/lib/lodging.js';
 
 // Catégories qui entrent au budget. Reprise du drapeau `budget` du design :
 // restaurants et shopping en sont exclus — ils se décident sur place et
@@ -31,8 +32,16 @@ export function buildBudget(trip) {
     let count = 0;
 
     for (const step of trip.steps) {
-      for (const item of step.items) {
-        if (item.category !== category.key) continue;
+      // Les hôtels d'une étape sont des CANDIDATS tant qu'on n'a pas choisi :
+      // seul le retenu compte. Les additionner tous triplait le poste logement
+      // dès qu'on comparait trois adresses à Kyoto — le total montait sans
+      // qu'aucune nuit ne s'ajoute.
+      const counted =
+        category.key === 'hotel'
+          ? [chosenHotel(step)].filter(Boolean)
+          : step.items.filter((item) => item.category === category.key);
+
+      for (const item of counted) {
         count += 1;
         const euros = toEuros(item.price, item.currency ?? 'JPY');
         if (!euros) blanks += 1;

@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase.js';
 import { fail } from '@/lib/errors.js';
 import { durationBetween } from '@/lib/transport.js';
+import { hotelsOf } from '@/lib/lodging.js';
 import {
   addDays,
   datesToUpdate,
@@ -67,6 +68,61 @@ export async function deleteItem(id) {
 export async function setFavorite(id, favorite) {
   const { error } = await supabase.from('items').update({ favorite }).eq('id', id);
   if (error) fail(error, 'Mise à jour du favori');
+}
+
+// --- Le logement d'une étape ------------------------------------------------
+//
+// Voir lib/lodging.js pour le modèle : plusieurs hôtels sont des candidats,
+// `favorite` désigne le retenu, `booked` scelle le choix.
+
+// L'étoile d'un hôtel est EXCLUSIVE dans son étape : en retenir un écarte
+// l'autre. Une étape a un lit, pas deux.
+//
+// Elle ne se DÉCOCHE pas, contrairement à celle d'un lieu : il y a toujours un
+// logement retenu — à défaut de choix, le premier saisi (voir lodging.js). Ne
+// plus retenir celui-ci n'a donc pas de sens, on en retient un autre.
+export async function setChosenHotel(step, id) {
+  for (const hotel of hotelsOf(step)) {
+    if (hotel.id === id || !hotel.favorite) continue;
+    const { error } = await supabase.from('items').update({ favorite: false }).eq('id', hotel.id);
+    if (error) fail(error, 'Mise à jour du logement retenu');
+  }
+
+  const { error } = await supabase.from('items').update({ favorite: true }).eq('id', id);
+  if (error) fail(error, 'Mise à jour du logement retenu');
+}
+
+// Scelle le choix : l'hôtel devient réservé, les candidats écartés sont
+// supprimés.
+//
+// L'ORDRE COMPTE. On scelle d'abord, on supprime ensuite. Si la suppression
+// échoue, il reste une étape avec un hôtel réservé et des candidats en trop —
+// visible, rattrapable à la main. Dans l'autre sens, un échec après la
+// suppression aurait détruit les candidats sans rien sceller : on aurait perdu
+// de la saisie pour rien.
+export async function sealHotel(step, id) {
+  const doomed = hotelsOf(step)
+    .filter((hotel) => hotel.id !== id)
+    .map((hotel) => hotel.id);
+
+  const { error } = await supabase
+    .from('items')
+    .update({ booked: true, favorite: true })
+    .eq('id', id);
+  if (error) fail(error, 'Réservation du logement');
+
+  if (doomed.length === 0) return;
+
+  const { error: sweep } = await supabase.from('items').delete().in('id', doomed);
+  if (sweep) fail(sweep, 'Suppression des hôtels non retenus');
+}
+
+// Défait le scellement. Les candidats supprimés ne reviennent pas — c'est
+// pourquoi le geste était confirmé —, mais une réservation annulée ne doit pas
+// laisser l'étape dans un état qu'on ne peut plus corriger.
+export async function unsealHotel(id) {
+  const { error } = await supabase.from('items').update({ booked: false }).eq('id', id);
+  if (error) fail(error, 'Annulation de la réservation');
 }
 
 // `geocoded_at` distingue les deux origines, comme le prévoit le schéma :

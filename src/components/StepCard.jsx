@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { CATEGORIES } from '@/lib/categories.js';
+import { chosenHotel, hotelsOf } from '@/lib/lodging.js';
 import { formatStepDates } from '@/lib/dates.js';
 import { setStepCoordinates } from '@/lib/mutations.js';
 import GeocodePicker from './GeocodePicker.jsx';
@@ -40,6 +41,16 @@ export default function StepCard({
   for (const item of step.items) {
     itemsByCategory.get(item.category)?.push(item);
   }
+
+  // Le logement est le décor de tout le séjour, pas une ligne parmi quarante-
+  // huit : il se lit sous les dates, avec elles. Et son absence se lit aussi —
+  // une étape sans lit est le seul trou qu'on ne peut pas combler sur place.
+  //
+  // Il n'y a jamais d'entre-deux : dès qu'un hôtel est saisi, il y en a un de
+  // retenu (voir lodging.js). Ce qui s'affiche ici est donc soit un nom, soit
+  // une étape où personne n'a encore cherché où dormir.
+  const lodging = chosenHotel(step);
+  const candidates = hotelsOf(step).length;
 
   return (
     <article
@@ -153,6 +164,23 @@ export default function StepCard({
               le voyage, et le moment se prete moins au compliment. */}
           <LoveNote kind="nights" seed={step.id} trigger={nightsAdded} />
         </div>
+
+        <p className="step__lodging" data-empty={lodging ? undefined : true}>
+          <span className="step__lodging-dot" data-cat="hotel" aria-hidden="true" />
+          {lodging ? (
+            <>
+              <span className="step__lodging-name">{lodging.title}</span>
+              {candidates > 1 && (
+                <span className="step__lodging-count">
+                  +{candidates - 1} candidat{candidates > 2 ? 's' : ''}
+                </span>
+              )}
+              {lodging.booked && <span className="step__lodging-badge">réservé</span>}
+            </>
+          ) : (
+            <span className="step__lodging-name">Logement à trouver</span>
+          )}
+        </p>
 
         {/* Une étape ajoutée depuis l'app n'a pas de coordonnées : elle
             n'apparaît ni sur la carte, ni comme ancre de ses items. Le bouton

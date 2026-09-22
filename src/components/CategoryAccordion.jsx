@@ -2,6 +2,7 @@ import { useId, useState } from 'react';
 import { formatEuros } from '@/lib/currency.js';
 import { sumInEuros } from '@/lib/budget.js';
 import { addItem } from '@/lib/mutations.js';
+import { chosenHotel } from '@/lib/lodging.js';
 import ItemRow from './ItemRow.jsx';
 import ChevronIcon from './ChevronIcon.jsx';
 import LoveNote from './LoveNote.jsx';
@@ -33,7 +34,14 @@ export default function CategoryAccordion({ category, items, step, tripTitle, re
 
   // Total de la catégorie, en euros. Le design l'affiche à droite de l'en-tête :
   // c'est ce qui permet de voir où part l'argent sans déplier.
-  const sum = sumInEuros(items);
+  //
+  // Les hôtels font exception, pour la même raison que dans le budget : trois
+  // candidats ne sont pas trois séjours. L'en-tête montrerait 1 620 € là où le
+  // budget en compte 540, et c'est l'en-tête qu'on lit en premier.
+  const sum =
+    category.key === 'hotel'
+      ? sumInEuros([chosenHotel(step)].filter(Boolean))
+      : sumInEuros(items);
   const total = sum > 0 ? formatEuros(sum) : '';
 
   const nextPosition =

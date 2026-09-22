@@ -50,10 +50,16 @@ describe('buildBudget', () => {
   // Un prix absent n'est pas zéro. Le total ne doit pas prétendre être complet
   // alors qu'il manque des lignes.
   it('compte les lignes sans prix et le dit', () => {
+    // Un hôtel par étape : deux dans la même seraient des CANDIDATS, dont un
+    // seul compte — le vide du second ne serait alors pas une ligne manquante
+    // mais une ligne écartée. Voir le bloc « hôtels candidats » plus bas.
     const budget = buildBudget(
       tripWith({
         flights: [{ price: null, currency: 'EUR' }],
-        steps: [{ nights: 1, items: [item('hotel', null), item('hotel', 16500)] }],
+        steps: [
+          { nights: 1, items: [item('hotel', null)] },
+          { nights: 1, items: [item('hotel', 16500)] },
+        ],
       }),
     );
 
@@ -69,6 +75,55 @@ describe('buildBudget', () => {
     );
     expect(budget.blanks).toBe(0);
     expect(budget.note).toBeNull();
+  });
+
+  // --- Hôtels candidats ----------------------------------------------------
+  //
+  // On compare trois adresses avant d'en réserver une. Les additionner faisait
+  // monter le budget de deux séjours qu'on ne fera pas.
+
+  it("ne compte que l'hôtel retenu quand plusieurs sont en lice", () => {
+    const budget = buildBudget(
+      tripWith({
+        steps: [
+          {
+            nights: 2,
+            items: [
+              { ...item('hotel', 16500), id: 'a' },
+              { ...item('hotel', 33000), id: 'b', favorite: true },
+              { ...item('hotel', 49500), id: 'c' },
+            ],
+          },
+        ],
+      }),
+    );
+
+    // 33 000 ¥ = 200 €. Sans la règle, le total valait 600 €.
+    expect(Math.round(budget.total)).toBe(200);
+  });
+
+  it('compte le premier saisi tant que rien n\'est retenu', () => {
+    const budget = buildBudget(
+      tripWith({
+        steps: [
+          {
+            nights: 2,
+            items: [
+              { ...item('hotel', 16500), id: 'a' },
+              { ...item('hotel', 99000), id: 'b' },
+            ],
+          },
+        ],
+      }),
+    );
+    expect(Math.round(budget.total)).toBe(100);
+  });
+
+  it('compte un hôtel seul sans exiger qu\'on le retienne', () => {
+    const budget = buildBudget(
+      tripWith({ steps: [{ nights: 2, items: [{ ...item('hotel', 16500), id: 'a' }] }] }),
+    );
+    expect(Math.round(budget.total)).toBe(100);
   });
 
   // Les parts servent à la jauge : elles doivent faire 1, sinon la barre ne

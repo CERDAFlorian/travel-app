@@ -55,6 +55,26 @@ describe('featured', () => {
     expect(featured(items).map((i) => i.title)).toEqual(['Un lieu', 'Une activité', 'Un hôtel']);
   });
 
+  // Trois adresses en lice ne sont pas trois séjours : le bandeau ne montre
+  // que celle qu'on a retenue, jamais un candidat écarté.
+  it('ne prend que l’hôtel retenu parmi les candidats', () => {
+    const items = [
+      { ...item('Hôtel écarté', 'hotel'), id: 'a' },
+      { ...item('Hôtel retenu', 'hotel', true), id: 'b' },
+      { ...item('Hôtel écarté aussi', 'hotel'), id: 'c' },
+    ];
+    expect(featured(items).map((i) => i.title)).toEqual(['Hôtel retenu']);
+  });
+
+  // Sans étoile en base — le cas du seed — le retenu est le premier saisi.
+  it('retombe sur le premier hôtel saisi', () => {
+    const items = [
+      { ...item('Premier', 'hotel'), id: 'a' },
+      { ...item('Second', 'hotel'), id: 'b' },
+    ];
+    expect(featured(items).map((i) => i.title)).toEqual(['Premier']);
+  });
+
   // Restaurants et shopping n'entrent dans le bandeau que par l'étoile : c'est
   // fidèle au design, et ça explique que les photos dotonbori et okonomiyaki
   // ne s'affichent jamais avec le seed actuel.

@@ -84,6 +84,58 @@
     color: var(--accent);
   }
 
+  // Le logement, juste sous le nom de la ville : c'est le décor du séjour.
+  // Sur une ligne à lui, pas dans la rangée du titre — celle-ci porte déjà les
+  // dates et les nuits, et un nom d'hôtel long la ferait passer à trois lignes.
+  &__lodging {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    margin: 4px 0 0;
+    font-size: clamp(12.5px, 1.2vw, 14px);
+    color: var(--text-soft);
+
+    // Aucun hôtel retenu : l'italique dit que c'est un manque, pas un nom.
+    &[data-empty] {
+      font-style: italic;
+      color: var(--muted);
+    }
+  }
+
+  &__lodging-dot {
+    width: 7px;
+    height: 7px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--cat-hotel);
+
+    [data-empty] > & { opacity: 0.4; }
+  }
+
+  &__lodging-name {
+    @include mixins.truncate;
+  }
+
+  // « +2 candidats » : le choix n'est pas figé, et on doit s'en souvenir en
+  // lisant l'en-tête plutôt qu'en dépliant l'accordéon.
+  &__lodging-count {
+    flex: none;
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    font-style: italic;
+  }
+
+  &__lodging-badge {
+    flex: none;
+    padding: 0 6px;
+    border: 1px solid var(--ok);
+    border-radius: var(--radius-pill);
+    color: var(--ok);
+    font-size: var(--fs-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
   &__nights-group {
     display: inline-flex;
     align-items: center;
