@@ -54,6 +54,9 @@
   // lisait comme une décoration, elle prend maintenant sa place au centre.
   &__add {
     @include mixins.action-button;
+    // Le mixin pose --sp-3 de chaque cote. Ici la tuile fait ~92px de large sur
+    // un ecran de 320px : le libelle tient, ses marges non. On les resserre.
+    padding-inline: var(--sp-2);
     max-width: 100%;
     font-size: var(--fs-xs);
     text-decoration: none;
