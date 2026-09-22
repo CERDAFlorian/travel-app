@@ -107,10 +107,12 @@
     pointer-events: none;
   }
 
+  // Les villes reviennent à leur taille d'origine : elles servent de repère,
+  // pas de lecture. Les agrandir avec les lieux écrasait la carte.
   &__step-label {
     fill: var(--text-heading);
     font-family: var(--font-display);
-    font-size: 19px;
+    font-size: 15px;
     font-weight: 600;
     paint-order: stroke;
     stroke: var(--bg);
@@ -120,13 +122,13 @@
 
   // paint-order + contour de la couleur du fond : le texte reste lisible
   // par-dessus le trait de côte et les pointillés, sans cartouche opaque.
-  // 16 px : à l'échelle de la carte, un nom d'hôtel se lit de loin ou ne se
-  // lit pas. Les libellés sont contre-échelonnés, donc cette taille vaut à
+  // 18 px : c'est ce qu'on cherche sur la carte — le nom d'un hôtel ou d'une
+  // activité. Les libellés sont contre-échelonnés, donc cette taille vaut à
   // tous les niveaux de zoom.
   &__item-label {
     fill: var(--text);
     font-family: var(--font-body);
-    font-size: 16px;
+    font-size: 18px;
     paint-order: stroke;
     stroke: var(--bg);
     stroke-width: 3;

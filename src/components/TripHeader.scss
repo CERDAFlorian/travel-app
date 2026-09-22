@@ -18,10 +18,14 @@
   // Le décor déborde, mais il ne doit pas manger le contenu. Sur un écran
   // étroit il rétrécit fortement : à 375 px, les tailles du design
   // laissaient 91 px au titre.
+  // En filigrane derrière le titre. La marge qui lui était réservée —
+  // jusqu'à 130 px — désalignait tout l'en-tête du reste de la page. Il garde
+  // son coin, le texte passe devant.
   &__momiji {
-    left: -22px;
-    top: -12px;
-    width: clamp(64px, 11vw, 168px);
+    left: -24px;
+    top: -16px;
+    width: clamp(64px, 10vw, 150px);
+    opacity: 0.4;
   }
 
   &__fuji {
@@ -38,8 +42,7 @@
   // Ligne du retour et des chiffres, sous le titre. Le z-index la garde
   // au-dessus du décor : le Fuji descend bas à droite et intercepterait le
   // clic sur une pastille.
-  // Même marge gauche que le titre : le retour se cale sous le « J » de
-  // JAPON plutôt que sur le bord de la page.
+  // Même marge que le titre, et donc que tout le contenu de la page.
   &__summary {
     position: relative;
     z-index: var(--z-sticky);
@@ -48,7 +51,7 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--sp-3);
-    padding: 0 clamp(16px, 3vw, 44px) var(--sp-3) clamp(16px, 8vw, 130px);
+    padding: 0 clamp(16px, 3vw, 44px) var(--sp-3);
   }
 
   // Marges asymétriques : elles réservent la place du décor. Sur mobile, le
@@ -69,10 +72,12 @@
       clamp(14px, 2.4vw, 30px)
       clamp(110px, 26vw, 375px)
       var(--sp-3)
-      clamp(16px, 8vw, 130px);
+      clamp(16px, 3vw, 44px);
   }
 
+  // Au-dessus du décor : sans `position`, le momiji recouvrirait le « J ».
   &__title {
+    position: relative;
     // Correction optique. Les deux blocs partagent la même marge gauche, mais
     // l'approche du « J » de Playfair laisse un blanc avant son dessin : le
     // titre paraissait rentré par rapport au bouton juste en dessous. En `em`,
@@ -88,6 +93,7 @@
 
   // Plus de calage manuel : c'est la ligne de base qui aligne désormais.
   &__subtitle {
+    position: relative;
     min-width: 0;
   }
 
