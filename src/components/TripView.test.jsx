@@ -28,6 +28,7 @@ const trip = {
   startDate: '2026-11-07',
   endDate: '2026-11-11',
   shareToken: null,
+  loveNotes: true,
   steps: [
     {
       id: 'step-1',
@@ -229,6 +230,21 @@ describe('TripView', () => {
   it('ne laisse aucun mot d’amour partir dans le lien de partage', () => {
     const html = render({ readOnly: true, shared: true });
     for (const mot of MOTS) expect(html).not.toContain(mot);
+  });
+
+  // Le drapeau est PAR VOYAGE : l'app sert désormais à quelqu'un d'autre, sur
+  // son propre itinéraire, et les mots y seraient déplacés.
+  it('se tait sur un voyage qui désactive les mots d’amour', () => {
+    const html = render({ readOnly: false, trip: { ...trip, loveNotes: false } });
+    for (const mot of MOTS) expect(html).not.toContain(mot);
+  });
+
+  // Un cache écrit avant la migration n'a pas le champ : on retombe sur le
+  // défaut du schéma plutôt que de faire taire un voyage qui parle.
+  it('parle quand le voyage ne dit rien du drapeau', () => {
+    const { loveNotes, ...sansDrapeau } = { ...trip, loveNotes: undefined };
+    const html = render({ readOnly: false, trip: sansDrapeau });
+    for (const mot of MOTS) expect(html).toContain(mot);
   });
 
   // Le mot doux des temps de trajet SERT de titre : le retirer laisserait le

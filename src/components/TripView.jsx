@@ -139,14 +139,20 @@ export default function TripView({
   }, [view]);
 
   return (
-    // LES MOTS D'AMOUR NE PARTENT PAS DANS LE LIEN DE PARTAGE. Ils sont écrits
-    // pour deux ; un itinéraire envoyé à la famille ne doit pas les afficher.
-    // Sept textes sont concernés, dans six composants — d'où un contexte
-    // plutôt que sept props (voir hooks/useLoveNotes.js).
+    // LES MOTS D'AMOUR, À DEUX CONDITIONS. Sept textes sont concernés, dans six
+    // composants — d'où un contexte plutôt que sept props (useLoveNotes.js).
     //
-    // La coupure se fait sur `shared` et non sur `readOnly` : hors ligne dans
-    // un train japonais, l'app est en lecture seule et on est toujours à deux.
-    <LoveNotesProvider value={!shared}>
+    // 1. Le VOYAGE les autorise (`trips.love_notes`). C'est un drapeau par
+    //    voyage et non par compte : c'est le voyage qui est un voyage de
+    //    noces, pas la personne qui le regarde. L'app sert maintenant à
+    //    quelqu'un d'autre, sur son propre itinéraire.
+    // 2. On n'est PAS en vue partagée. Ils sont écrits pour deux ; un lien
+    //    envoyé ne les emporte pas, même sur un voyage qui les autorise.
+    //
+    // La seconde condition porte sur `shared` et non sur `readOnly` : hors
+    // ligne dans un train japonais, l'app est en lecture seule et on est
+    // toujours à deux.
+    <LoveNotesProvider value={!shared && trip.loveNotes !== false}>
       <div className="trip">
         <TripHeader
           trip={view}
