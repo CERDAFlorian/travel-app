@@ -17,9 +17,11 @@ import './PhotoStrip.scss';
 // ÉTAPE VIDE : trois emplacements, pas une bannière. Le bandeau annonçait
 // « photos de Osaka à déposer ici », ce qui laissait croire qu'on attendait des
 // photos DE LA VILLE, à téléverser. Ni l'un ni l'autre : les images viennent
-// des activités, restaurants et lieux qu'on ajoute à l'étape, et elles
-// apparaissent toutes seules. Trois cases de la même taille que les vraies
-// tuiles disent la seule chose utile — la place existe, elle attend du contenu.
+// des items qu'on ajoute à l'étape, et elles apparaissent toutes seules.
+//
+// Trois cases de la même taille que les vraies tuiles, et une ligne qui nomme
+// l'étoile — c'est elle qui décide de ce qui monte dans le bandeau, et le seul
+// moyen d'y faire entrer un restaurant ou une boutique.
 export default function PhotoStrip({ items, stepName }) {
   const tiles = photoStripFor(items);
 
@@ -34,8 +36,15 @@ export default function PhotoStrip({ items, stepName }) {
           ))}
         </ul>
 
+        {/* On nomme l'ÉTOILE, parce que c'est le geste qui décide. Les trois
+            places reviennent d'abord aux items mis en avant — c'est d'ailleurs
+            le seul moyen d'y faire entrer un restaurant ou une boutique. Sans
+            étoile, le bandeau se remplit tout seul avec les lieux puis les
+            activités : le dire évite de croire qu'il faut étoiler pour avoir
+            la moindre image. */}
         <p className="photo-strip__note">
-          Les photos viendront des activités, restos et lieux de l'étape.
+          Les items mis en avant <span aria-hidden="true">★</span> prendront ces
+          trois places — à défaut, les lieux et activités de l'étape.
         </p>
       </div>
     );

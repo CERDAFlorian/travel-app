@@ -210,9 +210,10 @@ describe('TripView', () => {
 
     expect(html).not.toContain('à déposer ici');
     expect(html).toContain('photo-strip__hole');
-    // Sans l'apostrophe finale : React l'échappe en `&#x27;`, y compris dans le
-    // texte. L'assertion porterait sur la typographie, pas sur le rendu.
-    expect(html).toContain('Les photos viendront des activités, restos et lieux');
+    // Sans apostrophe : React les échappe en `&#x27;`, y compris dans le texte.
+    // L'assertion porterait sur la typographie, pas sur le rendu.
+    expect(html).toContain('Les items mis en avant');
+    expect(html).toContain('prendront ces');
   });
 
   // --- Les mots d'amour ------------------------------------------------------
