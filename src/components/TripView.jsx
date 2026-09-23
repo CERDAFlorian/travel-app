@@ -15,6 +15,7 @@ import NightsGap from '@/components/NightsGap.jsx';
 import LocateAll from '@/components/LocateAll.jsx';
 import AddStep from '@/components/AddStep.jsx';
 import TripProgram from '@/components/TripProgram.jsx';
+import { CitiesIcon, DaysIcon } from '@/components/ViewIcons.jsx';
 import StepLink from '@/components/StepLink.jsx';
 import LoveNote from '@/components/LoveNote.jsx';
 import { addStep, moveStep, removeStep, setStepNights } from '@/lib/mutations.js';
@@ -177,19 +178,39 @@ export default function TripView({
 
       <FlightsPanel trip={view} readOnly={readOnly} onChanged={onChanged} />
 
-      {/* Sous les vols : on lit d'abord comment on arrive, ensuite ce qu'on
-          fait. Le bouton bascule la colonne de gauche — la carte, l'en-tête et
-          la frise ne bougent pas. */}
+      {/* La bascule de la colonne de gauche.
+          Elle est COLLÉE au bloc qu'elle commande : beaucoup d'air au-dessus,
+          presque rien en dessous. Centrée entre les deux, elle aurait eu l'air
+          d'appartenir aux vols, ou à rien.
+          Discrète et alignée à gauche : c'est un réglage d'affichage, pas une
+          action du voyage. Elle ne doit pas peser autant que « Ajouter une
+          ville ». */}
       <div className="trip__mode">
-        <button
-          type="button"
-          className="trip__mode-btn"
-          data-on={byDay || undefined}
-          aria-pressed={byDay}
-          onClick={() => setByDay((value) => !value)}
-        >
-          {byDay ? '← Revenir aux villes' : 'Le programme jour par jour →'}
-        </button>
+        <div className="trip__mode-group" role="group" aria-label="Lecture de l'itinéraire">
+          <button
+            type="button"
+            className="trip__mode-btn"
+            data-on={!byDay || undefined}
+            aria-pressed={!byDay}
+            title="L'itinéraire ville par ville"
+            onClick={() => setByDay(false)}
+          >
+            <CitiesIcon />
+            <span className="trip__mode-label">Villes</span>
+          </button>
+
+          <button
+            type="button"
+            className="trip__mode-btn"
+            data-on={byDay || undefined}
+            aria-pressed={byDay}
+            title="Le programme jour par jour"
+            onClick={() => setByDay(true)}
+          >
+            <DaysIcon />
+            <span className="trip__mode-label">Jour par jour</span>
+          </button>
+        </div>
       </div>
 
       <main className="trip__main">

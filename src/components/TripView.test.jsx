@@ -173,8 +173,14 @@ describe('TripView', () => {
     expect(html).toContain('Vue partagée');
   });
 
-  it('propose la bascule jour par jour sous les vols', () => {
-    expect(render({ readOnly: false })).toContain('Le programme jour par jour');
+  it('propose les deux lectures sous les vols', () => {
+    const html = render({ readOnly: false });
+    // Pas d'assertion sur un libellé à apostrophe : React l'échappe en
+    // `&#x27;` dans les attributs, et le test casserait sur la typographie
+    // plutôt que sur le rendu.
+    expect(html).toContain('trip__mode-group');
+    expect(html).toContain('Jour par jour');
+    expect(html).toContain('Villes');
   });
 
   // Un voyage sans étape, sans vol, sans rien : l'état du premier jour.
