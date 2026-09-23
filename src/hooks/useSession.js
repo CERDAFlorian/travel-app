@@ -104,19 +104,20 @@ export function useSession() {
     await clearCache();
     await supabase.auth.signOut();
 
-    // PUIS ON RECHARGE, et ce n'est pas de la paresse.
+    // PUIS ON RECHARGE.
     //
-    // Vider IndexedDB ne vide pas la MÉMOIRE : `useCached` garde dans son état
-    // les voyages déjà lus, et `PrivateApp` décide d'afficher l'écran de
-    // connexion d'après cet état. Sans rechargement, on se déconnecte et on
-    // reste sur la liste, avec les voyages du compte précédent sous les yeux —
-    // le cache est bien vide, mais l'écran ne le sait pas.
+    // L'écran, à lui seul, n'a plus besoin de ça : `PrivateApp` remonte tout
+    // l'arbre quand l'utilisateur change (voir App.jsx), donc la liste repart
+    // vide et l'écran de connexion revient de lui-même.
     //
-    // Rien à sauver à cet instant : la déconnexion est un geste délibéré, et un
-    // chargement complet est la seule façon de garantir qu'il ne reste aucun
-    // résidu, ni en état de composant ni en variable de module. Hors ligne, le
-    // service worker sert la coquille : on retombe sur un écran vide et sur la
-    // connexion, ce qui est exactement ce qu'on a demandé.
+    // Le rechargement couvre ce que le remontage ne couvre pas : tout ce qui
+    // vit HORS de l'arbre React — état de module, client Supabase, et ce qu'on
+    // y ajoutera un jour sans y penser. La déconnexion est un geste délibéré et
+    // rare ; il n'y a rien à sauver à cet instant, et une garantie vaut mieux
+    // qu'un raisonnement à refaire à chaque fois.
+    //
+    // Hors ligne, le service worker sert la coquille : on retombe sur un écran
+    // vide et sur la connexion, ce qui est exactement ce qu'on a demandé.
     if (typeof window !== 'undefined') window.location.assign('/');
   }, []);
 
