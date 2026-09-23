@@ -1,9 +1,20 @@
 import { useState } from 'react';
 import { TRANSPORT_MODES, durationBetween, formatClock, formatDuration, modeLabel } from '@/lib/transport.js';
 import { deleteLeg, saveLeg } from '@/lib/mutations.js';
+import { eurosInput, priceInEuros } from '@/lib/currency.js';
 import ConfirmDialog from './ConfirmDialog.jsx';
 import TrashIcon from './TrashIcon.jsx';
 import './StepLink.scss';
+
+// Un prix saisi au clavier français s'écrit « 110 » ou « 12,50 ». Vide vaut
+// « pas de prix » — pas zéro : un trajet inclus dans le JR Pass et un trajet
+// dont on ignore le prix ne sont pas la même chose.
+function parsePrice(raw) {
+  const cleaned = String(raw).replace(/\s/g, '').replace(',', '.');
+  if (cleaned === '') return null;
+  const value = Number(cleaned);
+  return Number.isFinite(value) && value >= 0 ? value : null;
+}
 
 // Le trajet entre deux étapes.
 //
@@ -20,6 +31,7 @@ export default function StepLink({ trip, fromStep, toStep, leg, readOnly, onChan
   const [mode, setMode] = useState(leg?.mode ?? 'train');
   const [dep, setDep] = useState(formatClock(leg?.dep) ?? '');
   const [arr, setArr] = useState(formatClock(leg?.arr) ?? '');
+  const [price, setPrice] = useState(eurosInput(leg?.price, leg?.currency) ?? '');
 
   async function run(action) {
     setBusy(true);
@@ -44,6 +56,10 @@ export default function StepLink({ trip, fromStep, toStep, leg, readOnly, onChan
         modeLabel(leg.mode),
         formatClock(leg.dep) && `${formatClock(leg.dep)} → ${formatClock(leg.arr)}`,
         formatDuration(leg.duration_min),
+        // Le prix se lit ici, là où l'œil passe déjà. Six trajets pèsent
+        // lourd, et les chercher un par un dans le budget ne dit pas lequel
+        // coûte cher.
+        priceInEuros(leg.price, leg.currency),
       ]
         .filter(Boolean)
         .join(' · ')
@@ -67,6 +83,7 @@ export default function StepLink({ trip, fromStep, toStep, leg, readOnly, onChan
                 mode,
                 dep,
                 arr,
+                price: parsePrice(price),
               }),
             );
           }}
@@ -98,6 +115,16 @@ export default function StepLink({ trip, fromStep, toStep, leg, readOnly, onChan
             value={arr}
             aria-label="Heure d'arrivée"
             onChange={(event) => setArr(event.target.value)}
+          />
+
+          <input
+            className="link__price"
+            type="text"
+            inputMode="numeric"
+            value={price}
+            placeholder="prix €"
+            aria-label="Prix du trajet, en euros"
+            onChange={(event) => setPrice(event.target.value)}
           />
 
           {/* La durée se calcule sous les yeux : on voit tout de suite qu'un

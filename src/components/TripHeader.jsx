@@ -1,6 +1,7 @@
 import { CATEGORIES } from '@/lib/categories.js';
 import { formatTripRange } from '@/lib/dates.js';
 import { countdown } from '@/lib/lovenotes.js';
+import { useLoveNotes } from '@/hooks/useLoveNotes.js';
 import './TripHeader.scss';
 
 const GEOGRAPHIC = new Set(CATEGORIES.filter((c) => c.onMap).map((c) => c.key));
@@ -29,6 +30,9 @@ export default function TripHeader({ trip, back }) {
   );
 
   const jours = countdown(trip.startDate);
+  // La ligne qui suit le compte à rebours est un mot d'amour : elle saute en
+  // vue partagée, le compte à rebours reste.
+  const mots = useLoveNotes();
 
   return (
     <header className="trip-header">
@@ -46,7 +50,7 @@ export default function TripHeader({ trip, back }) {
           {jours ? (
             <div className="trip-header__tagline">
               <span className="trip-header__count">{jours.compte}</span>
-              <span className="trip-header__vow">{jours.ligne}</span>
+              {mots && <span className="trip-header__vow">{jours.ligne}</span>}
             </div>
           ) : (
             <div className="trip-header__tagline">{trip.subtitle}</div>

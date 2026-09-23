@@ -27,6 +27,19 @@ export function buildBudget(trip) {
   total += flights;
   rows.push({ key: 'vols', label: 'Vols', count: trip.flights.length, amount: flights });
 
+  // Les trajets terrestres, longtemps absents du total. C'est pourtant le
+  // poste qui manquait le plus : six liaisons en Shinkansen pèsent plus lourd
+  // que toutes les entrées de temples réunies, et le budget annonçait un
+  // voyage moins cher qu'il ne l'est.
+  let legs = 0;
+  for (const leg of trip.legs ?? []) {
+    const euros = toEuros(leg.price, leg.currency ?? 'EUR');
+    if (!euros) blanks += 1;
+    else legs += euros;
+  }
+  total += legs;
+  rows.push({ key: 'trajets', label: 'Trajets', count: (trip.legs ?? []).length, amount: legs });
+
   for (const category of BUDGETED) {
     let amount = 0;
     let count = 0;

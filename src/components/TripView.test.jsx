@@ -127,6 +127,24 @@ const trip = {
       currency: 'EUR',
       stops: null,
     },
+    // Le retour n'est pas un détail du décor : c'est lui qui ferme la fenêtre
+    // du voyage, et c'est sous lui que s'affiche l'un des mots d'amour.
+    {
+      id: 'f2',
+      direction: 'retour',
+      from_code: 'HND',
+      to_code: 'CDG',
+      date: '2026-11-11',
+      dep: '11:45:00',
+      arr: '17:20:00',
+      arrival_offset_days: 0,
+      airline: null,
+      flight_no: 'AF275',
+      ref: null,
+      price: null,
+      currency: 'EUR',
+      stops: null,
+    },
   ],
   legs: [
     {
@@ -181,6 +199,49 @@ describe('TripView', () => {
     expect(html).toContain('trip__mode-group');
     expect(html).toContain('Jour par jour');
     expect(html).toContain('Villes');
+  });
+
+  // --- Les mots d'amour ------------------------------------------------------
+  //
+  // Ils sont écrits pour deux. Un itinéraire envoyé à la famille ne doit pas
+  // les afficher. Le contrôle porte sur les CLASSES et non sur le texte : les
+  // phrases sont tirées au hasard, une assertion sur l'une d'elles ne dirait
+  // rien des six autres.
+  //
+  // Sept textes sont concernés, dans six composants. C'est précisément parce
+  // qu'ils sont dispersés que ce test existe : en ajouter un huitième sans
+  // passer par le contexte rouvrirait la fuite en silence.
+
+  const MOTS = [
+    'trip-header__vow', // le compte à rebours de l'en-tête
+    'hero__line', // les deux lignes du bandeau
+    'hero__sub',
+    'flights__hint', // l'en-tête du panneau des vols
+    'flight__note', // sous le vol retour
+    'love-note', // le proverbe du pied de page
+  ];
+
+  it('affiche les mots d’amour chez soi', () => {
+    const html = render({ readOnly: false });
+    for (const mot of MOTS) expect(html).toContain(mot);
+  });
+
+  it('ne laisse aucun mot d’amour partir dans le lien de partage', () => {
+    const html = render({ readOnly: true, shared: true });
+    for (const mot of MOTS) expect(html).not.toContain(mot);
+  });
+
+  // Le mot doux des temps de trajet SERT de titre : le retirer laisserait le
+  // bloc sans en-tête, donc il est remplacé et non supprimé.
+  it('remplace le titre des temps de trajet au lieu de le retirer', () => {
+    expect(render({ readOnly: true, shared: true })).toContain('Temps de trajet');
+  });
+
+  // Hors ligne dans un train japonais, l'app est en lecture seule et on est
+  // toujours à deux : c'est `shared` qui coupe, pas `readOnly`.
+  it('garde les mots d’amour en lecture seule non partagée', () => {
+    const html = render({ readOnly: true });
+    for (const mot of MOTS) expect(html).toContain(mot);
   });
 
   // Un voyage sans étape, sans vol, sans rien : l'état du premier jour.

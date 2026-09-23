@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { proverbFor, whisperFor } from '@/lib/lovenotes.js';
+import { useLoveNotes } from '@/hooks/useLoveNotes.js';
 import './LoveNote.scss';
 
 // Un mot doux, à deux visages.
@@ -13,6 +14,9 @@ import './LoveNote.scss';
 const LINGER_MS = 7000;
 
 export default function LoveNote({ kind, seed, trigger }) {
+  // Un mot doux est écrit pour deux. En vue partagée, il n'a rien à faire
+  // sous les yeux de qui reçoit le lien.
+  const allowed = useLoveNotes();
   const [shown, setShown] = useState(false);
   const transient = kind !== undefined;
 
@@ -26,6 +30,8 @@ export default function LoveNote({ kind, seed, trigger }) {
     const timer = setTimeout(() => setShown(false), LINGER_MS);
     return () => clearTimeout(timer);
   }, [transient, trigger]);
+
+  if (!allowed) return null;
 
   if (transient) {
     // La place est reservee en permanence, meme vide : sans ca, le mot doux

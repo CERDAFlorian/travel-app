@@ -20,6 +20,7 @@ import StepLink from '@/components/StepLink.jsx';
 import LoveNote from '@/components/LoveNote.jsx';
 import { addStep, moveStep, removeStep, setStepNights } from '@/lib/mutations.js';
 import { resolveItinerary, timelineEntries } from '@/lib/itinerary.js';
+import { LoveNotesProvider } from '@/hooks/useLoveNotes.js';
 import './TripView.scss';
 
 // L'itinéraire, mis en page comme le design.
@@ -138,136 +139,145 @@ export default function TripView({
   }, [view]);
 
   return (
-    <div className="trip">
-      <TripHeader
-        trip={view}
-        back={
-          shared ? (
-            <p className="trip__shared">Vue partagée · lecture seule</p>
-          ) : (
-            <Link className="trip__back" to="/">
-              ← Mes voyages
-            </Link>
-          )
-        }
-      />
-
-      {/* Collante sur mobile : en faisant défiler sept étapes, on garde sous
-          les yeux où l'on en est dans le voyage, et de quoi sauter ailleurs.
-          Sortie de l'en-tête pour ça — voir TripHeader. */}
-      <div className="trip__timeline">
-        <StepTimeline
-          entries={entries}
-          selectedId={selectedStepId}
-          onSelectStep={selectStep}
-          onSelectFlight={showFlights}
+    // LES MOTS D'AMOUR NE PARTENT PAS DANS LE LIEN DE PARTAGE. Ils sont écrits
+    // pour deux ; un itinéraire envoyé à la famille ne doit pas les afficher.
+    // Sept textes sont concernés, dans six composants — d'où un contexte
+    // plutôt que sept props (voir hooks/useLoveNotes.js).
+    //
+    // La coupure se fait sur `shared` et non sur `readOnly` : hors ligne dans
+    // un train japonais, l'app est en lecture seule et on est toujours à deux.
+    <LoveNotesProvider value={!shared}>
+      <div className="trip">
+        <TripHeader
+          trip={view}
+          back={
+            shared ? (
+              <p className="trip__shared">Vue partagée · lecture seule</p>
+            ) : (
+              <Link className="trip__back" to="/">
+                ← Mes voyages
+              </Link>
+            )
+          }
         />
-      </div>
 
-      {/* Ne s'affiche que s'il y a quelque chose à signaler — hors ligne ou
-          synchronisation refusée. */}
-      <div className="trip__strip">
-        <SyncLine
-          isOffline={isOffline}
-          syncError={syncError}
-          lastSync={lastSync}
-          onRefresh={onRefresh}
-          onSignIn={onRequestLogin}
-        />
-      </div>
-
-      <FlightsPanel trip={view} readOnly={readOnly} onChanged={onChanged} />
-
-      {/* La bascule de la colonne de gauche.
-          Elle est COLLÉE au bloc qu'elle commande : beaucoup d'air au-dessus,
-          presque rien en dessous. Centrée entre les deux, elle aurait eu l'air
-          d'appartenir aux vols, ou à rien.
-          Discrète et alignée à gauche : c'est un réglage d'affichage, pas une
-          action du voyage. Elle ne doit pas peser autant que « Ajouter une
-          ville ». */}
-      <div className="trip__mode">
-        <div className="trip__mode-group" role="group" aria-label="Lecture de l'itinéraire">
-          <button
-            type="button"
-            className="trip__mode-btn"
-            data-on={!byDay || undefined}
-            aria-pressed={!byDay}
-            title="L'itinéraire ville par ville"
-            onClick={() => setByDay(false)}
-          >
-            <CitiesIcon />
-            <span className="trip__mode-label">Villes</span>
-          </button>
-
-          <button
-            type="button"
-            className="trip__mode-btn"
-            data-on={byDay || undefined}
-            aria-pressed={byDay}
-            title="Le programme jour par jour"
-            onClick={() => setByDay(true)}
-          >
-            <DaysIcon />
-            <span className="trip__mode-label">Jour par jour</span>
-          </button>
+        {/* Collante sur mobile : en faisant défiler sept étapes, on garde sous
+            les yeux où l'on en est dans le voyage, et de quoi sauter ailleurs.
+            Sortie de l'en-tête pour ça — voir TripHeader. */}
+        <div className="trip__timeline">
+          <StepTimeline
+            entries={entries}
+            selectedId={selectedStepId}
+            onSelectStep={selectStep}
+            onSelectFlight={showFlights}
+          />
         </div>
-      </div>
 
-      <main className="trip__main">
-        <section className="trip__steps">
-          {byDay ? (
-            <TripProgram
-              trip={view}
-              selectedStepId={selectedStepId}
-              onSelectStep={selectStep}
-            />
-          ) : (
-            <StepsColumn
-              view={view}
-              readOnly={readOnly}
-              selectedStepId={selectedStepId}
-              setSelectedStepId={setSelectedStepId}
-              justAddedStep={justAddedStep}
-              itinerary={itinerary}
-              legBetween={legBetween}
-              handleRemoveStep={handleRemoveStep}
-              handleMoveStep={handleMoveStep}
-              handleNights={handleNights}
-              handleAddStep={handleAddStep}
-              onChanged={onChanged}
-            />
-          )}
-        </section>
+        {/* Ne s'affiche que s'il y a quelque chose à signaler — hors ligne ou
+            synchronisation refusée. */}
+        <div className="trip__strip">
+          <SyncLine
+            isOffline={isOffline}
+            syncError={syncError}
+            lastSync={lastSync}
+            onRefresh={onRefresh}
+            onSignIn={onRequestLogin}
+          />
+        </div>
 
-        <aside className="trip__aside">
-          <div className="trip__map-card">
-            <div className="trip__map-head">
-              <h2 className="trip__map-title">La carte du voyage</h2>
-              {/* L'indication « molette pour zoomer » disait ce que tout le
-                  monde essaie de toute façon. La place sert mieux à une
-                  action. */}
-              <LocateAll trip={view} readOnly={readOnly} onChanged={onChanged} />
-            </div>
-            <TripMap trip={view} selectedStepId={selectedStepId} onSelectStep={selectStep} />
-            <TravelTimes steps={view.steps} legs={view.legs} />
+        <FlightsPanel trip={view} readOnly={readOnly} onChanged={onChanged} />
+
+        {/* La bascule de la colonne de gauche.
+            Elle est COLLÉE au bloc qu'elle commande : beaucoup d'air au-dessus,
+            presque rien en dessous. Centrée entre les deux, elle aurait eu l'air
+            d'appartenir aux vols, ou à rien.
+            Discrète et alignée à gauche : c'est un réglage d'affichage, pas une
+            action du voyage. Elle ne doit pas peser autant que « Ajouter une
+            ville ». */}
+        <div className="trip__mode">
+          <div className="trip__mode-group" role="group" aria-label="Lecture de l'itinéraire">
+            <button
+              type="button"
+              className="trip__mode-btn"
+              data-on={!byDay || undefined}
+              aria-pressed={!byDay}
+              title="L'itinéraire ville par ville"
+              onClick={() => setByDay(false)}
+            >
+              <CitiesIcon />
+              <span className="trip__mode-label">Villes</span>
+            </button>
+
+            <button
+              type="button"
+              className="trip__mode-btn"
+              data-on={byDay || undefined}
+              aria-pressed={byDay}
+              title="Le programme jour par jour"
+              onClick={() => setByDay(true)}
+            >
+              <DaysIcon />
+              <span className="trip__mode-label">Jour par jour</span>
+            </button>
           </div>
-        </aside>
-      </main>
+        </div>
 
-      <HeroBanner steps={view.steps} startDate={view.startDate} />
-      <Experiences experiences={view.experiences} />
-      <BudgetPanel trip={view} />
+        <main className="trip__main">
+          <section className="trip__steps">
+            {byDay ? (
+              <TripProgram
+                trip={view}
+                selectedStepId={selectedStepId}
+                onSelectStep={selectStep}
+              />
+            ) : (
+              <StepsColumn
+                view={view}
+                readOnly={readOnly}
+                selectedStepId={selectedStepId}
+                setSelectedStepId={setSelectedStepId}
+                justAddedStep={justAddedStep}
+                itinerary={itinerary}
+                legBetween={legBetween}
+                handleRemoveStep={handleRemoveStep}
+                handleMoveStep={handleMoveStep}
+                handleNights={handleNights}
+                handleAddStep={handleAddStep}
+                onChanged={onChanged}
+              />
+            )}
+          </section>
 
-      {/* Le partage tout en bas : c'est ce qu'on fait une fois l'itinéraire
-          prêt, pas en le préparant. */}
-      <div className="trip__share">
-        <ShareLink trip={view} readOnly={readOnly} onChanged={onChanged} />
+          <aside className="trip__aside">
+            <div className="trip__map-card">
+              <div className="trip__map-head">
+                <h2 className="trip__map-title">La carte du voyage</h2>
+                {/* L'indication « molette pour zoomer » disait ce que tout le
+                    monde essaie de toute façon. La place sert mieux à une
+                    action. */}
+                <LocateAll trip={view} readOnly={readOnly} onChanged={onChanged} />
+              </div>
+              <TripMap trip={view} selectedStepId={selectedStepId} onSelectStep={selectStep} />
+              <TravelTimes steps={view.steps} legs={view.legs} />
+            </div>
+          </aside>
+        </main>
+
+        <HeroBanner steps={view.steps} startDate={view.startDate} />
+        <Experiences experiences={view.experiences} />
+        <BudgetPanel trip={view} />
+
+        {/* Le partage tout en bas : c'est ce qu'on fait une fois l'itinéraire
+            prêt, pas en le préparant. */}
+        <div className="trip__share">
+          <ShareLink trip={view} readOnly={readOnly} onChanged={onChanged} />
+        </div>
+
+        <footer className="trip__foot">
+          <LoveNote seed={trip.id ?? trip.slug} />
+        </footer>
       </div>
-
-      <footer className="trip__foot">
-        <LoveNote seed={trip.id ?? trip.slug} />
-      </footer>
-    </div>
+    </LoveNotesProvider>
   );
 }
 

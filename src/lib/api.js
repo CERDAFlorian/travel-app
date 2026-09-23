@@ -50,7 +50,7 @@ const TRIP_SELECT = `
     )
   ),
   flights ( id, direction, from_code, to_code, stops, date, dep, arr, arrival_offset_days, airline, flight_no, ref, price, currency ),
-  legs ( id, from_step, to_step, mode, duration_min, note, dep, arr ),
+  legs ( id, from_step, to_step, mode, duration_min, note, dep, arr, price, currency ),
   experiences ( id, position, title, description, image, price, currency, url, favorite )
 `;
 

@@ -4,7 +4,7 @@ import { formatEuros } from './currency.js';
 
 const plain = (value) => value?.replace(/[  ]/g, ' ');
 
-const tripWith = ({ flights = [], steps = [] }) => ({ flights, steps });
+const tripWith = ({ flights = [], steps = [], legs = [] }) => ({ flights, steps, legs });
 const item = (category, price, currency = 'JPY') => ({ category, price, currency });
 
 describe('buildBudget', () => {
@@ -33,7 +33,7 @@ describe('buildBudget', () => {
     );
 
     const byKey = Object.fromEntries(budget.rows.map((row) => [row.key, Math.round(row.amount)]));
-    expect(byKey).toEqual({ vols: 890, hotel: 100, activite: 20, lieu: 10 });
+    expect(byKey).toEqual({ vols: 890, trajets: 0, hotel: 100, activite: 20, lieu: 10 });
   });
 
   // Restaurants et shopping se décident sur place : les compter fausserait
@@ -44,7 +44,7 @@ describe('buildBudget', () => {
     );
 
     expect(budget.total).toBe(0);
-    expect(budget.rows.map((row) => row.key)).toEqual(['vols', 'hotel', 'activite', 'lieu']);
+    expect(budget.rows.map((row) => row.key)).toEqual(['vols', 'trajets', 'hotel', 'activite', 'lieu']);
   });
 
   // Un prix absent n'est pas zéro. Le total ne doit pas prétendre être complet
@@ -124,6 +124,49 @@ describe('buildBudget', () => {
       tripWith({ steps: [{ nights: 2, items: [{ ...item('hotel', 16500), id: 'a' }] }] }),
     );
     expect(Math.round(budget.total)).toBe(100);
+  });
+
+  // --- Trajets -------------------------------------------------------------
+  //
+  // Le poste qui manquait : six Shinkansen pèsent plus lourd que toutes les
+  // entrées de temples réunies, et le total annonçait un voyage moins cher
+  // qu'il ne l'est.
+
+  it('compte les trajets entre étapes', () => {
+    const budget = buildBudget(
+      tripWith({
+        flights: [{ price: 890, currency: 'EUR' }],
+        legs: [
+          { price: 110, currency: 'EUR' },
+          { price: 45, currency: 'EUR' },
+        ],
+      }),
+    );
+
+    const byKey = Object.fromEntries(budget.rows.map((row) => [row.key, Math.round(row.amount)]));
+    expect(byKey.trajets).toBe(155);
+    expect(Math.round(budget.total)).toBe(1045);
+  });
+
+  // Un trajet saisi en yens reste comparable : tout est ramené en euros avant
+  // d'être additionné, comme les items.
+  it('ramène un trajet en yens sur la même échelle', () => {
+    const budget = buildBudget(tripWith({ legs: [{ price: 16500, currency: 'JPY' }] }));
+    expect(Math.round(budget.total)).toBe(100);
+  });
+
+  // Un trajet sans prix n'est pas gratuit : il manque au total, et ça se dit.
+  it('signale un trajet sans prix', () => {
+    const budget = buildBudget(tripWith({ legs: [{ price: null, currency: 'EUR' }] }));
+
+    expect(budget.blanks).toBe(1);
+    expect(budget.note).toMatch(/1 ligne encore sans prix/);
+  });
+
+  // Un voyage lu depuis un cache écrit avant cette version n'a pas de `legs`.
+  it('survit à un voyage sans liaisons', () => {
+    const budget = buildBudget({ flights: [], steps: [] });
+    expect(budget.rows.find((row) => row.key === 'trajets').amount).toBe(0);
   });
 
   // Les parts servent à la jauge : elles doivent faire 1, sinon la barre ne

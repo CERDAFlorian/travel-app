@@ -512,7 +512,7 @@ export async function deleteFlight(trip, id) {
 // panneau des temps de trajet, et parce qu'un trajet peut n'avoir qu'une durée
 // connue, sans horaire.
 
-export async function saveLeg({ id, tripId, fromStep, toStep, mode, dep, arr }) {
+export async function saveLeg({ id, tripId, fromStep, toStep, mode, dep, arr, price }) {
   const row = {
     trip_id: tripId,
     from_step: fromStep,
@@ -521,6 +521,10 @@ export async function saveLeg({ id, tripId, fromStep, toStep, mode, dep, arr }) 
     dep: dep || null,
     arr: arr || null,
     duration_min: durationBetween(dep, arr),
+    // Saisi en euros, donc stocké en euros : pas de conversion, pas de dérive.
+    // Même choix que pour les items ajoutés depuis l'app.
+    price: price ?? null,
+    currency: 'EUR',
   };
 
   // Un trajet existe déjà entre ces deux étapes : on le remplace plutôt que
