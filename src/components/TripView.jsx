@@ -163,15 +163,6 @@ export default function TripView({
         />
       </div>
 
-      {/* La lecture qui sert SUR PLACE : on n'est pas « à Kyoto », on est le
-          13 novembre. Elle est en haut parce que c'est la première chose qu'on
-          cherche une fois parti. */}
-      <div className="trip__program">
-        <Link className="trip__program-link" to={`${pathname.replace(/\/$/, '')}/programme`}>
-          Le programme jour par jour →
-        </Link>
-      </div>
-
       {/* Ne s'affiche que s'il y a quelque chose à signaler — hors ligne ou
           synchronisation refusée. */}
       <div className="trip__strip">
