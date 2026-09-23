@@ -6,7 +6,7 @@ import { positionsToUpdate, releasedBy, reorderInDay } from '@/lib/days.js';
 import {
   addDays,
   datesToUpdate,
-  tripEndDate,
+  plannedEndDate,
   reorderSteps,
   tripStartFromFlights,
 } from '@/lib/itinerary.js';
@@ -306,17 +306,27 @@ async function persistItinerary(trip, orderedSteps, startIso = trip.startDate) {
     if (error) fail(error, 'Recalcul des dates');
   }
 
-  // Début et fin sont écrits ENSEMBLE. Le schéma exige `end_date >= start_date` :
-  // avancer le départ avant la fin, en deux requêtes, violerait la contrainte
-  // entre les deux.
-  const end = tripEndDate(startIso, orderedSteps);
-  if (startIso !== trip.startDate || end !== trip.endDate) {
-    const { error } = await supabase
-      .from('trips')
-      .update({ start_date: startIso, end_date: end })
-      .eq('id', trip.id);
-    if (error) fail(error, 'Mise à jour des dates du voyage');
-  }
+  // LA FIN DU VOYAGE N'EST PLUS DÉDUITE DES ÉTAPES.
+  //
+  // Elle l'était, et l'en-tête s'allongeait ville après ville : un séjour posé
+  // du 17 octobre au 5 novembre affichait « du 17 au 20 oct. » après une
+  // première étape. C'était la fenêtre qui suivait le contenu, alors que c'est
+  // le contenu qui doit tenir dans la fenêtre. `trips.end_date` est désormais
+  // une donnée saisie, pas un calcul — seul l'utilisateur la change.
+  //
+  // Le début, lui, reste recalé sur l'arrivée du vol aller : on ne décide pas
+  // de l'heure à laquelle on atterrit.
+  if (startIso === trip.startDate) return;
+
+  // Le schéma exige `end_date >= start_date`. Si le nouveau départ passe
+  // derrière la fin saisie, on la pousse d'autant plutôt que de laisser
+  // l'écriture échouer sur une contrainte — la fenêtre est fausse dans les
+  // deux cas, mais au moins elle reste modifiable depuis l'app.
+  const patch = { start_date: startIso };
+  if (trip.endDate && trip.endDate < startIso) patch.end_date = startIso;
+
+  const { error } = await supabase.from('trips').update(patch).eq('id', trip.id);
+  if (error) fail(error, 'Mise à jour des dates du voyage');
 }
 
 // Recale le début du voyage sur l'arrivée du vol aller, et décale tout
@@ -333,7 +343,7 @@ async function realignTripStart(trip, flights) {
 // Les coordonnées restent NULL — la ville n'apparaîtra sur la carte qu'une
 // fois localisée, et le bouton du rail sert à ça.
 export async function addStep(trip, { name, nights }) {
-  const start = tripEndDate(trip.startDate, trip.steps);
+  const start = plannedEndDate(trip.startDate, trip.steps);
 
   const { data, error } = await supabase
     .from('steps')
@@ -349,11 +359,9 @@ export async function addStep(trip, { name, nights }) {
     .single();
   if (error) fail(error, "Ajout de l'étape");
 
-  const { error: endError } = await supabase
-    .from('trips')
-    .update({ end_date: addDays(start, nights) })
-    .eq('id', trip.id);
-  if (endError) fail(endError, 'Mise à jour de la fin du voyage');
+  // La fin du voyage n'est PAS touchée : ajouter une ville remplit la fenêtre,
+  // il ne la repousse pas. Si le séjour déborde, `nightsGap` le dit — et c'est
+  // à l'utilisateur d'arbitrer, pas à l'app de déplacer sa date de retour.
 
   return data.id;
 }

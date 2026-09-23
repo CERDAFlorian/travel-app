@@ -111,6 +111,7 @@ const files = {
   transport: 'supabase/migrations/0006_trajets.sql',
   days: 'supabase/migrations/0007_journees.sql',
   legPrices: 'supabase/migrations/0008_prix_trajets.sql',
+  loveNotes: 'supabase/migrations/0009_mots_doux.sql',
   seed: 'supabase/seed.sql',
 };
 

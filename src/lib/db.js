@@ -85,6 +85,23 @@ export async function writeTripList(trips, savedAt) {
   await run(STORE_META, 'readwrite', (store) => store.put({ key: LIST_KEY, trips, savedAt }));
 }
 
+// Vide le cache entier.
+//
+// POURQUOI C'EST NÉCESSAIRE. `useCached` rend IndexedDB avant le réseau et sans
+// se soucier de qui est connecté — c'est ce qui fait tenir le hors-ligne, et ça
+// ne changera pas. Mais le cache est indexé par slug, pas par utilisateur :
+// deux comptes sur le même navigateur lisent le même stock. Sans effacement, la
+// personne qui se connecte après une autre voit les voyages de la précédente,
+// jusqu'à ce que le réseau réponde — et le DÉTAIL d'un voyage qui ne lui
+// appartient pas la renvoie à la liste, puisque le serveur ne lui rend rien.
+//
+// RLS n'était pas en cause : le serveur n'a jamais rien laissé fuir. C'est
+// l'écran qui montrait un reste.
+export async function clearCache() {
+  await run(STORE_TRIPS, 'readwrite', (store) => store.clear());
+  await run(STORE_META, 'readwrite', (store) => store.clear());
+}
+
 // Sans ça, le navigateur peut évincer IndexedDB quand l'espace manque, sans
 // prévenir. C'est précisément ce qu'il ne faut pas pour une app dont tout
 // l'intérêt est d'avoir la donnée le jour où il n'y a pas de réseau.

@@ -18,7 +18,9 @@ automatiquement : ni le repo, ni la CI, ni le déploiement ne parlent à Supabas
 | 6 | `migrations/0006_trajets.sql` | horaires des trajets entre étapes | oui |
 | 7 | `migrations/0007_journees.sql` | le programme jour par jour ; une étape a au moins une nuit | oui |
 | 8 | `migrations/0008_prix_trajets.sql` | prix des trajets entre étapes | oui |
-| 9 | `seed.sql` | le voyage Japon | oui, **il écrase le voyage `japon-2026`** |
+| 9 | `migrations/0009_mots_doux.sql` | les mots d'amour deviennent une option du voyage | oui |
+| 10 | `seed.sql` | le voyage Japon de novembre | oui, **il écrase `japon-2026`** — garde-fou en tête de fichier |
+| 11 | `seed-japon-octobre.sql` | le voyage Japon d'octobre, second compte | oui, **il écrase `japon-octobre-2026`** |
 
 ## Deux bases : dev et prod
 
@@ -188,6 +190,82 @@ from public.trips t, auth.users u
 where t.slug = 'japon-2026' and u.email = 'adresse@exemple.fr';
 ```
 
+## Plusieurs personnes, plusieurs voyages
+
+L'app est multi-voyages et **RLS isole chacun** : on ne voit que les voyages
+dont on est membre. Deux personnes peuvent préparer deux séjours dans la même
+base sans jamais se croiser.
+
+Ce qui n'existe pas encore : **aucune interface pour créer un compte ou un
+voyage.** C'est assumé — le formulaire viendra avec le créateur d'itinéraires.
+En attendant, les deux gestes sont manuels.
+
+### 1. Le compte
+
+Dashboard → **Authentication** → **Users** → **Add user** → *Create new user*,
+avec un mot de passe et **« Auto Confirm User » coché**. L'app se connecte par
+mot de passe (`signInWithPassword`), pas par lien magique : sans confirmation,
+le compte ne passe pas.
+
+Le mot de passe ne vit que là. Il n'a rien à faire dans ce dépôt.
+
+### 2. Le voyage
+
+Soit un fichier dédié — `seed-japon-octobre.sql` en est l'exemple —, soit
+directement :
+
+```sql
+insert into public.trips (slug, title, subtitle, start_date, end_date, theme, love_notes)
+values ('son-voyage-2027', 'Portugal', 'Itinéraire jour par jour',
+        '2027-04-10', '2027-04-20', 'neutral', false);
+```
+
+`love_notes = false` sur tout voyage qui n'est pas le vôtre : les mots d'amour
+sont écrits pour deux personnes précises, ils feraient une intrusion ailleurs.
+
+Le trigger `trips_claim_creator` ne fait **rien** ici : `auth.uid()` est `NULL`
+depuis l'éditeur SQL, et il a été écrit pour ne pas fabriquer de membre
+fantôme. L'appartenance est donc à poser à la main, juste en dessous.
+
+### 3. Le rattachement
+
+```sql
+insert into public.trip_members (trip_id, user_id, role)
+select t.id, u.id, 'owner'
+from public.trips t, auth.users u
+where t.slug = 'son-voyage-2027' and u.email = 'adresse@exemple.fr';
+```
+
+`owner` pour la personne dont c'est le voyage — elle gère ses membres et peut
+le supprimer. `editor` pour quelqu'un qui écrit sans décider, `viewer` pour la
+lecture seule.
+
+**Vérifier que la ligne existe** : sans elle, RLS rend le voyage invisible à
+tout le monde, y compris à toi, et l'app affiche une page vide sans la moindre
+erreur.
+
+```sql
+select t.slug, u.email, tm.role
+from public.trip_members tm
+join public.trips t on t.id = tm.trip_id
+join auth.users u on u.id = tm.user_id
+order by t.slug;
+```
+
+### Les mots d'amour
+
+`trips.love_notes` — un drapeau **par voyage**, pas par compte : c'est le
+voyage qui est un voyage de noces, pas la personne qui le regarde.
+
+```sql
+update public.trips set love_notes = false where slug = 'japon-octobre-2026';
+```
+
+Sept textes en dépendent, dans six composants : le compte à rebours de
+l'en-tête, les deux lignes du bandeau, le titre des temps de trajet, l'en-tête
+du panneau des vols, la note sous le vol retour, le proverbe du pied de page.
+Ils sont coupés **aussi** en vue partagée, quel que soit ce drapeau.
+
 ## Changer l'adresse d'un utilisateur
 
 **L'`id` du compte ne change pas**, donc `trip_members` reste valide et les
@@ -239,7 +317,11 @@ que la personne y a accès avant de basculer.
 
 ## Reset
 
-**Reseeder le voyage** — relancer `seed.sql`. Le `delete from public.trips
+**Reseeder le voyage** — relancer `seed.sql`, après avoir décommenté la ligne
+`create temporary table oui_je_reseede_japon_2026` en tête de fichier. Sans
+elle, le fichier refuse de tourner : il efface la préparation réelle et
+rattache tous les comptes de la base, ce qui n'a plus de sens depuis qu'un
+troisième compte existe. Le `delete from public.trips
 where slug = 'japon-2026'` en tête de fichier emporte en cascade étapes, items,
 liaisons, vols, expériences et appartenances. Tout ce qui a été saisi depuis
 l'app sur ce voyage disparaît. C'est voulu : le seed est une remise à zéro, pas

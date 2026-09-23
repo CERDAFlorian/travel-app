@@ -40,7 +40,7 @@ export async function fetchTrips() {
 }
 
 const TRIP_SELECT = `
-  id, slug, title, subtitle, start_date, end_date, theme, share_token,
+  id, slug, title, subtitle, start_date, end_date, theme, love_notes, share_token,
   steps (
     id, position, name, date_start, date_end, nights, lat, lng, images,
     items (
@@ -71,6 +71,11 @@ function normalizeTrip(data) {
     theme: data.theme,
     title: data.title,
     subtitle: data.subtitle,
+    // Absent d'une charge utile écrite avant 0009 — un cache IndexedDB plus
+    // vieux que la migration, typiquement. On retombe alors sur `true`, qui
+    // est le défaut du schéma : mieux vaut un mot doux de trop chez soi qu'un
+    // voyage qui perd son caractère après une mise à jour.
+    loveNotes: data.love_notes ?? true,
     startDate: data.start_date,
     endDate: data.end_date,
     shareToken: data.share_token ?? null,

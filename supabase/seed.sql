@@ -18,6 +18,30 @@
 begin;
 
 -- ---------------------------------------------------------------------------
+-- GARDE-FOU — à lire avant de lancer
+-- ---------------------------------------------------------------------------
+--
+-- Ce fichier EFFACE le voyage 'japon-2026' et tout ce qui y a été saisi depuis
+-- l'app, puis rattache TOUS les comptes présents dans auth.users comme
+-- propriétaires. C'était sans conséquence à deux utilisateurs légitimes sur une
+-- base vide. Ça ne l'est plus : la base porte la préparation réelle, et un
+-- troisième compte existe pour un autre voyage — le rejouer lui donnerait ce
+-- voyage-ci en propriété.
+--
+-- Pour l'exécuter, DÉCOMMENTER la ligne ci-dessous. Une ligne à décommenter
+-- vaut mieux qu'un avertissement en commentaire : on ne colle pas un fichier
+-- de 200 lignes par accident, mais on ne lit pas son en-tête non plus.
+--
+-- create temporary table oui_je_reseede_japon_2026 as select 1;
+
+do $$
+begin
+  if to_regclass('pg_temp.oui_je_reseede_japon_2026') is null then
+    raise exception E'seed.sql est un effacement, pas une mise a jour.\n\nIl supprime le voyage japon-2026 (etapes, items, trajets, vols, programme) et rattache TOUS les comptes de auth.users comme proprietaires.\n\nSi c''est bien ce que tu veux, decommente la ligne « create temporary table oui_je_reseede_japon_2026 » en tete de fichier, puis relance.';
+  end if;
+end $$;
+
+-- ---------------------------------------------------------------------------
 -- Voyage
 -- ---------------------------------------------------------------------------
 
@@ -157,9 +181,17 @@ insert into public.experiences (trip_id, "position", title, description, image, 
 -- Appartenance
 --
 -- Sans ligne ici, RLS rend le voyage invisible à tout le monde et l'app affiche
--- une page vide. Tous les comptes existants deviennent owner : l'app a deux
--- utilisateurs, tous deux légitimes sur ce voyage. Si un jour ce n'est plus
--- vrai, remplacer ce bloc par un INSERT nommant les user_id voulus.
+-- une page vide.
+--
+-- TOUS les comptes existants deviennent owner. Ça se tenait quand l'app n'avait
+-- que deux utilisateurs, tous deux légitimes sur ce voyage. Depuis qu'un
+-- troisième compte existe pour un autre séjour, c'est faux — et c'est la raison
+-- du garde-fou en tête de fichier.
+--
+-- Sur une base de DEV, ce raccourci reste commode : on veut voir la donnée,
+-- peu importe avec quel compte on se connecte. Sur la prod, ce fichier n'a plus
+-- à tourner du tout ; l'appartenance s'y pose à la main, par adresse
+-- (voir supabase/README.md, « Rattacher quelqu'un après coup »).
 -- ---------------------------------------------------------------------------
 
 insert into public.trip_members (trip_id, user_id, role)
