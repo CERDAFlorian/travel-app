@@ -136,16 +136,39 @@ export async function unsealHotel(id) {
 // En fin et pas en tête : on ajoute ce qu'on vient de décider à la suite de ce
 // qui est déjà prévu. Le rang se calcule sur le jour visé, pas sur l'étape —
 // deux jours ont chacun leur numérotation.
-export async function placeItem(step, id, dayOffset) {
+export async function placeItem(step, id, dayOffset, slot = null) {
+  // Le rang se compte dans le MOMENT, pas dans la journée : chaque moment a sa
+  // propre numérotation, et c'est ce qui permet de réordonner une soirée sans
+  // renuméroter la matinée.
   const last = (step.items ?? [])
-    .filter((item) => item.day_offset === dayOffset)
+    .filter((item) => item.day_offset === dayOffset && (item.day_slot ?? null) === slot)
     .reduce((max, item) => Math.max(max, item.day_position ?? 0), 0);
 
   const { error } = await supabase
     .from('items')
-    .update({ day_offset: dayOffset, day_position: last + 1 })
+    .update({ day_offset: dayOffset, day_slot: slot, day_position: last + 1 })
     .eq('id', id);
   if (error) fail(error, "Placement de l'item");
+}
+
+// L'heure ferme : un musée, une visite guidée, une table réservée.
+//
+// Elle n'ordonne rien (voir scheduleOf) : elle s'affiche. Vide vaut NULL —
+// « pas d'heure » et « minuit » ne sont pas la même chose.
+export async function setStartTime(id, time) {
+  const { error } = await supabase
+    .from('items')
+    .update({ start_time: time || null })
+    .eq('id', id);
+  if (error) fail(error, "Enregistrement de l'heure");
+}
+
+// `booked` ne servait qu'à sceller un logement (voir sealHotel). Il vaut pour
+// tout ce qui est retenu d'avance : le billet de sumo, l'atelier matcha, la
+// table du kaiseki. Sur un hôtel, passer par sealHotel — lui fait le ménage.
+export async function setBooked(id, booked) {
+  const { error } = await supabase.from('items').update({ booked }).eq('id', id);
+  if (error) fail(error, 'Mise à jour de la réservation');
 }
 
 // Renvoie un item en réserve. Il reste dans sa catégorie, avec son prix et ses
@@ -181,11 +204,11 @@ export async function moveItemInDay(items, itemId, delta) {
 // de L9). Manger deux fois à Dōtonbori fait deux lignes, et c'est défendable :
 // ce sont deux sorties, deux budgets. Encore faut-il que la deuxième ne se
 // resaisisse pas à la main, d'où cette copie complète.
-export async function duplicateItemOnDay(step, item, dayOffset) {
+export async function duplicateItemOnDay(step, item, dayOffset, slot = null) {
   const position =
     (step.items ?? []).reduce((max, current) => Math.max(max, current.position ?? 0), 0) + 1;
   const last = (step.items ?? [])
-    .filter((other) => other.day_offset === dayOffset)
+    .filter((other) => other.day_offset === dayOffset && (other.day_slot ?? null) === slot)
     .reduce((max, other) => Math.max(max, other.day_position ?? 0), 0);
 
   const { data, error } = await supabase
@@ -207,7 +230,10 @@ export async function duplicateItemOnDay(step, item, dayOffset) {
       geocoded_at: item.geocoded_at,
       position,
       day_offset: dayOffset,
+      day_slot: slot,
       day_position: last + 1,
+      // L'heure ne suit pas : la visite guidée de 10h ne se refait pas à 10h
+      // un autre jour, c'est justement ce qu'on vient recaler.
       // Ni l'étoile ni la réservation ne se copient : la mise en avant vaut
       // pour un lieu, pas pour chacun de ses passages, et une table réservée
       // le lundi ne l'est pas le jeudi.

@@ -1235,10 +1235,12 @@ ne coûte rien.
 
 | Feature | Ce qu'on gagne | SQL | Effort |
 |---|---|---|---|
-| **F1 · L'hôtel retenu** | Comparer trois hôtels sans fausser le budget, puis sceller le choix | aucun | 0,5 j |
-| **F2 · Poser un item sur un jour** | Le programme existe : chaque activité a son jour | `0007_journees.sql` | 1,5 j |
-| **F3 · Les moments et les heures fermes** | La journée se lit : matin, midi, après-midi, soir — et ce qui est réservé saute aux yeux | aucun | 1 j |
+| ~~**F1 · L'hôtel retenu**~~ | ✅ Comparer trois hôtels sans fausser le budget, puis sceller le choix | aucun | fait |
+| ~~**F2 · Poser un item sur un jour**~~ | ✅ Le programme existe : chaque activité a son jour | `0007_journees.sql` | fait |
+| ~~**F3 · Les moments et les heures fermes**~~ | ✅ La journée se lit, et ce qui est réservé saute aux yeux | aucun | fait |
 | **F4 · La vue Programme** | Le voyage entier jour par jour : ce qui sert sur place | aucun | 1 j |
+
+**F1, F2 et F3 sont livrées** (22 septembre 2026). Reste F4.
 
 **L'ordre est imposé.** F1 d'abord : elle ne touche pas au schéma, corrige deux
 bugs vivants, et surtout **fixe le sens de l'étoile**, dont F2 et F3 dépendent

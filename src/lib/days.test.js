@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  SLOTS,
   daysOf,
   positionsToUpdate,
   releasedBy,
@@ -98,6 +99,98 @@ describe('scheduleOf', () => {
   it('laisse les items en réserve hors du programme', () => {
     const step = kyoto([item('un jour peut-être'), item('posé', { day_offset: 3 })]);
     expect(scheduleOf(step).flatMap((day) => day.items).map((i) => i.id)).toEqual(['posé']);
+  });
+});
+
+describe('scheduleOf — les moments', () => {
+  const groupsOf = (day) =>
+    Object.fromEntries(day.groups.map((group) => [group.key ?? 'null', group.items.map((i) => i.id)]));
+
+  // L'ordre de la journée : la journée entière d'abord — c'est un bandeau,
+  // pas un créneau —, puis matin, midi, après-midi, soir.
+  it('ordonne la journée par moment', () => {
+    const step = kyoto([
+      item('soir', { day_offset: 0, day_slot: 'soir' }),
+      item('matin', { day_offset: 0, day_slot: 'matin' }),
+      item('journee', { day_offset: 0, day_slot: 'journee' }),
+      item('aprem', { day_offset: 0, day_slot: 'apres-midi' }),
+      item('midi', { day_offset: 0, day_slot: 'midi' }),
+    ]);
+
+    expect(scheduleOf(step)[0].items.map((i) => i.id)).toEqual([
+      'journee',
+      'matin',
+      'midi',
+      'aprem',
+      'soir',
+    ]);
+  });
+
+  it('range chaque item dans son groupe', () => {
+    const step = kyoto([
+      item('fushimi', { day_offset: 0, day_slot: 'matin' }),
+      item('nishiki', { day_offset: 0, day_slot: 'midi' }),
+      item('kaiseki', { day_offset: 0, day_slot: 'soir' }),
+    ]);
+
+    expect(groupsOf(scheduleOf(step)[0])).toEqual({
+      journee: [],
+      matin: ['fushimi'],
+      midi: ['nishiki'],
+      'apres-midi': [],
+      soir: ['kaiseki'],
+      null: [],
+    });
+  });
+
+  // Tous les moments sont rendus, vides compris : c'est la vue qui décide
+  // lesquels afficher.
+  it('rend tous les groupes même vides', () => {
+    const day = scheduleOf(kyoto())[0];
+    expect(day.groups.map((group) => group.key)).toEqual([
+      ...SLOTS.map((slot) => slot.key),
+      null,
+    ]);
+  });
+
+  // Un item posé avant l'existence des moments ne doit pas atterrir dans un
+  // moment arbitraire : il reste à caler, visible.
+  it('garde les items sans moment dans leur propre groupe', () => {
+    const step = kyoto([item('orphelin', { day_offset: 0 })]);
+    const day = scheduleOf(step)[0];
+
+    expect(groupsOf(day).null).toEqual(['orphelin']);
+    // Et il passe en dernier dans l'ordre du jour.
+    expect(day.items.map((i) => i.id)).toEqual(['orphelin']);
+  });
+
+  it('place les sans-moment après les moments connus', () => {
+    const step = kyoto([
+      item('a caler', { day_offset: 0 }),
+      item('soir', { day_offset: 0, day_slot: 'soir' }),
+    ]);
+    expect(scheduleOf(step)[0].items.map((i) => i.id)).toEqual(['soir', 'a caler']);
+  });
+
+  // L'HEURE NE TRIE PAS. On lit l'heure, on ne s'y soumet pas : sinon saisir
+  // « 9h » sur la dernière ligne la ferait sauter en tête sous les doigts.
+  it('ne laisse pas start_time commander l’ordre', () => {
+    const step = kyoto([
+      item('premier', { day_offset: 0, day_slot: 'matin', day_position: 1, start_time: '11:00' }),
+      item('second', { day_offset: 0, day_slot: 'matin', day_position: 2, start_time: '09:00' }),
+    ]);
+
+    expect(scheduleOf(step)[0].items.map((i) => i.id)).toEqual(['premier', 'second']);
+  });
+
+  // Deux items au même rang dans le même moment : départagés par l'ordre de
+  // saisie, jamais par le hasard de la réponse.
+  it('départage deux items du même moment', () => {
+    const step = kyoto([
+      item('second', { day_offset: 0, day_slot: 'soir', position: 2 }),
+      item('premier', { day_offset: 0, day_slot: 'soir', position: 1 }),
+    ]);
+    expect(scheduleOf(step)[0].items.map((i) => i.id)).toEqual(['premier', 'second']);
   });
 });
 

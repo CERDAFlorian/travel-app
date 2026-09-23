@@ -68,17 +68,80 @@
     font-style: italic;
   }
 
+  &__slots {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+// Un moment de la journée. L'étiquette est en marge à gauche dès qu'il y a la
+// place : la journée se lit alors comme une colonne d'heures, et les lignes
+// restent alignées entre les moments.
+.slot {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0 var(--sp-3);
+  padding: 4px var(--sp-3);
+
+  & + & { border-top: 1px dotted var(--border-soft); }
+
+  // La journée entière n'est pas un créneau : c'est un bandeau qui annonce
+  // que le jour est pris.
+  &[data-full] {
+    background: var(--accent-soft);
+    border-bottom: 1px solid var(--border-soft);
+  }
+
+  // Les items posés avant qu'on ait choisi un moment. Le pointillé dit qu'il
+  // reste un geste à faire.
+  &[data-loose] {
+    border-top: 1px dashed var(--border-strong);
+    background: var(--surface-sunken);
+  }
+
+  &__name {
+    margin: 0;
+    padding-top: 3px;
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+
+    [data-full] > & { color: var(--accent-deep); }
+    // Un moment vide s'efface, mais reste lisible : c'est une place à prendre.
+    [data-empty] > & { opacity: 0.55; }
+  }
+
+  &__empty {
+    margin: 0;
+    color: var(--border-strong);
+    font-size: var(--fs-sm);
+  }
+
   &__items {
     margin: 0;
     padding: 0;
     list-style: none;
   }
+
+  @media (min-width: 560px) {
+    grid-template-columns: 92px 1fr;
+    align-items: start;
+  }
 }
 
 .planned {
-  padding: 5px var(--sp-3);
+  padding: 4px 0;
 
   & + & { border-top: 1px solid var(--border-soft); }
+
+  // Réservé : la ligne qu'on ne peut pas rater porte un filet d'accent.
+  &[data-booked] {
+    margin-left: -8px;
+    padding-left: 6px;
+    border-left: 2px solid var(--ok);
+  }
 
   // La distance au précédent, au-dessus de la ligne : elle appartient à
   // l'intervalle entre deux activités, pas à celle qui suit.
@@ -155,6 +218,59 @@
     flex: none;
     align-items: center;
     gap: 4px;
+  }
+
+  // L'heure ferme, en tête de ligne. Absente, le « +h » reste discret : la
+  // plupart des activités n'ont pas d'heure, et l'inviter partout donnerait
+  // une colonne de boutons pour rien.
+  &__time {
+    flex: none;
+    min-width: 40px;
+    min-height: var(--hit-dense);
+    padding: 0 5px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--border-strong);
+    font: inherit;
+    font-size: var(--fs-xs);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    cursor: pointer;
+
+    &[data-on] {
+      color: var(--accent-deep);
+      font-weight: 600;
+    }
+
+    &:hover:not(:disabled) { border-color: var(--border-strong); }
+    &:focus-visible { @include mixins.focus-ring; }
+    &:disabled { opacity: 0.5; cursor: progress; }
+  }
+
+  &__booked {
+    flex: none;
+    min-height: var(--hit-dense);
+    padding: 0 7px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-pill);
+    background: none;
+    color: var(--border-strong);
+    font: inherit;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &[data-on] {
+      border-color: var(--ok);
+      color: var(--ok);
+    }
+
+    &:hover:not(:disabled):not([data-on]) { border-color: var(--border-strong); }
+    &:focus-visible { @include mixins.focus-ring; }
+    &:disabled { opacity: 0.5; cursor: progress; }
   }
 
   // Commandes d'organisation : discrètes au repos, elles ne doivent pas
@@ -253,4 +369,75 @@
     &:focus-visible { @include mixins.focus-ring; }
     &:disabled { opacity: 0.5; cursor: progress; }
   }
+}
+
+// Saisie d'une heure ferme, sous la ligne — comme le sélecteur de jour.
+.timefield {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: 6px;
+  padding: 6px 8px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+
+  &__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+
+    input {
+      padding: 2px 6px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text);
+      font: inherit;
+      font-size: var(--fs-sm);
+      font-variant-numeric: tabular-nums;
+      text-transform: none;
+
+      &:focus-visible { @include mixins.focus-ring; }
+    }
+  }
+
+  &__save {
+    min-height: var(--hit-dense);
+    padding: 1px 10px;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-pill);
+    background: none;
+    color: var(--accent);
+    font: inherit;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+
+    &:hover:not(:disabled) { background: var(--accent-soft); }
+    &:focus-visible { @include mixins.focus-ring; }
+    &:disabled { opacity: 0.5; cursor: progress; }
+  }
+
+  &__clear,
+  &__cancel {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: var(--fs-xs);
+    text-decoration: underline;
+    cursor: pointer;
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  &__cancel { margin-left: auto; }
 }

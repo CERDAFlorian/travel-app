@@ -15,6 +15,36 @@
 import { addDays } from './itinerary.js';
 import { categoryOf } from './categories.js';
 
+// Les moments d'une journée.
+//
+// DES MOMENTS, PAS UNE GRILLE HORAIRE. Personne ne tient un créneau de 14h15 à
+// Arashiyama : une journée se pense en « le matin Fushimi, le soir un kaiseki ».
+// Quatre moments se remplissent en trois clics là où un emploi du temps à
+// l'heure resterait vide, et se lisent d'un coup d'œil sur place.
+//
+// `journee` n'est pas un moment mais un mode : Kōyasan, c'est 2h30 de trajet,
+// ça mange la journée. Il se pose donc en tête et se lit comme un bandeau —
+// on doit voir que rien d'autre ne tiendra ce jour-là.
+export const SLOTS = [
+  { key: 'journee', label: 'Journée entière', full: true },
+  { key: 'matin', label: 'Matin' },
+  { key: 'midi', label: 'Midi' },
+  { key: 'apres-midi', label: 'Après-midi' },
+  { key: 'soir', label: 'Soir' },
+];
+
+// Un item posé avant que les moments n'existent, ou placé sans en choisir un.
+// Il ne disparaît pas dans un moment arbitraire : il reste visible en pied de
+// journée, à caler. Se vide tout seul à mesure qu'on range.
+export const UNSLOTTED = { key: null, label: 'À caler' };
+
+const SLOT_RANK = new Map(SLOTS.map((slot, index) => [slot.key, index]));
+const rankOf = (item) => SLOT_RANK.get(item.day_slot) ?? SLOTS.length;
+
+export function slotLabel(key) {
+  return (SLOTS.find((slot) => slot.key === key) ?? UNSLOTTED).label;
+}
+
 // Les jours d'une étape, dans l'ordre.
 export function daysOf(step, { isLast = false } = {}) {
   const nights = step.nights ?? 0;
@@ -36,11 +66,16 @@ function dayCount(nights, isLast) {
   return Math.max(0, nights) + (isLast ? 1 : 0);
 }
 
-// Le programme de l'étape : chaque jour avec ses items, dans l'ordre.
+// Le programme de l'étape : chaque jour, ses moments, et leurs items.
 //
-// L'ordre vient de `day_position`, départagé par `position` — l'ordre de
-// saisie — pour que deux items jamais réordonnés ne s'échangent pas d'un
-// rendu à l'autre.
+// L'ORDRE VIENT DU MOMENT, PUIS DE `day_position`. Surtout pas de
+// `start_time` : une heure saisie sur une ligne ne doit pas réarranger la
+// journée sous les doigts. On lit l'heure, on ne s'y soumet pas — et l'ordre
+// reste celui qu'on a posé soi-même.
+//
+// `position` départage en dernier ressort, pour que deux items jamais
+// réordonnés — qui valent 0 tous les deux — ne s'échangent pas d'un rendu à
+// l'autre au gré de la réponse du serveur.
 export function scheduleOf(step, { isLast = false } = {}) {
   const days = daysOf(step, { isLast });
   const byDay = new Map(days.map((day) => [day.offset, []]));
@@ -50,14 +85,26 @@ export function scheduleOf(step, { isLast = false } = {}) {
     byDay.get(item.day_offset)?.push(item);
   }
 
-  for (const items of byDay.values()) {
-    items.sort(
+  return days.map((day) => {
+    const items = (byDay.get(day.offset) ?? []).sort(
       (a, b) =>
-        (a.day_position ?? 0) - (b.day_position ?? 0) || (a.position ?? 0) - (b.position ?? 0),
+        rankOf(a) - rankOf(b) ||
+        (a.day_position ?? 0) - (b.day_position ?? 0) ||
+        (a.position ?? 0) - (b.position ?? 0),
     );
-  }
 
-  return days.map((day) => ({ ...day, items: byDay.get(day.offset) }));
+    // Tous les moments sont rendus, vides compris : un trou dans une journée
+    // est une information, et c'est là qu'on pose la suite. C'est la vue qui
+    // décide de masquer `journee` et `à caler` quand ils n'ont rien — eux ne
+    // sont pas des moments de la journée, ils n'ont pas à occuper une ligne
+    // pour dire qu'ils sont vides.
+    const groups = [...SLOTS, UNSLOTTED].map((slot) => ({
+      ...slot,
+      items: items.filter((item) => (item.day_slot ?? null) === slot.key),
+    }));
+
+    return { ...day, items, groups };
+  });
 }
 
 // La réserve : ce qu'on veut faire dans cette ville sans avoir dit quand.

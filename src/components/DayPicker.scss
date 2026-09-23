@@ -45,16 +45,39 @@
       color: var(--accent);
     }
 
-    // Le jour courant : visible, mais inerte.
+    // Le créneau actuel : marqué, mais toujours choisissable — on vient
+    // souvent ici pour changer le moment sans changer le jour.
     &[data-on] {
       border-color: var(--accent);
       background: var(--accent-soft);
       color: var(--accent-deep);
-      cursor: default;
+    }
+
+    // La journée entière n'est pas un moment mais un mode : elle prend toute
+    // la ligne pour qu'on ne la coche pas en croyant choisir un créneau.
+    &[data-full] {
+      flex-basis: 100%;
+      justify-content: center;
+      border-style: dashed;
     }
 
     &:focus-visible { @include mixins.focus-ring; }
-    &:disabled:not([data-on]) { opacity: 0.5; cursor: progress; }
+    &:disabled { opacity: 0.5; cursor: progress; }
+  }
+
+  &__back {
+    flex: none;
+    min-width: var(--hit-dense);
+    min-height: var(--hit-dense);
+    padding: 0 4px;
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    cursor: pointer;
+
+    &:hover:not(:disabled) { color: var(--accent); }
+    &:focus-visible { @include mixins.focus-ring; }
   }
 
   &__cancel {
