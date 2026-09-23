@@ -18,3 +18,22 @@ if (missing.length > 0) {
 }
 
 export const supabase = createClient(url, anonKey);
+
+// QUELLE BASE ? En développement seulement.
+//
+// Deux projets Supabase coexistent : dev et prod. Rien à l'écran ne dit lequel
+// on lit, et se tromper de base est exactement l'accident contre lequel cette
+// séparation existe — appliquer une migration, rejouer un seed, effacer une
+// étape en croyant être ailleurs. Le ref du projet s'affiche donc une fois au
+// démarrage, dans la console.
+//
+// En production le message ne sort pas : il n'apprendrait rien et exposerait
+// le ref à qui ouvre les outils de développement.
+if (import.meta.env.DEV) {
+  try {
+    console.info(`[supabase] base « ${new URL(url).hostname.split('.')[0]} »`);
+  } catch {
+    // Une URL mal formée fera échouer le premier appel avec un message clair.
+    // Ce n'est pas à ce repère de faire tomber le démarrage.
+  }
+}

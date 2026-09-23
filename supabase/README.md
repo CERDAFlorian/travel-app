@@ -1,7 +1,12 @@
 # Supabase — schéma, RLS, seed
 
-Trois fichiers, à exécuter **dans cet ordre**. Rien n'est appliqué
+Neuf fichiers, à exécuter **dans cet ordre**. Rien n'est appliqué
 automatiquement : ni le repo, ni la CI, ni le déploiement ne parlent à Supabase.
+
+> **Deux bases depuis le 23 septembre 2026.** Toute migration se pose d'abord
+> sur **dev**, puis sur **prod**. Voir la section suivante — et, en cas de
+> doute sur la base qu'on regarde, `npm run dev` affiche son ref dans la
+> console du navigateur.
 
 | Ordre | Fichier | Contenu | Rejouable ? |
 |---|---|---|---|
@@ -11,7 +16,100 @@ automatiquement : ni le repo, ni la CI, ni le déploiement ne parlent à Supabas
 | 4 | `migrations/0004_vols.sql` | ouvre la direction « interieur » sur les vols | oui |
 | 5 | `migrations/0005_escales.sql` | escales et jour d'arrivée des vols | oui |
 | 6 | `migrations/0006_trajets.sql` | horaires des trajets entre étapes | oui |
-| 7 | `seed.sql` | le voyage Japon | oui, **il écrase le voyage `japon-2026`** |
+| 7 | `migrations/0007_journees.sql` | le programme jour par jour ; une étape a au moins une nuit | oui |
+| 8 | `migrations/0008_prix_trajets.sql` | prix des trajets entre étapes | oui |
+| 9 | `seed.sql` | le voyage Japon | oui, **il écrase le voyage `japon-2026`** |
+
+## Deux bases : dev et prod
+
+Une seule base servait tout : `.env.local` et le déploiement pointaient le même
+projet. Toute migration, tout seed, toute suppression s'appliquait donc à la
+base que l'app déployée lit — et `seed.sql` s'ouvre sur un
+`delete from public.trips`, qui emporte la préparation réelle en cascade.
+
+Tant que la base était vide il n'y avait rien à perdre. Ça a cessé d'être vrai
+le jour où le vrai programme a été saisi.
+
+| | Dev | Prod |
+|---|---|---|
+| Sert à | essayer, casser, recommencer | le voyage réel, l'app déployée |
+| Configurée dans | `.env.local`, gitignoré | secrets GitHub du dépôt |
+| Qui l'écrit | `npm run dev` en local | l'image Docker déployée sur Coolify |
+| On peut y rejouer `seed.sql` | oui, c'est fait pour | **non**, il efface tout |
+
+**Aucun identifiant n'est commité.** `.env.example` ne contient que des
+placeholders, `.env.local` est gitignoré, et les valeurs de prod ne vivent que
+dans les secrets GitHub.
+
+### Monter la base de dev
+
+1. <https://supabase.com/dashboard> → **New project**. Le plan gratuit en
+   autorise deux : c'est exactement ce qu'il faut, et ça ne coûte rien.
+2. Le schéma d'un coup, plutôt que neuf copier-coller :
+
+   ```sh
+   npm run sql:bundle | pbcopy     # macOS : directement dans le presse-papier
+   npm run sql:bundle > /tmp/schema.sql
+   ```
+
+   SQL Editor → coller → **Run**. Chaque migration garde son `begin`/`commit` :
+   si l'une échoue, les précédentes restent posées et on reprend à celle qui a
+   cassé. **Le seed n'en fait pas partie** — on ne mélange pas un geste
+   destructeur avec la construction du schéma.
+3. Créer au moins un compte : **Authentication → Users → Add user**, en cochant
+   *auto confirm*. Sans ligne dans `auth.users`, le seed pose la donnée mais
+   personne ne la voit (voir l'étape 3 plus bas).
+4. `seed.sql` dans le SQL Editor.
+5. **Project Settings → API** : recopier l'URL et la clé publishable dans
+   `.env.local`.
+6. `npm run dev`. La console du navigateur annonce la base lue :
+   `[supabase] base « xxxxxxxx »`. Vérifier que c'est bien la nouvelle.
+
+### Promouvoir une migration vers la prod
+
+Dans cet ordre, sans exception :
+
+1. écrire la migration dans `supabase/migrations/`, numérotée à la suite ;
+2. `npm run sql:check` — il tourne aussi en CI, mais autant le savoir avant ;
+3. **inscrire le fichier dans la liste `files` de `scripts/check-sql.mjs`.**
+   Elle est FIXE : une migration non déclarée n'est contrôlée par rien, pas
+   même par le garde-fou qui vérifie que la fonction de partage filtre bien sur
+   son jeton ;
+4. l'appliquer sur **dev**, dans le SQL Editor du projet de dev ;
+5. `npm run dev` et éprouver la fonctionnalité pour de vrai ;
+6. seulement ensuite, l'appliquer sur **prod**, dans le SQL Editor du projet de
+   prod ;
+7. vérifier les comptages sur prod (requête de l'étape 5 plus bas).
+
+**Rien n'est automatique, et c'est le point.** Ni la CI ni le déploiement ne
+parlent à une base : c'est ce qui empêche un `git push` malheureux de toucher
+la production. Le prix à payer est ce pas-à-pas ; il est volontaire.
+
+**Une colonne ajoutée à une table lue par `trip_by_share_token` impose de
+recréer la fonction** — elle construit son JSON colonne par colonne. C'est le
+piège du projet : 0005, 0006, 0007 et 0008 s'y sont tous heurtés. Une vue
+partagée qui affiche un champ vide sans rien signaler, c'est toujours ça.
+
+### Repartir de zéro sur dev
+
+```sh
+npm run sql:bundle | pbcopy
+```
+
+… après avoir supprimé les objets (voir « Reset » plus bas). Ou, plus radical
+et souvent plus rapide : supprimer le projet de dev et en créer un neuf. C'est
+une base jetable, elle ne contient rien qu'on regretterait.
+
+**Ne jamais faire ça sur prod.**
+
+### Le projet gratuit s'endort
+
+Supabase met en pause un projet gratuit inactif au bout d'environ une semaine.
+La base de dev est la première concernée, puisqu'on ne la touche que par
+à-coups. Le réveil se fait d'un clic depuis le dashboard, mais il faut y penser
+avant de se demander pourquoi `npm run dev` ne ramène rien.
+
+---
 
 ## Application — pas à pas
 
@@ -89,6 +187,55 @@ select t.id, u.id, 'editor'
 from public.trips t, auth.users u
 where t.slug = 'japon-2026' and u.email = 'adresse@exemple.fr';
 ```
+
+## Changer l'adresse d'un utilisateur
+
+**L'`id` du compte ne change pas**, donc `trip_members` reste valide et les
+voyages restent rattachés : il n'y a rien à relier après coup. Ce n'est vrai
+que si l'on MODIFIE le compte — le supprimer pour en recréer un perd
+l'appartenance, qu'il faut alors reposer (voir « Rattacher quelqu'un après
+coup »).
+
+L'`user_id` se lit dans le SQL Editor :
+
+```sql
+select id, email, created_at from auth.users order by created_at;
+```
+
+**Depuis le dashboard** : Authentication → Users → ouvrir le compte. Selon la
+version, l'édition de l'e-mail y est proposée ou non.
+
+**Sinon, par l'API admin**, depuis un script jetable en local :
+
+```js
+import { createClient } from '@supabase/supabase-js';
+
+const admin = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+  auth: { autoRefreshToken: false, persistSession: false },
+});
+
+const { data, error } = await admin.auth.admin.updateUserById('<user_id>', {
+  email: 'nouvelle@adresse.fr',
+  email_confirm: true, // sinon le compte attend une confirmation par mail
+});
+console.log(error ?? data.user.email);
+```
+
+```sh
+SUPABASE_URL=… SUPABASE_SERVICE_ROLE_KEY=… node change-email.mjs
+```
+
+⚠️ **La clé `service_role` contourne RLS entièrement.** Elle ne doit jamais
+porter le préfixe `VITE_` ni entrer dans `.env.local` : Vite embarque les
+variables `VITE_*` dans le bundle public. On la passe en ligne de commande, et
+le script ne se commite pas.
+
+**À éviter : `update auth.users set email = …` en SQL.** GoTrue tient sa propre
+cohérence entre `auth.users` et `auth.identities` ; modifier une table sans
+l'autre peut casser la connexion par magic link.
+
+Après le changement, **le magic link part sur la nouvelle adresse** : s'assurer
+que la personne y a accès avant de basculer.
 
 ## Reset
 

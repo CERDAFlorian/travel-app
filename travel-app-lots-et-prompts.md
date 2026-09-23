@@ -14,7 +14,10 @@ Offline en **lecture seule**. Carte SVG unique zoomable, ancres géographiques +
 ## État du projet — 18 septembre 2026
 
 Branche de travail : `dev`. `main` est en retard, la fusion se fera par PR.
-**L0 à L7 sont terminés.** Reste L8 — séparer la base de dev de la base de prod.
+**L0 à L7 sont terminés.** L8 est arbitré et outillé le 23 septembre 2026 :
+deux projets Supabase, dev et prod. Il reste UN geste manuel, qui n'appartient
+qu'au propriétaire du compte — créer le projet de dev et y coller le schéma.
+La procédure est dans `supabase/README.md`, section « Deux bases ».
 
 **L9 spécifié le 22 septembre 2026**, pas commencé : le programme jour par jour —
 organiser activités, restaurants et visites à l'intérieur d'une ville. Le modèle et
@@ -242,7 +245,7 @@ Colle un prompt, laisse la boucle tourner, vérifie, commit, passe au suivant. N
 | ~~**L5**~~ | ~~Carte SVG : pan/zoom, ancres, labels déportés, filtres tags~~ | ✅ fait | La pièce maîtresse |
 | **L6** | Vols, trajets, expériences, budget | 1 j | Périmètre complet |
 | ~~**L7**~~ | ~~PWA, précache, bouton sync, QA mobile~~ | ✅ fait | Prêt pour le voyage |
-| **L8** | Séparer la base de dev de la base de prod | 0,5 j | On peut casser sans risque |
+| ~~**L8**~~ | ~~Séparer la base de dev de la base de prod~~ | ✅ outillé | On peut casser sans risque |
 | ~~**L9**~~ | ~~Le programme jour par jour — 4 features, voir la section dédiée~~ | ✅ fait | On sait quoi faire chaque jour |
 
 **Cible réaliste jour 1 : L0 → L3.**
@@ -1083,6 +1086,27 @@ STOP
 ```
 
 **Notes L8**
+
+**Arbitré le 23 septembre 2026 : un second projet Supabase**, pas une base
+locale. Ni Docker ni la CLI Supabase n'étaient installés sur la machine — la
+voie locale demandait plusieurs Go à télécharger et un conteneur à lancer avant
+chaque session, pour une base qu'on monte une fois. Le plan gratuit autorise
+exactement deux projets, et les gestes restent ceux qu'on connaît déjà : le
+dashboard et le SQL Editor.
+
+**Ce qui a été livré.** `npm run sql:bundle` réunit les huit migrations sur la
+sortie standard — monter une base neuve devenait huit copier-coller dans le bon
+ordre, donc huit occasions de se tromper pour un geste qu'on fait une fois par
+base. Rien n'est commité : un fichier généré finirait par diverger des
+migrations. Le client Supabase annonce en développement la base qu'il lit, dans
+la console — se tromper de base est précisément l'accident que ce lot évite.
+La procédure de promotion dev → prod et le reset de dev sont écrits dans
+`supabase/README.md`.
+
+**Ce qui reste, et qui n'appartient qu'à toi** : créer le projet de dev, y
+coller le schéma, y créer un compte, y jouer le seed, puis recopier URL et clé
+dans `.env.local`. Six étapes, détaillées dans le README.
+
 - À faire avant que la prépa réelle ne soit saisie — après, une erreur coûte
   de la donnée qu'aucun seed ne peut reconstituer.
 - Le plan gratuit Supabase met en pause un projet inactif. Deux projets = deux

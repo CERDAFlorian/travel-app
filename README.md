@@ -97,7 +97,9 @@ connecté.
 | `VITE_SUPABASE_URL` | URL du projet Supabase |
 | `VITE_SUPABASE_ANON_KEY` | Clé publiable (elle part dans le bundle, ce n'est pas un secret) |
 
-`.env.example` contient les valeurs du projet. `.env` et `.env.local` sont gitignorés.
+En local elles décrivent la base de **dev** ; en CI, les secrets GitHub du même
+nom décrivent la **prod**. `.env.example` ne contient que des placeholders ;
+`.env` et `.env.local` sont gitignorés.
 
 ## Branches et CI/CD
 
@@ -142,9 +144,21 @@ Déjà configurés dans [`nginx.conf`](nginx.conf), rien à faire côté Coolify
 
 ## Base de données
 
+**Deux projets Supabase : dev et prod.** `.env.local` pointe la base de
+**développement** ; la production vit dans les secrets GitHub du dépôt. Toute
+migration se pose d'abord sur dev, puis sur prod — la procédure complète est
+dans [`supabase/README.md`](supabase/README.md).
+
+En cas de doute sur la base qu'on lit, `npm run dev` l'annonce dans la console
+du navigateur : `[supabase] base « … »`.
+
 Les migrations SQL sont dans [`supabase/`](supabase/README.md) : schéma, RLS,
 seed du voyage Japon. Elles s'appliquent **à la main** depuis le SQL Editor de
 Supabase — ni le repo, ni la CI, ni le déploiement ne parlent à la base.
+
+```sh
+npm run sql:bundle | pbcopy   # toutes les migrations d'un bloc, pour une base neuve
+```
 
 ```sh
 npm run sql:check   # contrôle statique des fichiers SQL (tourne aussi en CI)
