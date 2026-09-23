@@ -6,10 +6,18 @@
 // nombre de nuits de chaque étape.
 //
 // C'est le modèle du design, et c'est ce qui manquait ici. Les colonnes
-// `date_start` / `date_end` restent stockées — la vue partagée et le mode hors
-// ligne les lisent telles quelles — mais elles sont désormais RECALCULÉES à
+// `date_start` / `date_end` DES ÉTAPES restent stockées — la vue partagée et le
+// mode hors ligne les lisent telles quelles — mais elles sont RECALCULÉES à
 // chaque changement de structure. Sans ça, retirer une étape laissait un trou
 // de deux jours que rien ne rattrapait.
+//
+// LES DATES DU VOYAGE, EN REVANCHE, NE SE DÉDUISENT PAS DES ÉTAPES.
+// `trips.start_date` et `trips.end_date` sont la FENÊTRE : la période qu'on
+// s'est donnée. Elle ne bouge pas parce qu'on ajoute une ville — c'est le
+// contenu qui doit tenir dedans, pas l'inverse. Seule l'arrivée du vol aller
+// peut recaler le début, parce qu'on ne décide pas de l'heure d'atterrissage.
+// `nightsGap` mesure l'écart entre les deux, et c'est lui qui dit s'il reste
+// des nuits à placer.
 
 const DAY_MS = 86400000;
 
@@ -53,9 +61,12 @@ export function datesToUpdate(startIso, steps) {
   });
 }
 
-// Fin du voyage = fin de la dernière étape. `trips.end_date` doit suivre,
-// sinon l'en-tête annoncerait une période qui ne correspond plus aux étapes.
-export function tripEndDate(startIso, steps) {
+// Fin de la CHAÎNE D'ÉTAPES — le lendemain de la dernière nuit posée.
+//
+// Ce n'est PAS la fin du voyage, et la distinction est récente : `trips.end_date`
+// est la fenêtre qu'on s'est donnée, elle ne suit plus les étapes. Cette
+// fonction sert à savoir où commence l'étape suivante, rien d'autre.
+export function plannedEndDate(startIso, steps) {
   const chained = chainDates(startIso, steps);
   return chained.length > 0 ? chained.at(-1).date_end : startIso;
 }
@@ -121,19 +132,34 @@ export function resolveItinerary(trip) {
   });
 
   const plannedNights = steps.reduce((total, step) => total + (step.nights ?? 0), 0);
-  const lastNight = steps.length > 0 ? steps.at(-1).date_end : start;
 
-  // La fenêtre imposée par les vols, quand les deux sont connus.
-  const windowEnd = tripEndFromFlights(trip.flights ?? [], null);
+  // LA FENÊTRE DU VOYAGE — ses dates, celles qu'on annonce.
+  //
+  // Elle ne se déduit PAS des étapes. Un voyage dure du 17 octobre au 5
+  // novembre parce que c'est la période qu'on a posée, et ça ne change pas
+  // parce qu'on vient d'ajouter Kyoto. L'en-tête additionnait les nuits
+  // planifiées : un séjour de trois semaines s'affichait « du 17 au 17 oct. »
+  // à vide, puis grandissait ville après ville. C'était la fenêtre qui
+  // suivait le contenu, alors que c'est le contenu qui doit tenir dans la
+  // fenêtre.
+  //
+  // Deux sources, dans cet ordre : le vol retour quand il est daté — c'est lui
+  // qui borne vraiment le séjour —, sinon la période saisie à la création.
+  const windowEnd = tripEndFromFlights(trip.flights ?? [], null) ?? trip.endDate ?? null;
   const availableNights = windowEnd ? nightsBetween(start, windowEnd) : null;
+
+  // Fin de ce qui est PLANIFIÉ : la dernière nuit posée. Ce n'est plus ce que
+  // l'en-tête annonce, mais c'est ce que `nightsGap` compare à la fenêtre.
+  const plannedEnd = steps.length > 0 ? steps.at(-1).date_end : start;
 
   return {
     start,
-    // Fin réelle de ce qui est planifié — ce que l'en-tête annonce.
-    end: lastNight,
+    // Les dates du voyage. `plannedEnd` dit où en est le remplissage.
+    end: windowEnd ?? plannedEnd,
+    plannedEnd,
     steps,
     plannedNights,
-    // Nuits disponibles entre l'arrivée et le départ du retour.
+    // Nuits disponibles entre l'arrivée et la fin de la fenêtre.
     availableNights,
     // > 0 : il reste des nuits à placer. < 0 : le séjour déborde le vol retour.
     // null : pas de vol retour daté, rien à comparer.

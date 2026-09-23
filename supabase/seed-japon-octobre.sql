@@ -1,8 +1,9 @@
 -- seed-japon-octobre.sql — le second voyage au Japon, 17 octobre → 5 novembre 2026.
 --
 -- Un troisième compte utilise l'app, pour son propre séjour. Ce fichier pose le
--- voyage ; son contenu — villes, items, trajets — se saisit depuis l'app, c'est
--- exactement ce à quoi elle sert.
+-- voyage, RIEN DE PLUS : ni étape, ni vol. Tout le reste se saisit depuis
+-- l'app, c'est exactement ce à quoi elle sert — et une ligne posée d'office
+-- qu'on doit commencer par supprimer coûte plus qu'elle ne rend.
 --
 -- IL NE RATTACHE PERSONNE, et c'est délibéré : l'adresse d'un tiers n'a pas à
 -- vivre dans un dépôt Git. La ligne `trip_members` se pose à la main, juste
@@ -34,24 +35,22 @@ insert into public.trips (slug, title, subtitle, start_date, end_date, theme, lo
    '2026-10-17', '2026-11-05', 'japan', false);
 
 -- ---------------------------------------------------------------------------
--- Les vols — dates seulement
+-- Pas de vols
 -- ---------------------------------------------------------------------------
 --
--- Ce ne sont pas des billets : ce sont les DEUX BORNES du séjour. Le modèle
--- s'en sert (src/lib/itinerary.js) — l'arrivée du vol aller fait commencer le
--- voyage, le départ du retour le ferme — et l'app annonce alors « il reste
--- 19 nuits à placer » au lieu d'un itinéraire d'un seul jour.
+-- Une première version en posait deux, datés mais vides, pour borner le séjour :
+-- le modèle s'en sert (src/lib/itinerary.js) et l'app aurait annoncé « il reste
+-- 19 nuits à placer ». Mauvais calcul — à l'écran, deux cartes sans compagnie,
+-- sans aéroport, sans horaire et sans prix ne se lisent pas comme des repères
+-- mais comme des lignes ratées, et le premier geste est de les supprimer.
 --
--- Codes, horaires et prix restent NULL : ils se saisissent depuis le panneau
--- des vols quand les billets seront pris.
-
-insert into public.flights (trip_id, direction, "date", currency)
-select id, v.direction, v.date::date, 'EUR'
-from public.trips, (values
-  ('aller',  '2026-10-17'),
-  ('retour', '2026-11-05')
-) as v(direction, date)
-where slug = 'japon-octobre-2026';
+-- Un voyage vide ne ment plus pour autant : l'en-tête annonce la période saisie
+-- tant qu'aucune étape n'existe, au lieu de faire finir le séjour le jour où il
+-- commence.
+--
+-- Les vols se saisissent depuis le panneau, quand les billets sont pris. Et
+-- c'est à ce moment-là, quand ils portent leurs vraies dates, que le compteur
+-- de nuits restantes prend son sens.
 
 -- ---------------------------------------------------------------------------
 -- Vérification

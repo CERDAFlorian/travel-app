@@ -7,7 +7,7 @@ import {
   flightArrival,
   reorderSteps,
   resolveItinerary,
-  tripEndDate,
+  plannedEndDate,
   timelineEntries,
   tripEndFromFlights,
   tripStartFromFlights,
@@ -92,13 +92,13 @@ describe('datesToUpdate', () => {
   });
 });
 
-describe('tripEndDate', () => {
+describe('plannedEndDate', () => {
   it('suit la fin de la dernière étape', () => {
-    expect(tripEndDate('2026-11-07', SEED)).toBe('2026-11-26');
+    expect(plannedEndDate('2026-11-07', SEED)).toBe('2026-11-26');
   });
 
   it('retombe sur le départ quand il n’y a plus d’étape', () => {
-    expect(tripEndDate('2026-11-07', [])).toBe('2026-11-07');
+    expect(plannedEndDate('2026-11-07', [])).toBe('2026-11-07');
   });
 });
 
@@ -214,6 +214,90 @@ describe('resolveItinerary', () => {
     const resolved = resolveItinerary({ startDate: '2026-11-07', steps, flights: [] });
     expect(resolved.availableNights).toBeNull();
     expect(resolved.nightsGap).toBeNull();
+  });
+});
+
+describe('resolveItinerary — la fenêtre du voyage', () => {
+  // Le cas d'un voyage qu'on vient de créer. Faire finir un séjour de trois
+  // semaines le jour où il commence est un mensonge dès l'écran d'accueil.
+  it('annonce la période saisie plutôt qu’une seule journée', () => {
+    const view = resolveItinerary({
+      startDate: '2026-10-17',
+      endDate: '2026-11-05',
+      steps: [],
+      flights: [],
+    });
+
+    expect(view.start).toBe('2026-10-17');
+    expect(view.end).toBe('2026-11-05');
+  });
+
+  // Le vol retour fait foi quand il est daté : c'est lui qui borne vraiment le
+  // séjour, la période saisie n'est qu'un repli.
+  it('fait primer le vol retour sur la période saisie', () => {
+    const view = resolveItinerary({
+      startDate: '2026-10-17',
+      endDate: '2026-11-05',
+      steps: [],
+      flights: [{ direction: 'retour', date: '2026-11-02' }],
+    });
+
+    expect(view.end).toBe('2026-11-02');
+  });
+
+  it('retombe sur le jour de départ quand rien n’est connu', () => {
+    const view = resolveItinerary({ startDate: '2026-10-17', steps: [], flights: [] });
+    expect(view.end).toBe('2026-10-17');
+  });
+
+  // LA RÈGLE QUI COMPTE. Un voyage dure du 17 octobre au 5 novembre parce que
+  // c'est la période qu'on a posée ; ajouter Kyoto n'y change rien. C'est le
+  // contenu qui doit tenir dans la fenêtre, pas la fenêtre qui suit le
+  // contenu.
+  it('ne bouge pas quand on ajoute des villes', () => {
+    const vide = resolveItinerary({
+      startDate: '2026-10-17',
+      endDate: '2026-11-05',
+      steps: [],
+      flights: [],
+    });
+    const rempli = resolveItinerary({
+      startDate: '2026-10-17',
+      endDate: '2026-11-05',
+      steps: [{ id: 'a', nights: 3 }, { id: 'b', nights: 4 }],
+      flights: [],
+    });
+
+    expect(vide.end).toBe('2026-11-05');
+    expect(rempli.end).toBe('2026-11-05');
+  });
+
+  // Ce qui bouge, c'est le REMPLISSAGE — et l'écart qui reste à combler.
+  it('suit le remplissage à part, sans toucher à la fenêtre', () => {
+    const view = resolveItinerary({
+      startDate: '2026-10-17',
+      endDate: '2026-11-05',
+      steps: [{ id: 'a', nights: 3 }],
+      flights: [],
+    });
+
+    expect(view.plannedEnd).toBe('2026-10-20');
+    expect(view.plannedNights).toBe(3);
+    expect(view.availableNights).toBe(19);
+    expect(view.nightsGap).toBe(16);
+  });
+
+  // Sans vol NI période saisie, il n'y a pas de fenêtre : on annonce ce qui est
+  // planifié, faute de mieux, et aucun écart n'est calculable.
+  it('retombe sur les étapes quand aucune fenêtre n’est connue', () => {
+    const view = resolveItinerary({
+      startDate: '2026-10-17',
+      steps: [{ id: 'a', nights: 3 }],
+      flights: [],
+    });
+
+    expect(view.end).toBe('2026-10-20');
+    expect(view.nightsGap).toBeNull();
   });
 });
 
