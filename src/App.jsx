@@ -26,8 +26,44 @@ export default function App() {
   );
 }
 
+// La session, et rien d'autre. Les données vivent un cran plus bas, et c'est
+// tout l'objet de ce découpage.
 function PrivateApp() {
   const { user, loading: sessionLoading, readOnly, signIn, signOut } = useSession();
+
+  if (sessionLoading) {
+    return <main className="app-boot" aria-busy="true" />;
+  }
+
+  // LA CLÉ REMONTE TOUT QUAND L'UTILISATEUR CHANGE, et ce n'est pas un détail.
+  //
+  // `useCached` lit le réseau une fois, au montage. À l'ouverture de l'app
+  // personne n'est encore connecté : RLS ne rend rien, et la liste vide est
+  // mise en cache. Se connecter ensuite ne relançait AUCUN effet — la session
+  // apparaissait, l'écran restait vide, et il fallait recharger à la main pour
+  // voir ses voyages. Le bug existait déjà ; il était masqué par le cache du
+  // compte précédent, qu'on affichait faute de mieux.
+  //
+  // Changer la clé démonte et remonte tout l'arbre : la lecture repart, cette
+  // fois avec la session. Et à la déconnexion, elle repart sans — donc sur une
+  // liste vide et l'écran de connexion.
+  //
+  // `anon` couvre les deux cas où l'on n'a pas de session : jamais connecté, ou
+  // jeton expiré hors ligne. Le second doit continuer de rendre le cache, c'est
+  // toute la promesse de l'app — d'où un montage, pas un effacement.
+  return (
+    <AuthedApp
+      key={user?.id ?? 'anon'}
+      user={user}
+      readOnly={readOnly}
+      signIn={signIn}
+      signOut={signOut}
+    />
+  );
+}
+
+// Les données du compte courant. Remontée à chaque changement d'utilisateur.
+function AuthedApp({ user, readOnly, signIn, signOut }) {
   const trips = useTrips();
 
   // Connexion demandée depuis l'app alors qu'on a déjà du cache : jeton
@@ -35,7 +71,7 @@ function PrivateApp() {
   // cache était sans issue.
   const [loginRequested, setLoginRequested] = useState(false);
 
-  if (sessionLoading || trips.loading) {
+  if (trips.loading) {
     return <main className="app-boot" aria-busy="true" />;
   }
 
