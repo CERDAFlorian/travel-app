@@ -33,9 +33,9 @@
     border-color: var(--accent-2);
   }
 
-  // Même marge de défilement que les cartes d'étape : sur mobile, la frise
+  // Même marge de défilement que les cartes d'étape : sans elle, la frise
   // collante mangerait le haut du jour visé.
-  scroll-margin-top: 60px;
+  scroll-margin-top: calc(var(--timeline-h, 53px) + var(--sp-3));
 
   &__head {
     display: flex;

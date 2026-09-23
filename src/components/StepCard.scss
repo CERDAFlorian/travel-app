@@ -2,10 +2,12 @@
 
 .step {
   position: relative;
-  // Marge de défilement : on arrive ici depuis la carte ou la frise. Sur
-  // mobile elle doit dégager la hauteur de la frise collante, sinon l'étape
-  // sélectionnée atterrit DERRIÈRE elle.
-  scroll-margin-top: 60px;
+  // Marge de défilement : on arrive ici depuis la carte ou la frise. Elle doit
+  // dégager la hauteur de la frise collante, sinon l'étape sélectionnée
+  // atterrit DERRIÈRE elle — c'est ce qui se passait avec une valeur en dur
+  // légèrement sous-estimée. `--timeline-h` est mesurée au rendu (TripView),
+  // et l'espacement ajouté évite que le titre ne colle au filet.
+  scroll-margin-top: calc(var(--timeline-h, 53px) + var(--sp-3));
 
   @include mixins.from('md') {
     scroll-margin-top: var(--sp-4);
