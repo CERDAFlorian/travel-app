@@ -1443,11 +1443,22 @@ OBJECTIF
 Le voyage jour par jour, du 7 au 26 novembre, toutes villes confondues.
 
 CONTRAT
-- Route /voyage/:slug/programme, et son équivalent en vue partagée.
+- PAS de route séparée — arbitré le 23 septembre 2026, après essai. Le
+  programme remplace la COLONNE DE GAUCHE dans l'écran du voyage : la carte,
+  l'en-tête, la frise et les vols restent en place, et cliquer une ville dans
+  le programme la sélectionne sur la carte. Une page à part coupait le
+  programme de la carte, alors que c'est ensemble qu'ils servent. La bascule
+  est un état local et non une route : changer d'URL remonterait le composant,
+  donc la carte, et on perdrait son zoom au moment où l'on s'en sert. Le bouton
+  vit sous le panneau des vols — on lit d'abord comment on arrive.
 - Un bloc par jour : date en toutes lettres, ville, rang du jour dans l'étape,
   puis les moments.
-- Vols et trajets s'intercalent à leur date avec leurs horaires. Un jour de
-  trajet montre d'abord le trajet, ensuite le programme du soir.
+- Vols et TRANSFERTS INTER-VILLES s'intercalent à leur date. Un Kyoto →
+  Hiroshima prend la demi-journée : la ligne doit peser autant que ce qu'elle
+  occupe — ville de départ, ville d'arrivée, mode, durée en clair — et non se
+  lire comme une annotation. Elle s'affiche avant le programme de la journée.
+  La ville d'origine apparaît même sans liaison saisie : arriver d'ailleurs est
+  déjà une information, la durée n'en est que le détail.
 - Le jour courant est mis en avant quand la date du jour tombe dans le voyage.
   C'est la fonction principale sur place : arriver sur « aujourd'hui ».
 - Deux items géolocalisés qui se suivent affichent la distance entre eux

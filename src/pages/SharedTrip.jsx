@@ -2,7 +2,6 @@ import { useSharedTrip } from '@/hooks/useSharedTrip.js';
 import { useTheme } from '@/hooks/useTheme.js';
 import { APP_THEME } from '@/theme/themes.js';
 import TripView from '@/components/TripView.jsx';
-import TripProgram from '@/components/TripProgram.jsx';
 import './SharedTrip.scss';
 
 // Le voyage vu par quelqu'un qui n'a pas de compte.
@@ -13,7 +12,7 @@ import './SharedTrip.scss';
 //
 // Elle est en lecture seule par construction : `anon` n'a aucun droit
 // d'écriture, et la fonction de partage ne rend que des données.
-export default function SharedTrip({ token, programme = false }) {
+export default function SharedTrip({ token }) {
   const { trip, loading, isOffline, syncError, lastSync, refresh } = useSharedTrip(token);
 
   useTheme(trip?.theme ?? APP_THEME);
@@ -34,8 +33,6 @@ export default function SharedTrip({ token, programme = false }) {
       </main>
     );
   }
-
-  if (programme) return <TripProgram trip={trip} shared />;
 
   return (
     <TripView

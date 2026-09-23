@@ -162,28 +162,35 @@
   }
 }
 
-// Accès au programme du voyage entier. Discret mais pas caché : on le cherche
-// une fois parti, pas pendant la préparation.
+// La bascule entre les deux lectures, sous les vols : on lit d'abord comment
+// on arrive, ensuite ce qu'on fait.
 .trip {
-  &__program {
+  &__mode {
     max-width: var(--page-max);
     margin: 0 auto;
     padding: var(--sp-2) var(--page-pad) 0;
   }
 
-  &__program-link {
+  &__mode-btn {
     display: inline-flex;
     align-items: center;
-    min-height: var(--hit-dense);
-    padding: 2px 12px;
+    min-height: var(--hit);
+    padding: 2px 14px;
     border: 1px solid var(--accent);
     border-radius: var(--radius-pill);
+    background: none;
     color: var(--accent);
+    font: inherit;
     font-size: var(--fs-sm);
-    text-decoration: none;
+    cursor: pointer;
 
-    &:hover {
-      background: var(--accent-soft);
+    &:hover { background: var(--accent-soft); }
+
+    // En lecture jour par jour, le bouton porte l'état : c'est lui qui dit
+    // pourquoi la colonne de gauche ne ressemble plus à des villes.
+    &[data-on] {
+      background: var(--accent);
+      color: var(--accent-contrast);
     }
 
     &:focus-visible { @include mixins.focus-ring; }

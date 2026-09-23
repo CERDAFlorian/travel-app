@@ -369,6 +369,20 @@ describe('tripSchedule', () => {
     expect(days.every((day) => day.leg === null)).toBe(true);
   });
 
+  // Un jour de transfert reste un jour de programme : la ville de départ se
+  // lit même quand aucune durée n'a été saisie.
+  it('nomme la ville d’où l’on arrive, liaison ou pas', () => {
+    const days = tripSchedule(trip());
+    const arrival = days.find((day) => day.date === '2026-11-13');
+
+    expect(arrival.from.name).toBe('Kyoto');
+    expect(arrival.leg).toBeNull();
+    // Le premier jour du voyage ne vient de nulle part.
+    expect(days[0].from).toBeNull();
+    // Et les jours suivants d'une étape non plus : on n'arrive qu'une fois.
+    expect(days[1].from).toBeNull();
+  });
+
   it('range les vols à leur date', () => {
     const days = tripSchedule(
       trip({

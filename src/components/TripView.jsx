@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useMemo, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import SyncLine from '@/components/SyncLine.jsx';
 import TripHeader from '@/components/TripHeader.jsx';
 import StepTimeline from '@/components/StepTimeline.jsx';
@@ -14,6 +14,7 @@ import ShareLink from '@/components/ShareLink.jsx';
 import NightsGap from '@/components/NightsGap.jsx';
 import LocateAll from '@/components/LocateAll.jsx';
 import AddStep from '@/components/AddStep.jsx';
+import TripProgram from '@/components/TripProgram.jsx';
 import StepLink from '@/components/StepLink.jsx';
 import LoveNote from '@/components/LoveNote.jsx';
 import { addStep, moveStep, removeStep, setStepNights } from '@/lib/mutations.js';
@@ -43,9 +44,11 @@ export default function TripView({
   onChanged,
 }) {
   const [selectedStepId, setSelectedStepId] = useState(null);
-  // Construit depuis l'URL courante : la même ligne sert au propriétaire
-  // (/voyage/:slug) et à la vue partagée (/partage/:token).
-  const { pathname } = useLocation();
+  // Deux lectures du même voyage, DANS le même écran : par ville pour
+  // préparer, par jour pour vivre. La bascule est un état local et non une
+  // route : changer d'URL remonterait le composant, donc la carte, et on
+  // perdrait son zoom et sa position au moment précis où l'on s'en sert.
+  const [byDay, setByDay] = useState(false);
   const [justAddedStep, setJustAddedStep] = useState(null);
 
   // Les dates affichées sont DÉRIVÉES de l'arrivée du vol aller et du nombre
@@ -61,10 +64,16 @@ export default function TripView({
     [trip, itinerary],
   );
 
+  // Cliquer une ville sur la carte amène à sa carte d'étape — ou, en lecture
+  // jour par jour, au premier jour qu'on y passe. Sans ce repli, la carte
+  // resterait cliquable mais ne mènerait nulle part.
   const selectStep = useCallback((stepId) => {
     setSelectedStepId(stepId);
     if (!stepId) return;
-    document.getElementById(`step-${stepId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    const target =
+      document.getElementById(`step-${stepId}`) ?? document.getElementById(`day-${stepId}-0`);
+    target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, []);
 
   // Vols et étapes dans l'ordre où on les vit. Un vol intérieur s'intercale
@@ -177,58 +186,45 @@ export default function TripView({
 
       <FlightsPanel trip={view} readOnly={readOnly} onChanged={onChanged} />
 
+      {/* Sous les vols : on lit d'abord comment on arrive, ensuite ce qu'on
+          fait. Le bouton bascule la colonne de gauche — la carte, l'en-tête et
+          la frise ne bougent pas. */}
+      <div className="trip__mode">
+        <button
+          type="button"
+          className="trip__mode-btn"
+          data-on={byDay || undefined}
+          aria-pressed={byDay}
+          onClick={() => setByDay((value) => !value)}
+        >
+          {byDay ? '← Revenir aux villes' : 'Le programme jour par jour →'}
+        </button>
+      </div>
+
       <main className="trip__main">
         <section className="trip__steps">
-          {view.steps.map((step, index) => {
-            const next = view.steps[index + 1];
-
-            return (
-              <Fragment key={step.id}>
-                <StepCard
-                  step={step}
-                  tripTitle={view.title}
-                  readOnly={readOnly}
-                  selected={step.id === selectedStepId}
-                  onSelect={setSelectedStepId}
-                  onRemove={handleRemoveStep}
-                  onMove={handleMoveStep}
-                  canMoveUp={index > 0}
-                  canMoveDown={index < view.steps.length - 1}
-                  // La dernière étape porte un jour de plus : celui du vol
-                  // retour, où l'on ne dort pas mais où l'on fait encore
-                  // quelque chose.
-                  isLast={index === view.steps.length - 1}
-                  onNights={handleNights}
-                  autoLocate={step.id === justAddedStep}
-                  // Après chaque écriture on resynchronise le voyage entier
-                  // plutôt que de rapiécer le cache : une seule source de
-                  // vérité.
-                  onChanged={onChanged}
-                />
-
-                {/* Le trajet appartient à l'intervalle, pas à la ville qu'on
-                    quitte : il se pose donc entre les deux cartes. */}
-                {next && (
-                  <StepLink
-                    trip={view}
-                    fromStep={step}
-                    toStep={next}
-                    leg={legBetween(step.id, next.id)}
-                    readOnly={readOnly}
-                    onChanged={onChanged}
-                  />
-                )}
-              </Fragment>
-            );
-          })}
-
-          {/* Apres la derniere ville : on lit d'abord les nuits qu'on a
-              posees, ensuite celles qui manquent. Entre les vols et la
-              premiere etape, la remarque arrivait avant qu'on ait de quoi la
-              comprendre. */}
-          <NightsGap gap={itinerary.nightsGap} />
-
-          {!readOnly && <AddStep onAdd={handleAddStep} />}
+          {byDay ? (
+            <TripProgram
+              trip={view}
+              selectedStepId={selectedStepId}
+              onSelectStep={selectStep}
+            />
+          ) : (
+            <StepsColumn
+              view={view}
+              readOnly={readOnly}
+              selectedStepId={selectedStepId}
+              setSelectedStepId={setSelectedStepId}
+              justAddedStep={justAddedStep}
+              itinerary={itinerary}
+              legBetween={legBetween}
+              handleRemoveStep={handleRemoveStep}
+              handleMoveStep={handleMoveStep}
+              handleNights={handleNights}
+              handleAddStep={handleAddStep}
+              onChanged={onChanged}
+            />
+          )}
         </section>
 
         <aside className="trip__aside">
@@ -260,5 +256,78 @@ export default function TripView({
         <LoveNote seed={trip.id ?? trip.slug} />
       </footer>
     </div>
+  );
+}
+
+
+// La colonne des étapes, telle qu'elle était. Sortie de TripView pour que la
+// bascule jour par jour se lise en une ligne au lieu d'un ternaire de cent.
+function StepsColumn({
+  view,
+  readOnly,
+  selectedStepId,
+  setSelectedStepId,
+  justAddedStep,
+  itinerary,
+  legBetween,
+  handleRemoveStep,
+  handleMoveStep,
+  handleNights,
+  handleAddStep,
+  onChanged,
+}) {
+  return (
+    <>
+      {view.steps.map((step, index) => {
+        const next = view.steps[index + 1];
+
+        return (
+          <Fragment key={step.id}>
+            <StepCard
+              step={step}
+              tripTitle={view.title}
+              readOnly={readOnly}
+              selected={step.id === selectedStepId}
+              onSelect={setSelectedStepId}
+              onRemove={handleRemoveStep}
+              onMove={handleMoveStep}
+              canMoveUp={index > 0}
+              canMoveDown={index < view.steps.length - 1}
+              // La dernière étape porte un jour de plus : celui du vol
+              // retour, où l'on ne dort pas mais où l'on fait encore
+              // quelque chose.
+              isLast={index === view.steps.length - 1}
+              onNights={handleNights}
+              autoLocate={step.id === justAddedStep}
+              // Après chaque écriture on resynchronise le voyage entier
+              // plutôt que de rapiécer le cache : une seule source de
+              // vérité.
+              onChanged={onChanged}
+            />
+
+            {/* Le trajet appartient à l'intervalle, pas à la ville qu'on
+                quitte : il se pose donc entre les deux cartes. */}
+            {next && (
+              <StepLink
+                trip={view}
+                fromStep={step}
+                toStep={next}
+                leg={legBetween(step.id, next.id)}
+                readOnly={readOnly}
+                onChanged={onChanged}
+              />
+            )}
+          </Fragment>
+        );
+      })}
+
+      {/* Apres la derniere ville : on lit d'abord les nuits qu'on a
+          posees, ensuite celles qui manquent. Entre les vols et la
+          premiere etape, la remarque arrivait avant qu'on ait de quoi la
+          comprendre. */}
+      <NightsGap gap={itinerary.nightsGap} />
+
+      {!readOnly && <AddStep onAdd={handleAddStep} />}
+    </>
   );
 }

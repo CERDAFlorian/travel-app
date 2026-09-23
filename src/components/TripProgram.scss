@@ -1,46 +1,15 @@
 @use '../theme/mixins';
 
 .program {
-  max-width: var(--page-max);
-  margin: 0 auto;
-  padding: var(--sp-4) var(--page-pad) var(--sp-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
 
-  &__head {
-    margin-bottom: var(--sp-4);
-  }
-
-  &__back,
-  &__shared {
-    display: inline-block;
-    margin: 0 0 var(--sp-2);
+  &__none {
+    margin: 0;
     color: var(--muted);
     font-size: var(--fs-sm);
-    text-decoration: none;
-
-    &:hover { color: var(--accent); }
-    &:focus-visible { @include mixins.focus-ring; }
-  }
-
-  &__title {
-    margin: 0;
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: clamp(24px, 4vw, 38px);
-    line-height: 1.1;
-    color: var(--text-heading);
-  }
-
-  &__range {
-    margin: 4px 0 0;
-    color: var(--accent);
-    font-size: var(--fs-sm);
     font-style: italic;
-  }
-
-  &__days {
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-3);
   }
 }
 
@@ -57,8 +26,16 @@
     border-color: var(--accent);
     border-left-width: 3px;
     background: var(--surface-warm);
-    scroll-margin-top: var(--sp-4);
   }
+
+  // Ville choisie sur la carte : le repère va dans les deux sens.
+  &[data-selected] {
+    border-color: var(--accent-2);
+  }
+
+  // Même marge de défilement que les cartes d'étape : sur mobile, la frise
+  // collante mangerait le haut du jour visé.
+  scroll-margin-top: 60px;
 
   &__head {
     display: flex;
@@ -75,10 +52,21 @@
     text-transform: capitalize;
   }
 
+  // Cliquable : c'est le lien avec la carte, qu'on garde sous les yeux.
   &__city {
+    padding: 0;
+    border: 0;
+    background: none;
     color: var(--accent);
+    font: inherit;
     font-size: var(--fs-sm);
     font-style: italic;
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+    cursor: pointer;
+
+    &:hover { text-decoration-style: solid; }
+    &:focus-visible { @include mixins.focus-ring; }
   }
 
   &__rank {
@@ -99,7 +87,9 @@
     text-transform: uppercase;
   }
 
-  // Vol ou trajet : on arrive quelque part avant d'y faire quelque chose.
+  // Vol ou transfert : on arrive quelque part avant d'y faire quelque chose.
+  // Un Kyoto → Hiroshima prend la demi-journée ; la ligne doit peser autant
+  // que ce qu'elle occupe, pas se lire comme une annotation.
   &__move {
     display: flex;
     flex-wrap: wrap;
@@ -114,6 +104,7 @@
   }
 
   &__move-kind {
+    flex: none;
     padding: 0 6px;
     border-radius: var(--radius-pill);
     background: var(--surface-action);
@@ -121,6 +112,34 @@
     font-size: var(--fs-xs);
     letter-spacing: 0.06em;
     text-transform: uppercase;
+
+    [data-kind='transfert'] > & {
+      background: var(--accent-2-soft);
+      color: var(--accent-2);
+    }
+  }
+
+  &__move-route {
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  // La durée porte le poids : c'est elle qui dit si la matinée est prise.
+  &__move-time {
+    font-weight: 600;
+    color: var(--accent-deep);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__move-when {
+    color: var(--text-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__move-note {
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    font-style: italic;
   }
 
   &__empty {

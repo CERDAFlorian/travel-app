@@ -183,14 +183,26 @@ export function tripSchedule(trip) {
     flights.set(flight.date, [...(flights.get(flight.date) ?? []), flight]);
   }
 
-  return steps.flatMap((step, index) =>
-    scheduleOf(step, { isLast: index === steps.length - 1 }).map((day) => ({
+  return steps.flatMap((step, index) => {
+    const previous = index > 0 ? steps[index - 1] : null;
+
+    return scheduleOf(step, { isLast: index === steps.length - 1 }).map((day) => ({
       ...day,
       step,
-      // Le trajet n'apparaît qu'au PREMIER jour d'une étape : c'est le jour où
-      // l'on arrive, et il se lit avant le programme du soir.
-      leg: day.offset === 0 && index > 0 ? (legs.get(`${steps[index - 1].id}>${step.id}`) ?? null) : null,
+      // LE JOUR DE TRANSFERT EST UN JOUR DE PROGRAMME. Kyoto → Hiroshima,
+      // c'est 1h45 de Shinkansen plus les gares : la demi-journée est prise,
+      // et un programme qui ne le dirait pas laisserait croire à une matinée
+      // libre. Le transfert se lit donc AVANT les moments, au premier jour de
+      // l'étape d'arrivée.
+      //
+      // `from` existe même sans liaison saisie : arriver d'ailleurs est déjà
+      // une information, la durée n'en est que le détail.
+      from: day.offset === 0 ? previous : null,
+      leg:
+        day.offset === 0 && previous
+          ? (legs.get(`${previous.id}>${step.id}`) ?? null)
+          : null,
       flights: flights.get(day.date) ?? [],
-    })),
-  );
+    }));
+  });
 }
