@@ -54,12 +54,15 @@ export default function AddStep({ onAdd }) {
       <input
         className="add-step__nights"
         type="number"
-        min="0"
+        min="1"
         max="30"
         value={nights}
         title="Nombre de nuits"
         aria-label="Nombre de nuits"
-        onChange={(event) => setNights(Math.max(0, Number(event.target.value) || 0))}
+        // Plancher à 1 : le schéma refuse une étape à 0 nuit depuis 0007, et
+        // mieux vaut un champ qui ne descend pas qu'une erreur Postgres brute
+        // à la validation.
+        onChange={(event) => setNights(Math.max(1, Number(event.target.value) || 1))}
       />
 
       <button className="add-step__submit" type="submit" disabled={busy}>

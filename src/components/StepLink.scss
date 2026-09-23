@@ -151,3 +151,23 @@
     font-size: var(--fs-xs);
   }
 }
+
+// Le prix du trajet, dans le formulaire. Même gabarit que celui d'un item :
+// deux champs de prix qui ne se ressemblent pas donneraient l'impression de
+// deux natures de montant.
+.link {
+  &__price {
+    width: 78px;
+    padding: 2px 6px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface-raised);
+    color: var(--accent);
+    font: inherit;
+    font-size: clamp(12px, 1.2vw, 14px);
+    font-style: italic;
+    text-align: right;
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+}

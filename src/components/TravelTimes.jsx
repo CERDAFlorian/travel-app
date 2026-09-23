@@ -1,4 +1,5 @@
 import { whisperFor } from '@/lib/lovenotes.js';
+import { useLoveNotes } from '@/hooks/useLoveNotes.js';
 import './TravelTimes.scss';
 
 // Les temps de trajet entre deux villes.
@@ -18,13 +19,18 @@ export default function TravelTimes({ steps, legs }) {
   if (legs.length === 0) return null;
 
   const nameOf = new Map(steps.map((step) => [step.id, step.name.split(' ')[0]]));
+  const mots = useLoveNotes();
   const ordered = steps
     .flatMap((step) => legs.filter((leg) => leg.from_step === step.id))
     .filter((leg) => nameOf.has(leg.from_step) && nameOf.has(leg.to_step));
 
   return (
     <div className="travel-times">
-      <p className="travel-times__title">{whisperFor('travel', legs.length)}</p>
+      {/* Le mot doux sert ici de titre : partagé, un titre neutre le remplace
+          plutôt que de laisser le bloc sans en-tête. */}
+      <p className="travel-times__title">
+        {mots ? whisperFor('travel', legs.length) : 'Temps de trajet'}
+      </p>
       {ordered.map((leg) => (
         <div key={leg.id} className="travel-times__row">
           <span className="travel-times__label">

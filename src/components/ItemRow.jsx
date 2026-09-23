@@ -2,7 +2,16 @@ import { useRef, useState } from 'react';
 import { eurosInput, fromEuros, priceInEuros, toEuros } from '@/lib/currency.js';
 import { haversine, formatDistance, MAX_DISTANCE_FROM_STEP_KM } from '@/lib/geo.js';
 import { imageFor } from '@/lib/photos.js';
-import { deleteItem, setCoordinates, setFavorite, updateItem } from '@/lib/mutations.js';
+import {
+  deleteItem,
+  sealHotel,
+  setChosenHotel,
+  setCoordinates,
+  setFavorite,
+  unsealHotel,
+  updateItem,
+} from '@/lib/mutations.js';
+import { isChosenHotel, otherHotels } from '@/lib/lodging.js';
 import GeocodePicker from './GeocodePicker.jsx';
 import ConfirmDialog from './ConfirmDialog.jsx';
 import TrashIcon from './TrashIcon.jsx';
@@ -37,6 +46,7 @@ export default function ItemRow({ item, step, tripTitle, readOnly, autoLocate, o
   const [locating, setLocating] = useState(Boolean(autoLocate));
   const [editing, setEditing] = useState(false);
   const [asking, setAsking] = useState(false);
+  const [sealing, setSealing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const titleRef = useRef(null);
@@ -53,6 +63,19 @@ export default function ItemRow({ item, step, tripTitle, readOnly, autoLocate, o
       setBusy(false);
     }
   }
+
+  // Un hôtel ne se manipule pas comme le reste : son étoile désigne le
+  // logement retenu de l'étape, pas une photo de bandeau. Voir lib/lodging.js.
+  const isHotel = item.category === 'hotel';
+  // Le retenu ne se lit pas dans `item.favorite` : sans choix explicite, c'est
+  // le premier hôtel saisi qui l'est. Son étoile doit donc être allumée alors
+  // que la colonne vaut false — sinon le budget compterait une nuit dont la
+  // ligne n'affiche rien.
+  const retained = isChosenHotel(step, item);
+  // Ce que sceller ce choix emporterait. Calculé ici pour que le dialogue
+  // puisse les NOMMER : « supprimer 2 candidats » sans dire lesquels ne
+  // permet pas de décider.
+  const candidates = isHotel ? otherHotels(step, item) : [];
 
   const href = mapUrl(item);
   // Affiché en euros ; la saisie reste dans la devise d'origine — on tape le
@@ -136,29 +159,97 @@ export default function ItemRow({ item, step, tripTitle, readOnly, autoLocate, o
         <span className="item__tools">
           {readOnly ? (
             <>
-              {item.favorite && (
-                <span className="item__star" data-on="true" title="Mis en avant">
-                  ★<span className="sr-only"> mis en avant</span>
+              {(isHotel ? retained : item.favorite) && (
+                <span
+                  className="item__star"
+                  data-on="true"
+                  title={isHotel ? 'Logement retenu' : 'Mis en avant'}
+                >
+                  ★<span className="sr-only"> {isHotel ? 'logement retenu' : 'mis en avant'}</span>
                 </span>
               )}
+              {isHotel && item.booked && <span className="item__booked">réservé</span>}
               {price && <span className="item__price-read">{price}</span>}
             </>
           ) : (
             <>
-              <button
-                type="button"
-                className="item__star"
-                data-on={item.favorite || undefined}
-                disabled={busy}
-                aria-pressed={item.favorite}
-                title="Mettre en avant : ce lieu illustre la ville (3 maximum)"
-                onClick={() => run(() => setFavorite(item.id, !item.favorite))}
-              >
-                {item.favorite ? '★' : '☆'}
-                <span className="sr-only">
-                  {item.favorite ? 'Retirer de la mise en avant' : 'Mettre en avant'}
+              {/* L'étoile d'un hôtel se comporte comme un bouton radio : on en
+                  retient un AUTRE, on ne déretient pas celui-ci — une étape a
+                  toujours un logement. Celle du retenu n'est donc pas un
+                  bouton, juste une marque : un bouton qui ne fait rien quand on
+                  le presse est pire qu'un repère qui n'en est pas un. */}
+              {isHotel && retained ? (
+                <span
+                  className="item__star"
+                  data-on="true"
+                  title="Le logement retenu de l'étape — c'est lui qui compte au budget"
+                >
+                  ★<span className="sr-only"> logement retenu</span>
                 </span>
-              </button>
+              ) : (
+                <button
+                  type="button"
+                  className="item__star"
+                  data-on={(isHotel ? false : item.favorite) || undefined}
+                  disabled={busy}
+                  aria-pressed={isHotel ? false : item.favorite}
+                  title={
+                    isHotel
+                      ? 'Retenir ce logement — il remplacera celui de l’étape au budget'
+                      : 'Mettre en avant : ce lieu illustre la ville (3 maximum)'
+                  }
+                  onClick={() =>
+                    run(() =>
+                      isHotel
+                        ? setChosenHotel(step, item.id)
+                        : setFavorite(item.id, !item.favorite),
+                    )
+                  }
+                >
+                  {!isHotel && item.favorite ? '★' : '☆'}
+                  <span className="sr-only">
+                    {isHotel
+                      ? 'Retenir ce logement'
+                      : item.favorite
+                        ? 'Retirer de la mise en avant'
+                        : 'Mettre en avant'}
+                  </span>
+                </button>
+              )}
+
+              {/* Réserver est un geste de fin de préparation : il scelle et il
+                  supprime. Il vit donc à côté de l'étoile, mais il en diffère
+                  franchement — l'un se coche et se décoche, l'autre se
+                  confirme. */}
+              {isHotel &&
+                (item.booked ? (
+                  <button
+                    type="button"
+                    className="item__booked"
+                    data-on="true"
+                    disabled={busy}
+                    title="Réservé — cliquer pour annuler la réservation"
+                    onClick={() => run(() => unsealHotel(item.id))}
+                  >
+                    ✓ réservé
+                    <span className="sr-only"> — annuler la réservation</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="item__seal"
+                    disabled={busy}
+                    title={
+                      candidates.length > 0
+                        ? `Réservé : scelle le choix et supprime ${candidates.length} candidat${candidates.length > 1 ? 's' : ''}`
+                        : 'Marquer ce logement comme réservé'
+                    }
+                    onClick={() => setSealing(true)}
+                  >
+                    Réserver
+                    <span className="sr-only"> {item.title}</span>
+                  </button>
+                ))}
 
               <button
                 type="button"
@@ -256,6 +347,38 @@ export default function ItemRow({ item, step, tripTitle, readOnly, autoLocate, o
         </p>
         <p>Cette action est définitive : il n'y a pas de corbeille.</p>
       </ConfirmDialog>
+
+      {isHotel && (
+        <ConfirmDialog
+          open={sealing}
+          title={`Réserver ${item.title} ?`}
+          confirmLabel={candidates.length > 0 ? 'Réserver et faire le ménage' : 'Marquer comme réservé'}
+          busy={busy}
+          onCancel={() => setSealing(false)}
+          onConfirm={async () => {
+            await run(() => sealHotel(step, item.id));
+            setSealing(false);
+          }}
+        >
+          <p>
+            <strong>{item.title}</strong> devient le logement de {step.name}.
+          </p>
+
+          {candidates.length > 0 && (
+            <>
+              <p>
+                Les {candidates.length === 1 ? 'autre candidat sera supprimé' : 'autres candidats seront supprimés'} :
+              </p>
+              <ul>
+                {candidates.map((hotel) => (
+                  <li key={hotel.id}>{hotel.title}</li>
+                ))}
+              </ul>
+              <p>Cette action est définitive — leurs prix et leurs adresses partent avec eux.</p>
+            </>
+          )}
+        </ConfirmDialog>
+      )}
 
       {error && (
         <p className="item__error" role="alert">

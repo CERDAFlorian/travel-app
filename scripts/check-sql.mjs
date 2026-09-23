@@ -109,6 +109,8 @@ const files = {
   flights: 'supabase/migrations/0004_vols.sql',
   stopovers: 'supabase/migrations/0005_escales.sql',
   transport: 'supabase/migrations/0006_trajets.sql',
+  days: 'supabase/migrations/0007_journees.sql',
+  legPrices: 'supabase/migrations/0008_prix_trajets.sql',
   seed: 'supabase/seed.sql',
 };
 

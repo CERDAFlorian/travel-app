@@ -1,4 +1,5 @@
 import { categoryOf } from './categories.js';
+import { chosenHotel } from './lodging.js';
 
 // Appariement photo ↔ item, transposé du design (.dc.html, PHOTO_LIB et
 // featured(), lignes 365-420).
@@ -77,17 +78,30 @@ export function imageFor(title) {
 // Les 3 items mis en avant dans le bandeau d'une étape : les favoris d'abord —
 // à condition d'être d'une catégorie géographique, ce qui écarte les notes —
 // puis on complète avec des lieux, des activités, l'hôtel, dans cet ordre.
+//
+// L'HÔTEL EST ÉCARTÉ DE LA PASSE DES FAVORIS. Son étoile ne dit pas « ce lieu
+// illustre la ville » mais « c'est le logement retenu » (voir lib/lodging.js).
+// Sans cette exclusion, chaque étape pousserait une photo de chambre devant
+// Fushimi Inari.
+//
+// Il reste en complément de fin de liste — une étape sans lieu ni activité
+// vaut mieux avec son hôtel qu'avec un trou —, mais alors UN SEUL : celui
+// qu'on a retenu. Trois adresses en lice ne sont pas trois séjours, et montrer
+// la photo d'un candidat qu'on n'a pas choisi donnerait le change.
 export function featured(items) {
   const chosen = items.filter(
-    (item) => item.favorite && categoryOf(item.category)?.onMap,
+    (item) => item.favorite && item.category !== 'hotel' && categoryOf(item.category)?.onMap,
   );
 
-  for (const category of ['lieu', 'activite', 'hotel']) {
+  for (const category of ['lieu', 'activite']) {
     for (const item of items) {
       if (chosen.length >= 3) break;
       if (item.category === category && !chosen.includes(item)) chosen.push(item);
     }
   }
+
+  const hotel = chosenHotel({ items });
+  if (chosen.length < 3 && hotel) chosen.push(hotel);
 
   return chosen.slice(0, 3);
 }

@@ -79,6 +79,34 @@ export function formatDay(iso) {
   return date ? DAY_MONTH.format(date) : '';
 }
 
+// Aujourd'hui, en 'YYYY-MM-DD' LOCAL.
+//
+// `toISOString()` donnerait la date UTC : le 13 novembre à 1h du matin à
+// Kyoto, elle rendrait le 12. Le programme surlignerait la veille précisément
+// là où on s'en sert — sur place, au petit matin.
+export function todayIso() {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
+const WEEKDAY_DAY_MONTH = new Intl.DateTimeFormat('fr-FR', {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+});
+
+// « jeu. 13 nov. » — l'en-tête d'un jour du programme.
+//
+// Le jour de la semaine compte ici plus qu'ailleurs : un programme se pense en
+// « le jeudi on fait Arashiyama », et c'est lui qui dit qu'un musée sera fermé
+// ou qu'un marché n'aura pas lieu.
+export function formatDayFull(iso) {
+  const date = parse(iso);
+  return date ? WEEKDAY_DAY_MONTH.format(date) : '';
+}
+
 // « Du 7 nov. au 26 nov. 2026 » — la forme de l'en-tête dans le design.
 // L'année n'apparaît qu'une fois, à la fin : un voyage ne chevauche pas deux
 // années dans la pratique, et la répéter alourdit une ligne déjà dense.

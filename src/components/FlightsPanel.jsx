@@ -8,6 +8,7 @@ import ConfirmDialog from './ConfirmDialog.jsx';
 import ChevronIcon from './ChevronIcon.jsx';
 import TrashIcon from './TrashIcon.jsx';
 import { whisperFor } from '@/lib/lovenotes.js';
+import { useLoveNotes } from '@/hooks/useLoveNotes.js';
 import './FlightsPanel.scss';
 
 const DIRECTIONS = [
@@ -52,6 +53,7 @@ function splitFlightNumber(raw) {
 }
 
 export default function FlightsPanel({ trip, readOnly, onChanged }) {
+  const mots = useLoveNotes();
   const flights = trip.flights;
   // Le formulaire est replié par défaut : déplié en permanence, il occupait
   // autant de place qu'un vol réel alors qu'on l'utilise trois fois par voyage.
@@ -89,8 +91,9 @@ export default function FlightsPanel({ trip, readOnly, onChanged }) {
             <h2 className="flights__title">Billets d'avion</h2>
             <span className="flights__count">{flights.length}</span>
             {/* Visible plie ou deplie : c'est un mot doux, pas le resume du
-                contenu. Masque sous 768px, ou la ligne est deja pleine. */}
-            <span className="flights__hint">{whisperFor('flights', trip.id)}</span>
+                contenu. Masque sous 768px, ou la ligne est deja pleine — et en
+                vue partagee, ou il ne regarde personne d'autre. */}
+            {mots && <span className="flights__hint">{whisperFor('flights', trip.id)}</span>}
             <span className="flights__caret" data-open={open || undefined}>
               <ChevronIcon />
             </span>
@@ -138,6 +141,7 @@ export default function FlightsPanel({ trip, readOnly, onChanged }) {
 }
 
 function FlightCard({ trip, flight, readOnly, onChanged }) {
+  const mots = useLoveNotes();
   const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
@@ -260,7 +264,7 @@ function FlightCard({ trip, flight, readOnly, onChanged }) {
         </p>
       )}
 
-      {flight.direction === 'retour' && (
+      {flight.direction === 'retour' && mots && (
         <p className="flight__note">{whisperFor('comeback', flight.id)}</p>
       )}
     </article>

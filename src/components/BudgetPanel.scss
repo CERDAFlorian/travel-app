@@ -63,6 +63,10 @@
     flex-basis: 0;
     background: var(--accent);
 
+    // Les vols gardent l'accent, faute de catégorie ; les trajets prennent
+    // l'accent secondaire, sinon les deux postes de transport se
+    // confondraient dans la jauge.
+    &[data-cat='trajets']  { background: var(--accent-2); }
     &[data-cat='hotel']    { background: var(--cat-hotel); }
     &[data-cat='activite'] { background: var(--cat-activite); }
     &[data-cat='lieu']     { background: var(--cat-lieu); }
@@ -90,6 +94,10 @@
     border-radius: 50%;
     background: var(--accent);
 
+    // Les vols gardent l'accent, faute de catégorie ; les trajets prennent
+    // l'accent secondaire, sinon les deux postes de transport se
+    // confondraient dans la jauge.
+    &[data-cat='trajets']  { background: var(--accent-2); }
     &[data-cat='hotel']    { background: var(--cat-hotel); }
     &[data-cat='activite'] { background: var(--cat-activite); }
     &[data-cat='lieu']     { background: var(--cat-lieu); }

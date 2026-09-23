@@ -14,7 +14,14 @@ Offline en **lecture seule**. Carte SVG unique zoomable, ancres géographiques +
 ## État du projet — 18 septembre 2026
 
 Branche de travail : `dev`. `main` est en retard, la fusion se fera par PR.
-**L0 à L7 sont terminés.** Reste L8 — séparer la base de dev de la base de prod.
+**L0 à L7 sont terminés.** L8 est arbitré et outillé le 23 septembre 2026 :
+deux projets Supabase, dev et prod. Il reste UN geste manuel, qui n'appartient
+qu'au propriétaire du compte — créer le projet de dev et y coller le schéma.
+La procédure est dans `supabase/README.md`, section « Deux bases ».
+
+**L9 spécifié le 22 septembre 2026**, pas commencé : le programme jour par jour —
+organiser activités, restaurants et visites à l'intérieur d'une ville. Le modèle et
+les neuf arbitrages sont en bas du fichier, après L8.
 
 ⚠️ **Départ le 7 novembre 2026 — sept semaines.** L5 et L6 pèsent environ trois
 jours de travail. L7 (PWA, service worker) est le lot qui rend l'app utilisable
@@ -149,6 +156,19 @@ les étapes à bandeau complet de **2 sur 7 à 4 sur 7**, sans toucher au code.
 Les trois autres (`sushi`, `matcha`, `baguettes`) ne servent qu'aux expériences
 de L6. Le plafond de 256 Ko de `get_file` empêche de les récupérer via le MCP.
 
+~~**Les mots d'amour ne doivent pas partir dans le lien de partage**~~ — ✅ fait
+le 23 septembre 2026. Ma première lecture disait « trois sont visibles » : il y
+en avait **sept**, dans six composants. Chercher `LoveNote` n'en trouvait qu'un,
+et `whisperFor` en manquait encore trois — le compte à rebours de l'en-tête
+passe par `countdown`. La leçon vaut pour la suite : c'est `lovenotes.js` qu'il
+faut grepper, pas ses consommateurs.
+
+D'où un **contexte** (`hooks/useLoveNotes.js`) plutôt que sept props à travers
+des composants qui n'ont rien à voir avec la question. Le défaut est `true` :
+hors d'un voyage partagé on est chez soi. La coupure se fait sur `shared` et
+non sur `readOnly` — hors ligne dans un train japonais, l'app est en lecture
+seule et on est toujours à deux.
+
 **Trois items n'auront jamais de photo** : Distillerie Hakushu, Balade dans le
 village, Mémorial de la Paix. Aucun mot-clé ne leur correspond dans le design.
 
@@ -225,7 +245,8 @@ Colle un prompt, laisse la boucle tourner, vérifie, commit, passe au suivant. N
 | ~~**L5**~~ | ~~Carte SVG : pan/zoom, ancres, labels déportés, filtres tags~~ | ✅ fait | La pièce maîtresse |
 | **L6** | Vols, trajets, expériences, budget | 1 j | Périmètre complet |
 | ~~**L7**~~ | ~~PWA, précache, bouton sync, QA mobile~~ | ✅ fait | Prêt pour le voyage |
-| **L8** | Séparer la base de dev de la base de prod | 0,5 j | On peut casser sans risque |
+| ~~**L8**~~ | ~~Séparer la base de dev de la base de prod~~ | ✅ outillé | On peut casser sans risque |
+| ~~**L9**~~ | ~~Le programme jour par jour — 4 features, voir la section dédiée~~ | ✅ fait | On sait quoi faire chaque jour |
 
 **Cible réaliste jour 1 : L0 → L3.**
 
@@ -1065,12 +1086,416 @@ STOP
 ```
 
 **Notes L8**
+
+**Arbitré le 23 septembre 2026 : un second projet Supabase**, pas une base
+locale. Ni Docker ni la CLI Supabase n'étaient installés sur la machine — la
+voie locale demandait plusieurs Go à télécharger et un conteneur à lancer avant
+chaque session, pour une base qu'on monte une fois. Le plan gratuit autorise
+exactement deux projets, et les gestes restent ceux qu'on connaît déjà : le
+dashboard et le SQL Editor.
+
+**Ce qui a été livré.** `npm run sql:bundle` réunit les huit migrations sur la
+sortie standard — monter une base neuve devenait huit copier-coller dans le bon
+ordre, donc huit occasions de se tromper pour un geste qu'on fait une fois par
+base. Rien n'est commité : un fichier généré finirait par diverger des
+migrations. Le client Supabase annonce en développement la base qu'il lit, dans
+la console — se tromper de base est précisément l'accident que ce lot évite.
+La procédure de promotion dev → prod et le reset de dev sont écrits dans
+`supabase/README.md`.
+
+**Ce qui reste, et qui n'appartient qu'à toi** : créer le projet de dev, y
+coller le schéma, y créer un compte, y jouer le seed, puis recopier URL et clé
+dans `.env.local`. Six étapes, détaillées dans le README.
+
 - À faire avant que la prépa réelle ne soit saisie — après, une erreur coûte
   de la donnée qu'aucun seed ne peut reconstituer.
 - Le plan gratuit Supabase met en pause un projet inactif. Deux projets = deux
   à surveiller. Voir « Points de vigilance transverses ».
 - L'ordre dans le découpage est indicatif : ce lot peut être avancé à tout
   moment, il ne dépend que de L1.
+
+---
+
+## L9 — Le programme jour par jour
+
+**Spécifié le 22 septembre 2026.** Évolution majeure : organiser activités,
+restaurants et visites **jour par jour à l'intérieur d'une ville**, pour obtenir
+un vrai programme et plus seulement une liste de choses à faire.
+
+### Le modèle — un jour n'est pas une table
+
+Le principe posé en L4 tient : **les dates ne sont pas stockées comme vérité,
+elles sont dérivées** de l'arrivée du vol aller et des nuits de chaque étape
+(`resolveItinerary`, `src/lib/itinerary.js`). Une table `days` casserait ça —
+il faudrait créer et détruire des lignes à chaque `+1 nuit`, à chaque
+`moveStep`, à chaque changement de vol, et gérer les jours orphelins. Deux
+vérités finiraient par diverger.
+
+Donc les jours restent **dérivés**, et c'est **l'item** qui dit à quel jour il
+appartient, par un décalage relatif à son étape :
+
+```
+Kyoto · 4 nuits · commence le 11 nov.
+  J1 = 11 nov.   day_offset 0
+  J2 = 12 nov.   day_offset 1
+  J3 = 13 nov.   day_offset 2
+  J4 = 14 nov.   day_offset 3
+  (le 15 nov. est le jour de trajet → c'est le J1 de Hiroshima)
+```
+
+**Une étape possède exactement `nights` jours.** Le jour de trajet appartient à
+la ville où l'on dort ce soir-là, c'est-à-dire la ville d'**arrivée**. Comme
+`date_start` d'une étape vaut déjà `date_end` de la précédente, il n'y a ni
+chevauchement ni arbitrage à faire. Seule la **dernière étape** a un jour en
+plus : celui du vol retour — check-out, trajet vers l'aéroport.
+
+Conséquence directe : `+1 nuit` sur Kyoto ajoute un jour vide au bon endroit et
+décale l'affichage de tout le reste **sans toucher à une seule ligne d'item**.
+
+### Les arbitrages
+
+Tous décidés le 22 septembre 2026, avant écriture du code.
+
+**1. Le placement est une colonne de l'item, pas une table de liaison.**
+Un item est posé à un endroit et un seul. Manger deux fois à Dōtonbori se
+traduit par **deux items**. L'alternative — une table `item_days` permettant
+plusieurs placements — était plus propre sur le papier, mais posait une
+question sans bonne réponse : un item placé deux fois compte-t-il une fois ou
+deux au budget ? Retenu : la duplication, rendue indolore par un bouton
+**« Refaire un autre jour »** qui recopie titre, prix et coordonnées sur le
+jour choisi.
+
+**2. Des moments, pas une grille horaire.** `matin`, `midi`, `apres-midi`,
+`soir`, plus `journee` pour ce qui mange la journée entière (Kōyasan, Universal
+Studios). Un planning à l'heure donne une fausse précision et se remplit mal ;
+quatre moments posent une journée en trois clics et se lisent d'un coup d'œil
+sur place.
+
+**3. L'heure précise reste possible, et elle se voit.** Un musée, une visite
+guidée, un kaiseki réservé ont une heure ferme. `start_time` est optionnelle,
+s'affiche en tête de ligne, et **ne commande pas l'ordre** — l'ordre, c'est le
+moment puis `day_position`. Pas de re-tri surprise sous les doigts. Couplée à
+`booked`, elle donne la ligne qu'on ne peut pas manquer.
+
+**4. Plusieurs hôtels par étape, un seul retenu.** Une contrainte `unique`
+interdirait le geste normal de la préparation : noter trois candidats avant de
+choisir. La règle passe donc par deux colonnes qui **existent déjà** :
+
+- `favorite` sur un hôtel = **le retenu**. Un seul par étape — cocher un autre
+  hôtel décoche le précédent. C'est lui, et lui seul, qui entre au budget ;
+- `booked` = **le choix scellé**. Le cocher **supprime les hôtels non retenus**
+  de l'étape. Geste destructif, donc derrière un `ConfirmDialog` nommant ce qui
+  part ;
+- l'hôtel retenu remonte dans l'en-tête de l'étape, sous les dates : c'est le
+  décor du séjour, pas une ligne d'accordéon. Tant que rien n'est retenu,
+  l'étape affiche **« logement à choisir »**.
+
+**5. Une étape a au moins une nuit.** `étape = changement de ville ET de
+logement`. Une excursion — Kōyasan, Nara, Miyajima — est une **activité** de la
+ville d'où l'on part, posée sur un jour en moment `journee`. Ce n'est jamais
+une étape. La règle descend dans le schéma (`nights >= 1`) et dans l'UI.
+
+**6. Tout ne se planifie pas.** Un hôtel est le décor de l'étape entière, une
+note perso n'a pas de jour. Un drapeau `planifiable` rejoint `onMap` et
+`budget` dans `src/lib/categories.js` : vrai pour `activite`, `restaurant`,
+`shopping`, `lieu` ; faux pour `hotel` et `note`.
+
+**7. `day_offset NULL` = la réserve.** C'est le défaut, donc **les 48 items
+existants restent tels quels** — aucune donnée à migrer. Non placé, un item
+reste dans sa catégorie : c'est « ce qu'on aimerait faire à Kyoto ». Le
+programme se construit en piochant dedans, et le compteur « 5 à placer » dit ce
+qu'il reste à faire.
+
+**8. Réduire les nuits libère, ne détruit pas.** Passer Kyoto de 4 à 2 nuits
+renvoie les items des jours disparus **en réserve** (`day_offset = null`). Ils
+ne sont ni supprimés, ni écrasés sur le dernier jour.
+
+**9. Pas de drag & drop.** Il impose une dépendance (`@dnd-kit`), se comporte
+mal au doigt dans une page qui défile, et n'est pas testable en Vitest. Le
+placement se fait au **sélecteur** — `J1 J2 J3 J4` puis le moment — et le
+réordonnancement aux **▲▼**, comme les étapes de `StepCard`. À rouvrir si
+l'usage frotte, pas avant.
+
+### Trois pièges repérés avant d'écrire
+
+**`trip_by_share_token` construit son JSON colonne par colonne.** Quatre
+colonnes ajoutées sur `items` n'y arrivent pas toutes seules : la fonction se
+recrée, comme dans `0006_trajets.sql`. Sans ça la vue partagée affiche un
+programme vide sans rien signaler.
+
+**`budget.js` additionne DÉJÀ tous les hôtels d'une étape.** Trois candidats à
+Kyoto = 216 000 ¥ au lieu de 72 000. Le bug est latent depuis L6 — le seed n'a
+qu'un hôtel par ville, personne ne l'a vu. L'arbitrage 4 le corrige : seul
+l'hôtel `favorite` entre au budget.
+
+**`photos.js` mettrait l'hôtel dans le bandeau.** `featured()` prend d'abord
+les favoris de catégorie `onMap`, et `hotel` l'est. Dès que `favorite` signifie
+« hôtel retenu », chaque étape pousserait son hôtel dans le bandeau photo. Il
+faut écarter `hotel` de la passe des favoris — il reste en complément de fin de
+liste, où il est aujourd'hui.
+
+### Le découpage — par feature
+
+Quatre features, chacune **livrable et utilisable seule**. Le découpage est
+vertical : une feature traverse le SQL, la logique pure et l'UI, et se termine
+sur quelque chose qu'on peut faire dans l'app — pas sur une couche technique
+dont l'intérêt n'apparaît qu'au lot suivant.
+
+**Une seule migration**, en tête de F2, qui pose les quatre colonnes d'un coup
+même si F2 n'en consomme que deux. Motif : recréer `trip_by_share_token` deux
+fois pour deux colonnes serait du travail payé double, et une colonne inutilisée
+ne coûte rien.
+
+| Feature | Ce qu'on gagne | SQL | Effort |
+|---|---|---|---|
+| ~~**F1 · L'hôtel retenu**~~ | ✅ Comparer trois hôtels sans fausser le budget, puis sceller le choix | aucun | fait |
+| ~~**F2 · Poser un item sur un jour**~~ | ✅ Le programme existe : chaque activité a son jour | `0007_journees.sql` | fait |
+| ~~**F3 · Les moments et les heures fermes**~~ | ✅ La journée se lit, et ce qui est réservé saute aux yeux | aucun | fait |
+| ~~**F4 · La vue Programme**~~ | ✅ Le voyage entier jour par jour : ce qui sert sur place | aucun | fait |
+
+**L9 est livré** — F1 à F4, les 22 et 23 septembre 2026. Il reste deux
+retouches notées plus haut : masquer les mots d'amour en vue partagée, et
+décider si la réserve « À placer » doit y rester visible.
+
+**L'ordre est imposé.** F1 d'abord : elle ne touche pas au schéma, corrige deux
+bugs vivants, et surtout **fixe le sens de l'étoile**, dont F2 et F3 dépendent
+pour l'affichage. F3 après F2, elle en redécoupe la vue. F4 en dernier — c'est
+la seule qui peut attendre le retour du voyage sans rien coûter.
+
+---
+
+### F1 — L'hôtel retenu
+
+```
+CONTEXTE
+travel-app, L0 à L7 livrés. items porte DÉJÀ deux colonnes utiles et inutilisées
+au bon endroit : `favorite` (l'étoile, aujourd'hui « illustre la ville », 3 max)
+et `booked` (remontée par api.js, affichée nulle part).
+Lis « L9 — Les arbitrages » n°4 ci-dessus avant d'écrire.
+Aucune migration dans cette feature.
+
+OBJECTIF
+Noter plusieurs hôtels candidats dans une étape, en retenir un, puis sceller le
+choix. Et corriger les deux bugs que ça met au jour.
+
+CONTRAT
+- src/lib/lodging.js, pur et testé :
+    hotelsOf(step)     les items de catégorie hotel
+    chosenHotel(step)  le retenu : le `booked` s'il existe, sinon le `favorite`,
+                       sinon l'unique hôtel s'il n'y en a qu'un, sinon null.
+                       Ce dernier repli n'est pas un détail : le seed a un hôtel
+                       par étape et AUCUN favori. Sans lui, appliquer F1 ferait
+                       tomber à zéro le poste logement du vrai voyage.
+    otherHotels(step)  les candidats non retenus
+- L'étoile d'un hôtel devient EXCLUSIVE dans son étape : en cocher un décoche
+  l'autre, en une passe. L'étoile des cinq autres catégories garde son sens
+  actuel — ne la touche pas. Le libellé et l'infobulle diffèrent donc selon la
+  catégorie : « Hôtel retenu » d'un côté, « Mettre en avant » de l'autre.
+- `booked` scelle le choix : il pose favorite, et SUPPRIME les hôtels non
+  retenus de l'étape. Geste destructif → ConfirmDialog nommant chaque hôtel qui
+  part, comme le retrait d'une étape. Un hôtel scellé affiche « réservé » et
+  perd le bouton de scellement.
+- L'hôtel retenu remonte dans l'en-tête de StepCard, sous les dates. Aucun
+  retenu alors que des candidats existent : « logement à choisir ».
+- CORRIGE budget.js : il additionne aujourd'hui TOUS les hôtels d'une étape.
+  Trois candidats à Kyoto donnent 216 000 ¥ au lieu de 72 000. Seul le retenu
+  compte. Une étape à plusieurs candidats sans retenu ne compte rien et le dit
+  dans la note du panneau, comme les lignes sans prix.
+- CORRIGE photos.js : featured() prend les favoris de catégorie onMap, et hotel
+  en est. Dès que l'étoile signifie « retenu », chaque étape pousserait une
+  photo d'hôtel dans son bandeau. Écarte hotel de la passe des favoris — il
+  reste en complément de fin de liste, là où il est déjà.
+- Le total d'en-tête de l'accordéon Hôtel suit la même règle que le budget.
+- readOnly : aucune de ces commandes en vue partagée ni hors ligne.
+
+BOUCLE
+1. Lis categories.js, budget.js, photos.js, ItemRow.jsx, StepCard.jsx,
+   mutations.js, ConfirmDialog.jsx.
+2. Écris lodging.js et ses tests, puis les deux corrections et leurs tests,
+   puis l'UI.
+3. Vérifie : npm test, npm run build, puis npm run dev — ajoute deux hôtels à
+   Kyoto, constate que le budget ne double pas, retiens-en un, scelle-le,
+   vérifie que l'autre disparaît après confirmation.
+4. Si échec, corrige et relance. Trois tentatives, puis remonte.
+
+CRITÈRE D'ARRÊT
+test + build au vert, et le scénario de l'étape 3 se déroule en entier.
+
+STOP
+- Aucune migration, aucune colonne nouvelle : tout existe déjà.
+- Ne touche pas au sens de l'étoile hors catégorie hotel.
+- Ne supprime jamais un hôtel sans confirmation explicite.
+```
+
+### F2 — Poser un item sur un jour
+
+```
+CONTEXTE
+F1 est livrée, le sens de l'étoile est fixé. Les items sont rangés par catégorie
+dans une étape, sans notion de jour. Le modèle de dates est dérivé :
+src/lib/itinerary.js fait foi. Lis « L9 — Le modèle » et les arbitrages 1, 5,
+6, 7, 8 et 9 avant d'écrire.
+
+OBJECTIF
+Placer une activité, un restaurant, une boutique ou un lieu sur un jour précis
+d'une ville, et voir la journée se remplir.
+
+CONTRAT
+- supabase/migrations/0007_journees.sql, rejouable, conventions de 0001 et 0006 :
+    items.day_offset   integer  -- NULL = en réserve, CHECK >= 0
+    items.day_slot     text     -- CHECK in ('journee','matin','midi','apres-midi','soir')
+    items.day_position integer  not null default 0, CHECK >= 0
+    items.start_time   time
+  day_slot et start_time ne sont posés qu'en F3, mais la colonne est créée ici.
+  Cohérence : un item en réserve (day_offset NULL) a day_slot NULL.
+  Resserre aussi steps_nights_sane de `nights >= 0` à `nights >= 1` — vérifie
+  d'abord qu'aucune ligne ne vaut 0, et remonte-le au lieu de corriger la donnée.
+  RECRÉE trip_by_share_token avec les quatre colonnes : c'est le piège connu.
+  Ajoute-les au TRIP_SELECT de api.js.
+- src/lib/days.js, pur et testé :
+    daysOf(step, { isLast })  les jours de l'étape : nights jours, plus UN jour
+                              de départ si c'est la dernière étape du voyage
+    scheduleOf(step)          les items rangés par jour puis day_position
+    unplacedOf(step)          la réserve : les items planifiables sans jour
+    releasedBy(step, nights)  les ids à renvoyer en réserve quand les nuits
+                              diminuent — rien de supprimé, rien d'écrasé
+- Ajoute `planifiable` aux six entrées de categories.js : vrai pour activite,
+  restaurant, shopping, lieu ; faux pour hotel et note.
+- Dans StepCard, une bascule « Catégories » / « Jour par jour » au-dessus du
+  contenu. Les catégories sont le garde-manger, les jours sont le menu.
+  L'onglet Jours porte le nombre d'items encore à placer.
+- Vue Jours : un bloc par jour, titré « J2 · mer. 12 nov. », les items dans
+  l'ordre. Un jour vide reste visible — un trou dans un programme est une
+  information.
+- Actions sur un item placé : changer de jour, ▲▼, renvoyer en réserve, et
+  « Refaire un autre jour » qui recopie titre, prix, devise et coordonnées sur
+  le jour choisi (arbitrage 1 : un item, un placement).
+- La réserve est en pied de vue, avec le sélecteur « Placer ». PAS de drag &
+  drop, aucune dépendance nouvelle.
+- Le − des nuits s'arrête à 1, AddStep passe à min="1". Réduire les nuits
+  appelle releasedBy dans la même passe que setStepNights.
+- readOnly rend le programme sans aucune commande.
+
+BOUCLE
+1. Lis itinerary.js et ses tests, 0006_trajets.sql, StepCard.jsx, mutations.js.
+2. Écris le SQL, puis days.js + tests, puis l'UI.
+3. Propose le découpage en composants AVANT d'écrire le JSX, et attends
+   validation.
+4. Vérifie : sql:check, test, build, puis en dev — pose trois activités et un
+   restaurant sur trois jours de Kyoto, réduis Kyoto à 2 nuits, vérifie que les
+   items reviennent en réserve au lieu de disparaître.
+5. Si échec, corrige et relance. Trois tentatives, puis remonte.
+
+CRITÈRE D'ARRÊT
+sql:check + test + build au vert, et le scénario de l'étape 4 ne perd rien.
+
+STOP
+- N'applique rien dans Supabase : les migrations passent à la main.
+- Ne migre aucune donnée : day_offset NULL est le bon défaut, les 48 items
+  restent intacts.
+- Ne réécris pas itinerary.js : days.js s'appuie dessus.
+- Ne casse pas la vue Catégories, elle reste le chemin de saisie.
+```
+
+### F3 — Les moments et les heures fermes
+
+```
+CONTEXTE
+F2 est livrée : les items se posent sur un jour, dans un ordre. Les colonnes
+day_slot et start_time existent en base depuis 0007 et ne sont pas encore
+utilisées. Lis les arbitrages 2 et 3.
+
+OBJECTIF
+Que la journée se lise comme une journée, et qu'une réservation à heure fixe ne
+puisse pas être ratée. Aucune migration.
+
+CONTRAT
+- Le jour se découpe en moments, dans l'ordre : journee, matin, midi,
+  apres-midi, soir. `journee` s'affiche comme un bandeau couvrant les quatre
+  autres — Kōyasan ou Universal mangent la journée, et on doit voir que rien
+  d'autre n'y tient.
+- Le sélecteur de placement de F2 gagne le moment, après le jour.
+- scheduleOf range par moment, puis par day_position à l'intérieur.
+  start_time s'AFFICHE mais NE TRIE PAS : pas de re-tri surprise sous les doigts.
+- start_time se saisit sur l'item et s'affiche en tête de ligne. Couplée à
+  `booked`, elle donne la ligne qu'on ne peut pas manquer : heure appuyée,
+  mention « réservé ». C'est le musée, la visite guidée, le kaiseki.
+- `booked` devient disponible hors hôtel — il ne servait qu'à sceller un
+  logement en F1, il vaut pour tout ce qui est réservé.
+- Un moment vide reste visible mais discret.
+- readOnly : lecture sans commande.
+
+BOUCLE
+1. Lis days.js et la vue Jours livrée en F2.
+2. Étends scheduleOf et ses tests AVANT l'UI : l'ordre des moments, le cas
+   `journee`, deux items à la même heure, un item sans heure entre deux avec.
+3. Implémente l'UI.
+4. Vérifie : test, build, puis en dev — pose Kōyasan en `journee` sur un jour
+   d'Osaka, et un kaiseki à 19h30 marqué réservé sur un soir de Kyoto.
+5. Si échec, corrige et relance. Trois tentatives, puis remonte.
+
+CRITÈRE D'ARRÊT
+test + build au vert, et les deux cas de l'étape 4 s'affichent correctement.
+
+STOP
+- Aucune migration : les colonnes sont là depuis F2.
+- start_time ne commande pas l'ordre. Si ça te paraît illogique, remonte-le, ne
+  le change pas.
+```
+
+### F4 — La vue Programme
+
+```
+CONTEXTE
+F1 à F3 sont livrées : on construit le programme ville par ville. Il manque la
+lecture du voyage entier, celle qui sert SUR PLACE, dans le train, en mode
+avion. timelineEntries (itinerary.js) sait déjà ordonner vols et étapes à leur
+date : ce lot s'appuie dessus, il ne le réécrit pas.
+
+OBJECTIF
+Le voyage jour par jour, du 7 au 26 novembre, toutes villes confondues.
+
+CONTRAT
+- PAS de route séparée — arbitré le 23 septembre 2026, après essai. Le
+  programme remplace la COLONNE DE GAUCHE dans l'écran du voyage : la carte,
+  l'en-tête, la frise et les vols restent en place, et cliquer une ville dans
+  le programme la sélectionne sur la carte. Une page à part coupait le
+  programme de la carte, alors que c'est ensemble qu'ils servent. La bascule
+  est un état local et non une route : changer d'URL remonterait le composant,
+  donc la carte, et on perdrait son zoom au moment où l'on s'en sert. Le bouton
+  vit sous le panneau des vols — on lit d'abord comment on arrive.
+- Un bloc par jour : date en toutes lettres, ville, rang du jour dans l'étape,
+  puis les moments.
+- Vols et TRANSFERTS INTER-VILLES s'intercalent à leur date. Un Kyoto →
+  Hiroshima prend la demi-journée : la ligne doit peser autant que ce qu'elle
+  occupe — ville de départ, ville d'arrivée, mode, durée en clair — et non se
+  lire comme une annotation. Elle s'affiche avant le programme de la journée.
+  La ville d'origine apparaît même sans liaison saisie : arriver d'ailleurs est
+  déjà une information, la durée n'en est que le détail.
+- Le jour courant est mis en avant quand la date du jour tombe dans le voyage.
+  C'est la fonction principale sur place : arriver sur « aujourd'hui ».
+- Deux items géolocalisés qui se suivent affichent la distance entre eux
+  (haversine, geo.js). Voir qu'on a mis Fushimi le matin et Arashiyama
+  l'après-midi, aux deux bouts de Kyoto, rattrape une journée mal construite.
+- Lecture seule : on suit un programme, on ne le modifie pas d'ici.
+- Marche hors ligne sans rien cacher de plus : le voyage entier est déjà en
+  IndexedDB.
+
+BOUCLE
+1. Lis itinerary.js, days.js, TripView.jsx, geo.js.
+2. Implémente.
+3. Vérifie : test, build, puis en dev avec DevTools → Offline : la vue doit se
+   rendre entièrement.
+4. Si échec, corrige et relance. Trois tentatives, puis remonte.
+
+CRITÈRE D'ARRÊT
+test + build au vert, et la vue se rend complètement hors ligne.
+
+STOP
+- Aucune écriture depuis cette vue.
+- Ne duplique pas la logique de days.js : si une fonction manque, ajoute-la là
+  avec ses tests, jamais dans le composant.
+```
 
 ---
 

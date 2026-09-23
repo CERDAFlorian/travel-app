@@ -65,4 +65,25 @@ export default defineConfig({
     },
   },
   server: { port: 5173 },
+
+  test: {
+    // DES VALEURS BIDON, ET C'EST VOULU.
+    //
+    // Les tests de rendu importent des composants qui remontent jusqu'à
+    // `lib/supabase.js`, lequel LÈVE au chargement quand la configuration
+    // manque — c'est délibéré, un client null se propagerait en « cannot read
+    // properties of null » à des dizaines de lignes de la vraie cause.
+    //
+    // En local, `.env.local` le nourrissait sans qu'on y pense ; la CI n'en a
+    // pas, et les deux suites tombaient à l'import. Les tests ne joignent
+    // jamais le réseau : le client est construit, jamais appelé.
+    //
+    // Surtout, ces valeurs empêchent un test de toucher la VRAIE base par
+    // accident. Le jour où un test appellera Supabase pour de bon, il échouera
+    // sur une URL qui n'existe pas plutôt que d'écrire dans la production.
+    env: {
+      VITE_SUPABASE_URL: 'https://base-de-test.supabase.co',
+      VITE_SUPABASE_ANON_KEY: 'cle-publishable-de-test',
+    },
+  },
 });

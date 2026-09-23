@@ -10,6 +10,7 @@
     "img": "node scripts/optimize-images.mjs",
     "img:check": "node scripts/optimize-images.mjs --check",
     "sql:check": "node scripts/check-sql.mjs",
+    "sql:bundle": "node scripts/build-sql-bundle.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "icons": "node scripts/build-icons.mjs",

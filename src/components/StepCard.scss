@@ -84,6 +84,58 @@
     color: var(--accent);
   }
 
+  // Le logement, juste sous le nom de la ville : c'est le décor du séjour.
+  // Sur une ligne à lui, pas dans la rangée du titre — celle-ci porte déjà les
+  // dates et les nuits, et un nom d'hôtel long la ferait passer à trois lignes.
+  &__lodging {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    margin: 4px 0 0;
+    font-size: clamp(12.5px, 1.2vw, 14px);
+    color: var(--text-soft);
+
+    // Aucun hôtel retenu : l'italique dit que c'est un manque, pas un nom.
+    &[data-empty] {
+      font-style: italic;
+      color: var(--muted);
+    }
+  }
+
+  &__lodging-dot {
+    width: 7px;
+    height: 7px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--cat-hotel);
+
+    [data-empty] > & { opacity: 0.4; }
+  }
+
+  &__lodging-name {
+    @include mixins.truncate;
+  }
+
+  // « +2 candidats » : le choix n'est pas figé, et on doit s'en souvenir en
+  // lisant l'en-tête plutôt qu'en dépliant l'accordéon.
+  &__lodging-count {
+    flex: none;
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    font-style: italic;
+  }
+
+  &__lodging-badge {
+    flex: none;
+    padding: 0 6px;
+    border: 1px solid var(--ok);
+    border-radius: var(--radius-pill);
+    color: var(--ok);
+    font-size: var(--fs-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
   &__nights-group {
     display: inline-flex;
     align-items: center;
@@ -106,6 +158,56 @@
     text-transform: uppercase;
     color: var(--text-soft);
     white-space: nowrap;
+  }
+
+  // Bascule entre les deux lectures de l'étape. Deux onglets et pas un
+  // interrupteur : « Catégories | Jour par jour » se lit sans avoir à deviner
+  // ce que l'autre position contient.
+  &__tabs {
+    display: flex;
+    gap: 4px;
+    margin: var(--sp-3) 0 0;
+    padding: 3px;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-pill);
+    background: var(--surface-sunken);
+  }
+
+  &__tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    justify-content: center;
+    min-height: var(--hit-dense);
+    padding: 2px var(--sp-3);
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: none;
+    color: var(--text-soft);
+    font: inherit;
+    font-size: clamp(12px, 1.15vw, 13.5px);
+    letter-spacing: 0.04em;
+    cursor: pointer;
+
+    &[data-on] {
+      background: var(--surface);
+      color: var(--accent-deep);
+      box-shadow: var(--shadow-sm);
+    }
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  // Ce qui reste à placer. En accent plutôt qu'en gris : c'est une chose à
+  // faire, pas une statistique.
+  &__tab-count {
+    padding: 0 6px;
+    border-radius: var(--radius-pill);
+    background: var(--accent-soft);
+    color: var(--accent-deep);
+    font-size: var(--fs-xs);
+    font-variant-numeric: tabular-nums;
   }
 
   &__cats {

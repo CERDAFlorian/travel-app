@@ -1,5 +1,6 @@
 import { CATEGORIES } from '@/lib/categories.js';
 import { toEuros } from '@/lib/currency.js';
+import { chosenHotel } from '@/lib/lodging.js';
 
 // Catégories qui entrent au budget. Reprise du drapeau `budget` du design :
 // restaurants et shopping en sont exclus — ils se décident sur place et
@@ -26,13 +27,34 @@ export function buildBudget(trip) {
   total += flights;
   rows.push({ key: 'vols', label: 'Vols', count: trip.flights.length, amount: flights });
 
+  // Les trajets terrestres, longtemps absents du total. C'est pourtant le
+  // poste qui manquait le plus : six liaisons en Shinkansen pèsent plus lourd
+  // que toutes les entrées de temples réunies, et le budget annonçait un
+  // voyage moins cher qu'il ne l'est.
+  let legs = 0;
+  for (const leg of trip.legs ?? []) {
+    const euros = toEuros(leg.price, leg.currency ?? 'EUR');
+    if (!euros) blanks += 1;
+    else legs += euros;
+  }
+  total += legs;
+  rows.push({ key: 'trajets', label: 'Trajets', count: (trip.legs ?? []).length, amount: legs });
+
   for (const category of BUDGETED) {
     let amount = 0;
     let count = 0;
 
     for (const step of trip.steps) {
-      for (const item of step.items) {
-        if (item.category !== category.key) continue;
+      // Les hôtels d'une étape sont des CANDIDATS tant qu'on n'a pas choisi :
+      // seul le retenu compte. Les additionner tous triplait le poste logement
+      // dès qu'on comparait trois adresses à Kyoto — le total montait sans
+      // qu'aucune nuit ne s'ajoute.
+      const counted =
+        category.key === 'hotel'
+          ? [chosenHotel(step)].filter(Boolean)
+          : step.items.filter((item) => item.category === category.key);
+
+      for (const item of counted) {
         count += 1;
         const euros = toEuros(item.price, item.currency ?? 'JPY');
         if (!euros) blanks += 1;
