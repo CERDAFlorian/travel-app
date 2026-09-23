@@ -34,6 +34,20 @@ npm run sql:check   # cohérence du schéma, des policies RLS et du seed
 
 Les trois tournent en CI sur chaque push.
 
+**La CI n'a pas de `.env.local`.** Vérifier en local ne suffit donc pas : un
+import qui dépend de la configuration Supabase y passe et casse en CI. Pour
+reproduire ses conditions exactes :
+
+```sh
+mv .env.local .env.local.bak
+npm run img:check && npm run sql:check && npm test && npm run build
+mv .env.local.bak .env.local
+```
+
+Les tests, eux, ne dépendent plus de ce fichier : `vite.config.js` leur fournit
+des valeurs Supabase bidon, qui garantissent aussi qu'aucun test ne touchera la
+vraie base.
+
 ## Ressources générées
 
 Trois scripts produisent des fichiers **commités**. Ils ne tournent jamais au
