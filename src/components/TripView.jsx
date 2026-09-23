@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import SyncLine from '@/components/SyncLine.jsx';
 import TripHeader from '@/components/TripHeader.jsx';
@@ -52,6 +52,39 @@ export default function TripView({
   // perdrait son zoom et sa position au moment précis où l'on s'en sert.
   const [byDay, setByDay] = useState(false);
   const [justAddedStep, setJustAddedStep] = useState(null);
+
+  // LA HAUTEUR DE LA FRISE SE MESURE, ELLE NE SE DEVINE PLUS.
+  //
+  // `--timeline-h` valait 53px, calculés à la main depuis les paddings et la
+  // ligne de texte d'un segment. Le raisonnement était juste, son résultat
+  // non : cliquer une ville dans la frise amenait son titre SOUS la frise, et
+  // la carte collante se posait au même endroit, à quelques pixels près.
+  //
+  // Une police qui rend un peu plus haut, un zoom navigateur, un segment qui
+  // gagne une icône — et l'écart revient. La valeur en dur reste comme repli
+  // avant le premier rendu ; ensuite c'est le DOM qui a raison.
+  //
+  // PAS DE BOUCLE, malgré les apparences : la frise porte
+  // `min-height: var(--timeline-h)`, qu'on vient de lui écrire. Un `min-height`
+  // ne peut que MONTER une hauteur, jamais la baisser — lui donner sa propre
+  // hauteur mesurée ne change donc rien, et l'observateur se tait au premier
+  // tour.
+  const timelineRef = useRef(null);
+
+  useEffect(() => {
+    const bar = timelineRef.current;
+    if (!bar || typeof ResizeObserver === 'undefined') return undefined;
+
+    const apply = () => {
+      const height = Math.round(bar.getBoundingClientRect().height);
+      if (height > 0) bar.closest('.trip')?.style.setProperty('--timeline-h', `${height}px`);
+    };
+
+    apply();
+    const observer = new ResizeObserver(apply);
+    observer.observe(bar);
+    return () => observer.disconnect();
+  }, []);
 
   // Les dates affichées sont DÉRIVÉES de l'arrivée du vol aller et du nombre
   // de nuits, pas lues dans `date_start` / `date_end`. Ajouter un vol qui
@@ -170,7 +203,7 @@ export default function TripView({
         {/* Collante sur mobile : en faisant défiler sept étapes, on garde sous
             les yeux où l'on en est dans le voyage, et de quoi sauter ailleurs.
             Sortie de l'en-tête pour ça — voir TripHeader. */}
-        <div className="trip__timeline">
+        <div className="trip__timeline" ref={timelineRef}>
           <StepTimeline
             entries={entries}
             selectedId={selectedStepId}
