@@ -8,9 +8,9 @@ import Trip from '@/pages/Trip.jsx';
 import SharedTrip from '@/pages/SharedTrip.jsx';
 import './App.scss';
 
-function SharedTripRoute() {
+function SharedTripRoute({ programme = false }) {
   const { token } = useParams();
-  return <SharedTrip token={token} />;
+  return <SharedTrip token={token} programme={programme} />;
 }
 
 // Le partage est branché AVANT tout le reste, et c'est le point important :
@@ -21,6 +21,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/partage/:token" element={<SharedTripRoute />} />
+      <Route path="/partage/:token/programme" element={<SharedTripRoute programme />} />
       <Route path="*" element={<PrivateApp />} />
     </Routes>
   );
@@ -80,6 +81,11 @@ function PrivateApp() {
       <Route
         path="/voyage/:slug"
         element={<Trip onRequestLogin={user ? null : requestLogin} readOnly={readOnly} />}
+      />
+      {/* Le programme du voyage entier : la lecture qui sert sur place. */}
+      <Route
+        path="/voyage/:slug/programme"
+        element={<Trip onRequestLogin={user ? null : requestLogin} readOnly={readOnly} programme />}
       />
       {/* replace : une URL inconnue ne doit pas s'empiler dans l'historique,
           sinon le bouton retour y ramène en boucle. */}

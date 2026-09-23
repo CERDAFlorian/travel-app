@@ -254,7 +254,7 @@ Colle un prompt, laisse la boucle tourner, vérifie, commit, passe au suivant. N
 | **L6** | Vols, trajets, expériences, budget | 1 j | Périmètre complet |
 | ~~**L7**~~ | ~~PWA, précache, bouton sync, QA mobile~~ | ✅ fait | Prêt pour le voyage |
 | **L8** | Séparer la base de dev de la base de prod | 0,5 j | On peut casser sans risque |
-| **L9** | Le programme jour par jour — 4 features, voir la section dédiée | 4 j | On sait quoi faire chaque jour |
+| ~~**L9**~~ | ~~Le programme jour par jour — 4 features, voir la section dédiée~~ | ✅ fait | On sait quoi faire chaque jour |
 
 **Cible réaliste jour 1 : L0 → L3.**
 
@@ -1238,9 +1238,11 @@ ne coûte rien.
 | ~~**F1 · L'hôtel retenu**~~ | ✅ Comparer trois hôtels sans fausser le budget, puis sceller le choix | aucun | fait |
 | ~~**F2 · Poser un item sur un jour**~~ | ✅ Le programme existe : chaque activité a son jour | `0007_journees.sql` | fait |
 | ~~**F3 · Les moments et les heures fermes**~~ | ✅ La journée se lit, et ce qui est réservé saute aux yeux | aucun | fait |
-| **F4 · La vue Programme** | Le voyage entier jour par jour : ce qui sert sur place | aucun | 1 j |
+| ~~**F4 · La vue Programme**~~ | ✅ Le voyage entier jour par jour : ce qui sert sur place | aucun | fait |
 
-**F1, F2 et F3 sont livrées** (22 septembre 2026). Reste F4.
+**L9 est livré** — F1 à F4, les 22 et 23 septembre 2026. Il reste deux
+retouches notées plus haut : masquer les mots d'amour en vue partagée, et
+décider si la réserve « À placer » doit y rester visible.
 
 **L'ordre est imposé.** F1 d'abord : elle ne touche pas au schéma, corrige deux
 bugs vivants, et surtout **fixe le sens de l'étoile**, dont F2 et F3 dépendent

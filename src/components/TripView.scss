@@ -161,3 +161,31 @@
     text-align: center;
   }
 }
+
+// Accès au programme du voyage entier. Discret mais pas caché : on le cherche
+// une fois parti, pas pendant la préparation.
+.trip {
+  &__program {
+    max-width: var(--page-max);
+    margin: 0 auto;
+    padding: var(--sp-2) var(--page-pad) 0;
+  }
+
+  &__program-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--hit-dense);
+    padding: 2px 12px;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-pill);
+    color: var(--accent);
+    font-size: var(--fs-sm);
+    text-decoration: none;
+
+    &:hover {
+      background: var(--accent-soft);
+    }
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+}

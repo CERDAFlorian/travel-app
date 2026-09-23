@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import SyncLine from '@/components/SyncLine.jsx';
 import TripHeader from '@/components/TripHeader.jsx';
 import StepTimeline from '@/components/StepTimeline.jsx';
@@ -43,6 +43,9 @@ export default function TripView({
   onChanged,
 }) {
   const [selectedStepId, setSelectedStepId] = useState(null);
+  // Construit depuis l'URL courante : la même ligne sert au propriétaire
+  // (/voyage/:slug) et à la vue partagée (/partage/:token).
+  const { pathname } = useLocation();
   const [justAddedStep, setJustAddedStep] = useState(null);
 
   // Les dates affichées sont DÉRIVÉES de l'arrivée du vol aller et du nombre
@@ -149,6 +152,15 @@ export default function TripView({
           onSelectStep={selectStep}
           onSelectFlight={showFlights}
         />
+      </div>
+
+      {/* La lecture qui sert SUR PLACE : on n'est pas « à Kyoto », on est le
+          13 novembre. Elle est en haut parce que c'est la première chose qu'on
+          cherche une fois parti. */}
+      <div className="trip__program">
+        <Link className="trip__program-link" to={`${pathname.replace(/\/$/, '')}/programme`}>
+          Le programme jour par jour →
+        </Link>
       </div>
 
       {/* Ne s'affiche que s'il y a quelque chose à signaler — hors ligne ou

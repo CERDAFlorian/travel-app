@@ -160,3 +160,37 @@ export function positionsToUpdate(items) {
     .map((item, index) => ({ id: item.id, day_position: index + 1 }))
     .filter((next, index) => (items[index].day_position ?? 0) !== next.day_position);
 }
+
+// LE VOYAGE ENTIER, JOUR PAR JOUR.
+//
+// C'est la lecture qui sert SUR PLACE : on n'est pas dans « Kyoto », on est le
+// 13 novembre. Les étapes s'effacent derrière la suite des jours, et les vols
+// comme les trajets se rangent à leur date, au milieu du programme.
+//
+// Les étapes doivent arriver AVEC LEURS DATES RÉSOLUES (resolveItinerary) : ce
+// sont elles qui font foi, pas les colonnes date_start stockées.
+export function tripSchedule(trip) {
+  const steps = trip.steps ?? [];
+
+  // Un trajet est identifié par le COUPLE d'étapes : une liaison qui subsiste
+  // entre deux villes devenues non adjacentes ne doit pas s'inviter dans une
+  // journée qu'elle ne concerne plus.
+  const legs = new Map((trip.legs ?? []).map((leg) => [`${leg.from_step}>${leg.to_step}`, leg]));
+
+  const flights = new Map();
+  for (const flight of trip.flights ?? []) {
+    if (!flight.date) continue;
+    flights.set(flight.date, [...(flights.get(flight.date) ?? []), flight]);
+  }
+
+  return steps.flatMap((step, index) =>
+    scheduleOf(step, { isLast: index === steps.length - 1 }).map((day) => ({
+      ...day,
+      step,
+      // Le trajet n'apparaît qu'au PREMIER jour d'une étape : c'est le jour où
+      // l'on arrive, et il se lit avant le programme du soir.
+      leg: day.offset === 0 && index > 0 ? (legs.get(`${steps[index - 1].id}>${step.id}`) ?? null) : null,
+      flights: flights.get(day.date) ?? [],
+    })),
+  );
+}

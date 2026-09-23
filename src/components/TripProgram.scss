@@ -1,0 +1,248 @@
+@use '../theme/mixins';
+
+.program {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: var(--sp-4) var(--page-pad) var(--sp-8);
+
+  &__head {
+    margin-bottom: var(--sp-4);
+  }
+
+  &__back,
+  &__shared {
+    display: inline-block;
+    margin: 0 0 var(--sp-2);
+    color: var(--muted);
+    font-size: var(--fs-sm);
+    text-decoration: none;
+
+    &:hover { color: var(--accent); }
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  &__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(24px, 4vw, 38px);
+    line-height: 1.1;
+    color: var(--text-heading);
+  }
+
+  &__range {
+    margin: 4px 0 0;
+    color: var(--accent);
+    font-size: var(--fs-sm);
+    font-style: italic;
+  }
+
+  &__days {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+  }
+}
+
+// Un jour du voyage.
+.pday {
+  padding: var(--sp-3);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+
+  // Aujourd'hui : c'est la seule chose qu'on cherche en ouvrant la page sur
+  // place. Le trait d'accent la rend repérable en faisant défiler.
+  &[data-today] {
+    border-color: var(--accent);
+    border-left-width: 3px;
+    background: var(--surface-warm);
+    scroll-margin-top: var(--sp-4);
+  }
+
+  &__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--sp-2);
+    margin-bottom: 6px;
+  }
+
+  &__date {
+    font-family: var(--font-display);
+    font-size: clamp(16px, 2vw, 20px);
+    color: var(--text-heading);
+    text-transform: capitalize;
+  }
+
+  &__city {
+    color: var(--accent);
+    font-size: var(--fs-sm);
+    font-style: italic;
+  }
+
+  &__rank {
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  &__now {
+    margin-left: auto;
+    padding: 1px 8px;
+    border-radius: var(--radius-pill);
+    background: var(--accent);
+    color: var(--accent-contrast);
+    font-size: var(--fs-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  // Vol ou trajet : on arrive quelque part avant d'y faire quelque chose.
+  &__move {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 6px;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    background: var(--surface-sunken);
+    color: var(--text-soft);
+    font-size: var(--fs-sm);
+  }
+
+  &__move-kind {
+    padding: 0 6px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-action);
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  &__empty {
+    margin: 0;
+    color: var(--muted);
+    font-size: var(--fs-sm);
+    font-style: italic;
+  }
+
+  &__slots {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+.pslot {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0 var(--sp-3);
+  padding: 3px 0;
+
+  // La journée entière prend le fond d'accent : elle annonce que le jour est
+  // pris, et ça doit se voir avant de lire la ligne.
+  &[data-full] {
+    padding: 4px 6px;
+    border-radius: var(--radius-sm);
+    background: var(--accent-soft);
+  }
+
+  &__name {
+    padding-top: 2px;
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+
+    [data-full] > & { color: var(--accent-deep); }
+  }
+
+  &__items {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  @media (min-width: 560px) {
+    grid-template-columns: 92px 1fr;
+    align-items: start;
+  }
+}
+
+.prow {
+  padding: 2px 0;
+
+  &[data-booked] {
+    margin-left: -8px;
+    padding-left: 6px;
+    border-left: 2px solid var(--ok);
+  }
+
+  &__hop {
+    display: block;
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    font-style: italic;
+
+    &::before {
+      content: '↳ ';
+      font-style: normal;
+    }
+  }
+
+  &__line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2);
+    min-width: 0;
+  }
+
+  &__time {
+    flex: none;
+    color: var(--accent-deep);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--cat-hotel);
+
+    &[data-cat='activite'] { background: var(--cat-activite); }
+    &[data-cat='restaurant'] { background: var(--cat-restaurant); }
+    &[data-cat='shopping'] { background: var(--cat-shopping); }
+    &[data-cat='lieu'] { background: var(--cat-lieu); }
+    &[data-cat='note'] { background: var(--cat-note); }
+  }
+
+  &__name {
+    font-size: var(--fs-sm);
+  }
+
+  &__booked {
+    flex: none;
+    padding: 0 6px;
+    border: 1px solid var(--ok);
+    border-radius: var(--radius-pill);
+    color: var(--ok);
+    font-size: var(--fs-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  &__meta {
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    font-style: italic;
+  }
+}

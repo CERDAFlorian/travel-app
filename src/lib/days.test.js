@@ -6,6 +6,7 @@ import {
   releasedBy,
   reorderInDay,
   scheduleOf,
+  tripSchedule,
   unplacedOf,
 } from './days.js';
 
@@ -298,5 +299,95 @@ describe('positionsToUpdate', () => {
       { id: 'a', day_position: 1 },
       { id: 'b', day_position: 2 },
     ]);
+  });
+});
+
+describe('tripSchedule', () => {
+  // Deux étapes enchaînées : Kyoto 11→13 (2 nuits), Osaka 13→15 (2 nuits),
+  // la seconde étant la dernière du voyage.
+  const trip = (overrides = {}) => ({
+    steps: [
+      {
+        id: 'kyoto',
+        name: 'Kyoto',
+        nights: 2,
+        date_start: '2026-11-11',
+        items: [{ id: 'fushimi', category: 'lieu', day_offset: 0, day_slot: 'matin' }],
+      },
+      { id: 'osaka', name: 'Osaka', nights: 2, date_start: '2026-11-13', items: [] },
+    ],
+    flights: [],
+    legs: [],
+    ...overrides,
+  });
+
+  // Le voyage se lit comme une suite de jours : deux nuits, deux nuits, plus
+  // le jour du vol retour porté par la dernière étape.
+  it('enchaîne les jours de toutes les étapes', () => {
+    const days = tripSchedule(trip());
+
+    expect(days.map((day) => day.date)).toEqual([
+      '2026-11-11',
+      '2026-11-12',
+      '2026-11-13',
+      '2026-11-14',
+      '2026-11-15',
+    ]);
+    expect(days.map((day) => day.step.name)).toEqual(['Kyoto', 'Kyoto', 'Osaka', 'Osaka', 'Osaka']);
+    expect(days.at(-1).departure).toBe(true);
+  });
+
+  // Aucun jour n'est réclamé deux fois : date_end d'une étape EST date_start
+  // de la suivante, et c'est la ville d'arrivée qui prend la journée.
+  it('ne fait jamais se chevaucher deux étapes', () => {
+    const dates = tripSchedule(trip()).map((day) => day.date);
+    expect(new Set(dates).size).toBe(dates.length);
+  });
+
+  it('garde le programme de chaque jour', () => {
+    const matin = tripSchedule(trip())[0].groups.find((group) => group.key === 'matin');
+    expect(matin.items.map((i) => i.id)).toEqual(['fushimi']);
+  });
+
+  // Le trajet se lit le jour où on le fait — donc au premier jour de l'étape
+  // d'arrivée, avant le programme du soir.
+  it('pose le trajet au premier jour de l’étape d’arrivée', () => {
+    const days = tripSchedule(
+      trip({ legs: [{ id: 'l1', from_step: 'kyoto', to_step: 'osaka', mode: 'shinkansen' }] }),
+    );
+
+    expect(days.find((day) => day.date === '2026-11-13').leg.id).toBe('l1');
+    expect(days.filter((day) => day.leg).length).toBe(1);
+  });
+
+  // Une liaison entre deux villes devenues non adjacentes reste en base — on
+  // ne supprime pas une saisie — mais n'a plus à s'inviter dans une journée.
+  it('ignore un trajet entre étapes non adjacentes', () => {
+    const days = tripSchedule(
+      trip({ legs: [{ id: 'l9', from_step: 'osaka', to_step: 'kyoto', mode: 'train' }] }),
+    );
+    expect(days.every((day) => day.leg === null)).toBe(true);
+  });
+
+  it('range les vols à leur date', () => {
+    const days = tripSchedule(
+      trip({
+        flights: [
+          { id: 'aller', direction: 'aller', date: '2026-11-11' },
+          { id: 'retour', direction: 'retour', date: '2026-11-15' },
+          { id: 'sans date', direction: 'interieur', date: null },
+        ],
+      }),
+    );
+
+    expect(days[0].flights.map((f) => f.id)).toEqual(['aller']);
+    expect(days.at(-1).flights.map((f) => f.id)).toEqual(['retour']);
+    // Un vol sans date n'a pas de place dans une chronologie : il reste dans
+    // son panneau, pas ici.
+    expect(days.flatMap((day) => day.flights)).toHaveLength(2);
+  });
+
+  it('ne rend rien pour un voyage sans étape', () => {
+    expect(tripSchedule({ steps: [], flights: [], legs: [] })).toEqual([]);
   });
 });
