@@ -202,6 +202,19 @@ describe('TripView', () => {
     expect(html).toContain('Villes');
   });
 
+  // Kyoto n'a aucun item : son bandeau photo est donc vide. Il annonçait
+  // « photos de Kyoto à déposer ici », ce qui laissait croire qu'on attendait
+  // des photos DE LA VILLE, à téléverser soi-même. Les deux sont faux.
+  it('montre trois emplacements plutôt qu’une invitation à déposer', () => {
+    const html = render({ readOnly: false });
+
+    expect(html).not.toContain('à déposer ici');
+    expect(html).toContain('photo-strip__hole');
+    // Sans l'apostrophe finale : React l'échappe en `&#x27;`, y compris dans le
+    // texte. L'assertion porterait sur la typographie, pas sur le rendu.
+    expect(html).toContain('Les photos viendront des activités, restos et lieux');
+  });
+
   // --- Les mots d'amour ------------------------------------------------------
   //
   // Ils sont écrits pour deux. Un itinéraire envoyé à la famille ne doit pas
