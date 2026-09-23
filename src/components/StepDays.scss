@@ -441,3 +441,67 @@
 
   &__cancel { margin-left: auto; }
 }
+
+// Le trajet qui ouvre ou ferme le séjour dans une ville.
+//
+// L'onglet ne montre qu'une ville : sans ce rappel, le Shinkansen du matin
+// n'apparaîtrait nulle part et on bâtirait une journée pleine par-dessus. Il
+// ne se modifie pas d'ici — un trajet appartient à l'intervalle entre deux
+// villes, et se saisit entre les deux cartes d'étape.
+.transfer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 5px var(--sp-3);
+  background: var(--surface-sunken);
+  color: var(--text-soft);
+  font-size: var(--fs-sm);
+
+  // L'arrivée ouvre la carte du jour, le départ la ferme : le filet se pose du
+  // côté où le mouvement a lieu.
+  &[data-way='in'] { border-bottom: 1px solid var(--border-soft); }
+  &[data-way='out'] { border-top: 1px dashed var(--accent-2); }
+
+  &__kind {
+    flex: none;
+    padding: 0 6px;
+    border-radius: var(--radius-pill);
+    background: var(--accent-2-soft);
+    color: var(--accent-2);
+    font-size: var(--fs-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  &__route {
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  &__date {
+    color: var(--accent);
+    font-style: italic;
+  }
+
+  // La durée porte le poids : c'est elle qui dit ce qu'il reste de la journée.
+  &__time {
+    font-weight: 600;
+    color: var(--accent-deep);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__when {
+    color: var(--text-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  // Un trajet sans horaire est un oubli en puissance : c'est exactement ce que
+  // ce bandeau est là pour éviter.
+  &__todo {
+    color: var(--warn);
+    font-size: var(--fs-xs);
+    font-style: italic;
+  }
+}

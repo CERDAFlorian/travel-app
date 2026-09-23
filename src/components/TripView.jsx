@@ -299,6 +299,18 @@ function StepsColumn({
               step={step}
               tripTitle={view.title}
               readOnly={readOnly}
+              // D'où l'on vient et où l'on va. L'onglet Jour par jour d'une
+              // ville ne montre QUE cette ville : sans ses voisines, le trajet
+              // n'y apparaîtrait nulle part, et on planifierait une journée
+              // pleine le matin d'un Shinkansen.
+              neighbours={{
+                previous: view.steps[index - 1] ?? null,
+                next,
+                legIn: view.steps[index - 1]
+                  ? legBetween(view.steps[index - 1].id, step.id)
+                  : null,
+                legOut: next ? legBetween(step.id, next.id) : null,
+              }}
               selected={step.id === selectedStepId}
               onSelect={setSelectedStepId}
               onRemove={handleRemoveStep}

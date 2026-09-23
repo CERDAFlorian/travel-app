@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { scheduleOf, unplacedOf } from '@/lib/days.js';
 import { formatDayFull } from '@/lib/dates.js';
-import { formatClock } from '@/lib/transport.js';
+import { formatClock, formatDuration, modeLabel } from '@/lib/transport.js';
 import { haversine, formatDistance } from '@/lib/geo.js';
 import {
   duplicateItemOnDay,
@@ -25,9 +25,21 @@ import './StepDays.scss';
 // prix ou géocoder une adresse se fait dans l'onglet Catégories, où la ligne
 // porte déjà tout ce qu'il faut. Empiler les deux jeux de commandes aurait
 // donné une ligne illisible sur un téléphone.
-export default function StepDays({ step, isLast, readOnly, onChanged }) {
+export default function StepDays({ step, isLast, neighbours, readOnly, onChanged }) {
   const days = scheduleOf(step, { isLast });
   const reserve = unplacedOf(step, { isLast });
+
+  // LES TRAJETS SONT DES JOURS OCCUPÉS. Cet onglet ne montre qu'une ville : le
+  // Shinkansen qui l'ouvre et celui qui la ferme n'apparaîtraient nulle part,
+  // et on se retrouverait à remplir le matin d'un départ.
+  //
+  // L'arrivée tombe le PREMIER jour — c'est la date où l'on roule, celle qui
+  // ouvre le séjour. Le départ, lui, a lieu le LENDEMAIN du dernier jour :
+  // on dort ici la dernière nuit et on part au matin. Le bandeau se pose donc
+  // en pied du dernier jour, en portant sa vraie date, plutôt que de laisser
+  // croire à une journée pleine.
+  const arrival = neighbours?.previous ?? null;
+  const leaving = neighbours?.next ?? null;
 
   return (
     <div className="days">
@@ -44,6 +56,15 @@ export default function StepDays({ step, isLast, readOnly, onChanged }) {
               <span className="day__date">{formatDayFull(day.date)}</span>
               {day.items.length > 0 && <span className="day__count">{day.items.length}</span>}
             </h3>
+
+            {day.offset === 0 && arrival && (
+              <Transfer
+                way="in"
+                city={arrival.name}
+                leg={neighbours.legIn}
+                date={null}
+              />
+            )}
 
             {day.items.length === 0 ? (
               // Un jour vide reste affiché : un trou dans un programme est une
@@ -99,6 +120,18 @@ export default function StepDays({ step, isLast, readOnly, onChanged }) {
                 })}
               </div>
             )}
+
+            {/* Le dernier jour de la ville porte le départ du lendemain. La
+                date affichée est celle du trajet, pas celle du jour : on part
+                au matin, après la dernière nuit. */}
+            {leaving && day.offset === days.length - 1 && (
+              <Transfer
+                way="out"
+                city={leaving.name}
+                leg={neighbours.legOut}
+                date={leaving.date_start}
+              />
+            )}
           </section>
         );
       })}
@@ -127,6 +160,37 @@ export default function StepDays({ step, isLast, readOnly, onChanged }) {
         )}
       </section>
     </div>
+  );
+}
+
+// Le trajet qui ouvre ou ferme le séjour.
+//
+// Il n'est pas modifiable ici : un trajet appartient à l'INTERVALLE entre deux
+// villes, et se saisit entre les deux cartes d'étape (StepLink). Le rappeler
+// ici sert à ne pas l'oublier en bâtissant la journée, pas à le ressaisir.
+function Transfer({ way, city, leg, date }) {
+  return (
+    <p className="transfer" data-way={way}>
+      <span className="transfer__kind">{leg ? modeLabel(leg.mode) : 'Trajet'}</span>
+
+      <span className="transfer__route">
+        {way === 'in' ? `Arrivée de ${city}` : `Départ vers ${city}`}
+      </span>
+
+      {date && <span className="transfer__date">{formatDayFull(date)}</span>}
+
+      {/* La durée en clair : c'est elle qui dit ce qu'il reste de la journée. */}
+      {leg?.duration_min != null && (
+        <span className="transfer__time">{formatDuration(leg.duration_min)}</span>
+      )}
+      {leg?.dep && (
+        <span className="transfer__when">
+          {formatClock(leg.dep)}
+          {leg.arr && ` → ${formatClock(leg.arr)}`}
+        </span>
+      )}
+      {!leg && <span className="transfer__todo">horaire à renseigner</span>}
+    </p>
   );
 }
 

@@ -23,6 +23,7 @@ export default function StepCard({
   tripTitle,
   readOnly,
   isLast,
+  neighbours,
   selected,
   onSelect,
   onRemove,
@@ -276,7 +277,13 @@ export default function StepCard({
           </div>
         ) : (
           <div onClick={(event) => event.stopPropagation()}>
-            <StepDays step={step} isLast={isLast} readOnly={readOnly} onChanged={onChanged} />
+            <StepDays
+              step={step}
+              isLast={isLast}
+              neighbours={neighbours}
+              readOnly={readOnly}
+              onChanged={onChanged}
+            />
           </div>
         )}
 
