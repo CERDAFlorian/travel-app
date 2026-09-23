@@ -11,6 +11,24 @@
 
 const DB_NAME = 'travel-app';
 const DB_VERSION = 1;
+
+// LA FORME DE CE QU'ON STOCKE — à ne pas confondre avec DB_VERSION, qui est le
+// schéma d'IndexedDB. Ici c'est la forme de l'objet normalisé par api.js.
+//
+// Pourquoi il en faut une : `useCached` rend le cache AVANT le réseau, et une
+// fiche écrite par une version précédente est rendue telle quelle. Le jour où
+// `love_notes` est apparu, les voyages en cache ne le portaient pas : l'app
+// affichait les mots d'amour sur un voyage qui les refuse, et une date de fin
+// périmée, le temps que la réponse arrive. Sur une connexion lente, « le temps
+// que » dure assez longtemps pour qu'on croie le correctif raté.
+//
+// UNE FICHE D'UNE AUTRE FORME EST IGNORÉE, pas réparée : on ne devine pas les
+// champs manquants. Elle sera réécrite à la première synchronisation.
+//
+// À INCRÉMENTER dès que `normalizeTrip` change de forme — un champ ajouté, un
+// champ dont le sens change. C'est le prix d'un cache qui survit aux
+// déploiements.
+const SHAPE = 2;
 const STORE_TRIPS = 'trips'; // un voyage complet, clé = slug
 const STORE_META = 'meta';   // la liste des voyages, clé = 'trips-list'
 const LIST_KEY = 'trips-list';
@@ -69,20 +87,24 @@ async function run(storeName, mode, work) {
 
 export async function readTrip(slug) {
   const row = await run(STORE_TRIPS, 'readonly', (store) => store.get(slug));
-  return row ? { data: row.trip, savedAt: row.savedAt } : null;
+  if (!row || row.shape !== SHAPE) return null;
+  return { data: row.trip, savedAt: row.savedAt };
 }
 
 export async function writeTrip(slug, trip, savedAt) {
-  await run(STORE_TRIPS, 'readwrite', (store) => store.put({ slug, trip, savedAt }));
+  await run(STORE_TRIPS, 'readwrite', (store) => store.put({ slug, trip, savedAt, shape: SHAPE }));
 }
 
 export async function readTripList() {
   const row = await run(STORE_META, 'readonly', (store) => store.get(LIST_KEY));
-  return row ? { data: row.trips, savedAt: row.savedAt } : null;
+  if (!row || row.shape !== SHAPE) return null;
+  return { data: row.trips, savedAt: row.savedAt };
 }
 
 export async function writeTripList(trips, savedAt) {
-  await run(STORE_META, 'readwrite', (store) => store.put({ key: LIST_KEY, trips, savedAt }));
+  await run(STORE_META, 'readwrite', (store) =>
+    store.put({ key: LIST_KEY, trips, savedAt, shape: SHAPE }),
+  );
 }
 
 // Vide le cache entier.
