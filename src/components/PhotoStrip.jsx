@@ -13,12 +13,31 @@ import './PhotoStrip.scss';
 //
 // Le libellé reste court par contrainte : une tuile fait un tiers de la carte,
 // soit ~110px sur mobile, ce qui laisse une dizaine de caractères.
+//
+// ÉTAPE VIDE : trois emplacements, pas une bannière. Le bandeau annonçait
+// « photos de Osaka à déposer ici », ce qui laissait croire qu'on attendait des
+// photos DE LA VILLE, à téléverser. Ni l'un ni l'autre : les images viennent
+// des activités, restaurants et lieux qu'on ajoute à l'étape, et elles
+// apparaissent toutes seules. Trois cases de la même taille que les vraies
+// tuiles disent la seule chose utile — la place existe, elle attend du contenu.
 export default function PhotoStrip({ items, stepName }) {
   const tiles = photoStripFor(items);
 
   if (tiles.length === 0) {
     return (
-      <div className="photo-strip__empty">photos de {stepName} à déposer ici</div>
+      <div className="photo-strip__waiting">
+        <ul className="photo-strip" aria-hidden="true">
+          {[0, 1, 2].map((slot) => (
+            <li key={slot} className="photo-strip__tile">
+              <div className="photo-strip__hole" />
+            </li>
+          ))}
+        </ul>
+
+        <p className="photo-strip__note">
+          Les photos viendront des activités, restos et lieux de l'étape.
+        </p>
+      </div>
     );
   }
 

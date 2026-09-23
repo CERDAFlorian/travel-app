@@ -77,23 +77,35 @@
     text-overflow: ellipsis;
   }
 
-  &__empty {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: clamp(56px, 6vw, 74px);
-    margin-top: 9px;
-    border: 1px dashed var(--border-strong);
-    border-radius: 8px;
+  // Étape vide : trois emplacements aux dimensions des vraies tuiles, pour que
+  // la carte garde sa hauteur et qu'on voie tout de suite ce qui manque.
+  &__hole {
+    width: 100%;
+    height: clamp(70px, 8vw, 108px);
+    // Mêmes hachures que l'emplacement d'une tuile sans image : une place à
+    // remplir, et non une image qui aurait échoué à charger.
     background: repeating-linear-gradient(
       45deg,
       var(--surface) 0 8px,
       var(--surface-tint) 8px 16px
     );
-    font-family: ui-monospace, Menlo, monospace;
-    font-size: 12px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--muted);
   }
+
+  // La phrase dit d'où viennent les images. C'est tout ce qui manquait :
+  // l'ancien libellé laissait croire qu'on attendait des photos de la ville, et
+  // qu'il fallait les déposer soi-même.
+  &__note {
+    margin: 5px 0 0;
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    font-style: italic;
+  }
+}
+
+.photo-strip__waiting {
+  margin-top: 9px;
+
+  // La grille est deja espacee par .photo-strip ; sans ca, la marge se
+  // cumulerait avec celle du conteneur.
+  > .photo-strip { margin-top: 0; }
 }
