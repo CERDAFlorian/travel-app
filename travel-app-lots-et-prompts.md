@@ -169,6 +169,22 @@ hors d'un voyage partagé on est chez soi. La coupure se fait sur `shared` et
 non sur `readOnly` — hors ligne dans un train japonais, l'app est en lecture
 seule et on est toujours à deux.
 
+**Une URL de recette pour la branche `dev`** — voulu le 25 septembre 2026,
+remis à plus tard. Une adresse où éprouver `dev` contre la base de dev, pour
+faire essayer une correction avant qu'elle ne touche le vrai voyage de
+quelqu'un. L'app a maintenant trois utilisateurs : tester en production a cessé
+d'être sans conséquence.
+
+Ce qu'il faut, une heure environ : un workflow qui construit et pousse une image
+taguée `dev` sur GHCR, une seconde application Coolify pointant cette image, un
+second domaine. Les identifiants existent déjà — `VITE_SUPABASE_URL_DEV` et
+`VITE_SUPABASE_ANON_KEY_DEV`, créés pour `check.yml`.
+
+Le piège à prévoir : **deux PWA sur deux domaines, deux service workers, deux
+caches**. Une recette installée sur l'écran d'accueil à côté de la vraie app est
+une confusion garantie le jour du départ. Donner au site de recette un nom et
+une couleur qui ne trompent pas — la charte `neutral` existe déjà pour ça.
+
 **Trois items n'auront jamais de photo** : Distillerie Hakushu, Balade dans le
 village, Mémorial de la Paix. Aucun mot-clé ne leur correspond dans le design.
 
