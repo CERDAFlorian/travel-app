@@ -127,12 +127,24 @@ ne sont utilisés par aucun workflow.
 
 ### Secrets GitHub requis
 
-Dans `Settings > Secrets and variables > Actions` :
+Dans `Settings > Secrets and variables > Actions`, **quatre** secrets — une
+paire par base :
 
 ```txt
-VITE_SUPABASE_URL
+VITE_SUPABASE_URL           prod, utilisée par deploy.yml (push sur main)
 VITE_SUPABASE_ANON_KEY
+
+VITE_SUPABASE_URL_DEV       dev,  utilisée par check.yml  (push sur dev, PR)
+VITE_SUPABASE_ANON_KEY_DEV
 ```
+
+**Chaque branche voit sa base.** `main` part en production et doit voir la
+prod ; `dev` est une branche de travail, son build de vérification n'a aucune
+raison d'embarquer les identifiants de la base qui porte les vrais voyages.
+
+`check.yml` échoue explicitement si les secrets `_DEV` manquent : sans ce
+contrôle, un secret absent donne une chaîne vide, le build réussit, et produit
+un bundle sans configuration qui ne lèverait qu'à l'ouverture.
 
 `GITHUB_TOKEN` est fourni automatiquement pour le push sur GHCR.
 
