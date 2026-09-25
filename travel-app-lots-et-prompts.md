@@ -14,10 +14,10 @@ Offline en **lecture seule**. Carte SVG unique zoomable, ancres géographiques +
 ## État du projet — 18 septembre 2026
 
 Branche de travail : `dev`. `main` est en retard, la fusion se fera par PR.
-**L0 à L7 sont terminés.** L8 est arbitré et outillé le 23 septembre 2026 :
-deux projets Supabase, dev et prod. Il reste UN geste manuel, qui n'appartient
-qu'au propriétaire du compte — créer le projet de dev et y coller le schéma.
-La procédure est dans `supabase/README.md`, section « Deux bases ».
+**L0 à L9 sont terminés.** L8 compris : la base de dev existe depuis le
+25 septembre 2026, avec un compte et le voyage `japon-2026` du seed. `.env.local`
+la vise ; les secrets GitHub continuent de viser la prod. La procédure de
+promotion dev → prod est dans `supabase/README.md`, section « Deux bases ».
 
 **L9 spécifié le 22 septembre 2026**, pas commencé : le programme jour par jour —
 organiser activités, restaurants et visites à l'intérieur d'une ville. Le modèle et
@@ -1103,9 +1103,22 @@ la console — se tromper de base est précisément l'accident que ce lot évite
 La procédure de promotion dev → prod et le reset de dev sont écrits dans
 `supabase/README.md`.
 
-**Ce qui reste, et qui n'appartient qu'à toi** : créer le projet de dev, y
-coller le schéma, y créer un compte, y jouer le seed, puis recopier URL et clé
-dans `.env.local`. Six étapes, détaillées dans le README.
+**Fait le 25 septembre 2026.** Projet de dev créé, schéma posé depuis le
+bundle, un compte, le voyage `japon-2026` du seed — un seul suffit, c'est celui
+qui a du contenu. `anon` y a été vérifié sans aucun droit de table, ce qui
+confirme que `0001` est bien passé.
+
+Deux choses apprises en le montant, notées pour la prochaine base :
+
+· **le seed avant le compte ne sert à rien.** `auth.users` est vide sur un
+  projet neuf, donc `trip_members` reste vide et RLS rend tout invisible — sans
+  la moindre erreur à l'écran. Le `WARNING` du seed n'est pas affiché par le SQL
+  Editor. Créer le compte D'ABORD.
+
+· **le cache du navigateur ne suit pas le changement de base.** IndexedDB est
+  indexé par origine, pas par projet : après avoir changé `.env.local`, l'app
+  rend encore les voyages de la prod avant que le réseau ne réponde. Vider les
+  données du site, ou passer par une fenêtre privée.
 
 - À faire avant que la prépa réelle ne soit saisie — après, une erreur coûte
   de la donnée qu'aucun seed ne peut reconstituer.
