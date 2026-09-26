@@ -1,13 +1,21 @@
+import { useState } from 'react';
 import { featured } from '@/lib/photos.js';
+import { hasGoogleMaps } from '@/lib/googleMaps.js';
+import { cachedPhoto, photoOf } from '@/lib/places.js';
+import { useOnline } from '@/hooks/useOnline.js';
 import './PhotoStrip.scss';
 
 // Bandeau de 3 photos d'une étape.
 //
 // Les tuiles ne sont pas portées par l'étape : ce sont ses items mis en avant
-// (voir lib/photos.js). Il n'y a pas encore de source de photos — la
-// bibliothèque de la démo a été retirée —, chaque tuile est donc un
-// emplacement : le nom du lieu, puis « Une photo ? » centré, qui ouvre une
-// recherche d'images pré-remplie.
+// (voir lib/photos.js).
+//
+// LES PHOTOS VIENNENT DE GOOGLE, ET AU GESTE (L10, F4). Chaque image affichée
+// est facturée, et Google interdit de la stocker : on ne la demande donc que
+// sur « Voir les photos », pour les lieux reliés. Elle reste en mémoire le temps
+// de la visite (lib/places.js) : un bandeau déjà vu réapparaît sans nouveau
+// clic. Un lieu sans photo, ou pas relié à Google, garde son emplacement : le
+// nom, puis « Une photo ? », qui ouvre une recherche d'images pré-remplie.
 //
 // Le libellé reste court par contrainte : une tuile fait un tiers de la carte,
 // soit ~110px sur mobile, ce qui laisse une dizaine de caractères.
@@ -22,6 +30,33 @@ import './PhotoStrip.scss';
 // moyen d'y faire entrer un restaurant ou une boutique.
 export default function PhotoStrip({ items, stepName }) {
   const tiles = featured(items);
+  const online = useOnline();
+  // Photos déjà obtenues pendant la visite : item.id → photo, ou null si Google
+  // n'en a pas. Amorcé depuis la mémoire de lib/places.js : un bandeau déjà vu
+  // réapparaît sans nouveau clic.
+  const [photos, setPhotos] = useState(
+    () =>
+      new Map(
+        tiles
+          .filter((tile) => tile.place_id && cachedPhoto(tile.place_id) !== undefined)
+          .map((tile) => [tile.id, cachedPhoto(tile.place_id)]),
+      ),
+  );
+  const [loading, setLoading] = useState(false);
+
+  const linked = tiles.filter((tile) => tile.place_id);
+  const missing = linked.filter((tile) => !photos.has(tile.id));
+  const canShow = hasGoogleMaps() && online && missing.length > 0;
+
+  async function show(event) {
+    event.stopPropagation();
+    setLoading(true);
+    const found = await Promise.all(
+      missing.map(async (tile) => [tile.id, await photoOf(tile.place_id).catch(() => null)]),
+    );
+    setPhotos((current) => new Map([...current, ...found]));
+    setLoading(false);
+  }
 
   if (tiles.length === 0) {
     return (
@@ -49,25 +84,64 @@ export default function PhotoStrip({ items, stepName }) {
   }
 
   return (
-    <ul className="photo-strip">
-      {tiles.map((tile) => (
-        <li key={tile.id} className="photo-strip__tile">
-          <div className="photo-strip__slot">
-            <span className="photo-strip__slot-name">{tile.title}</span>
-            <a
-              className="photo-strip__add"
-              href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(`${tile.title} ${stepName} Japon`)}`}
-              target="_blank"
-              rel="noreferrer"
-              onClick={(event) => event.stopPropagation()}
-              title={`Trouver une photo de ${tile.title}`}
-            >
-              Une photo ?
-            </a>
-          </div>
-          <span className="photo-strip__caption">{tile.title}</span>
-        </li>
-      ))}
-    </ul>
+    <div className="photo-strip__wrap">
+      <ul className="photo-strip">
+        {tiles.map((tile) => {
+          const photo = photos.get(tile.id);
+          return (
+            <li key={tile.id} className="photo-strip__tile">
+              {photo ? (
+                <div className="photo-strip__photo">
+                  <img className="photo-strip__img" src={photo.src} alt={tile.title} loading="lazy" />
+                  {/* L'auteur est une condition de Google : il reste lisible et
+                      cliquable sur la photo elle-même. */}
+                  {photo.authors.length > 0 && (
+                    <span className="photo-strip__credit">
+                      {photo.authors.map((author, index) => (
+                        <a
+                          key={author.uri ?? index}
+                          href={author.uri}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          {author.name}
+                        </a>
+                      ))}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <div className="photo-strip__slot">
+                  <span className="photo-strip__slot-name">{tile.title}</span>
+                  {/* Un lieu relié attend « Voir les photos » : lui proposer
+                      aussi une recherche d'images ferait doublon. Le lien reste
+                      pour un lieu non relié, ou sans photo chez Google. */}
+                  {(!tile.place_id || photo === null) && (
+                    <a
+                      className="photo-strip__add"
+                      href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(`${tile.title} ${stepName}`)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={(event) => event.stopPropagation()}
+                      title={`Trouver une photo de ${tile.title}`}
+                    >
+                      Une photo ?
+                    </a>
+                  )}
+                </div>
+              )}
+              <span className="photo-strip__caption">{tile.title}</span>
+            </li>
+          );
+        })}
+      </ul>
+
+      {canShow && (
+        <button type="button" className="photo-strip__show" onClick={show} disabled={loading}>
+          {loading ? 'Chargement…' : 'Voir les photos'}
+        </button>
+      )}
+    </div>
   );
 }

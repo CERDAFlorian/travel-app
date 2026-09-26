@@ -93,6 +93,42 @@ export async function locationOf(placeId) {
   return { placeId, lat: place.location.lat(), lng: place.location.lng() };
 }
 
+// La photo d'un lieu relié (L10, F4), pour le bandeau d'une étape.
+//
+// Deux temps, deux prix : la liste des photos d'une fiche (champ `photos`
+// seul) relève du palier « IDs Only », GRATUIT et illimité ; c'est l'image
+// elle-même, au moment où le navigateur la charge, qui est facturée (Place
+// Photos, 7 $ les 1 000 au-delà de 1 000 par mois). D'où le chargement au
+// geste seulement, décidé en L10.
+//
+// Rien ne se stocke : les conditions de Google l'interdisent pour les photos.
+// On garde l'adresse en MÉMOIRE le temps de la visite, pour qu'un bandeau
+// refermé puis rouvert ne reparte pas chez Google.
+const photos = new Map();
+
+// Une photo déjà obtenue pendant la visite, sans rien demander à Google.
+// `undefined` : jamais demandée ; `null` : Google n'en a pas.
+export function cachedPhoto(placeId) {
+  return photos.has(placeId) ? photos.get(placeId) : undefined;
+}
+
+export async function photoOf(placeId, { maxWidth = 640 } = {}) {
+  if (photos.has(placeId)) return photos.get(placeId);
+  const { Place } = await places();
+  const place = new Place({ id: placeId });
+  await place.fetchFields({ fields: ['photos'] });
+  const first = place.photos?.[0];
+  const photo = first
+    ? {
+        src: first.getURI({ maxWidth }),
+        // Afficher l'auteur est une condition de Google, pas une politesse.
+        authors: (first.authorAttributions ?? []).map((author) => ({ name: author.displayName, uri: author.uri })),
+      }
+    : null;
+  photos.set(placeId, photo);
+  return photo;
+}
+
 // Le lien « Maps ↗ » d'un item. Relié à Google, il ouvre la fiche exacte du
 // lieu ; sinon, ses coordonnées. Les liens Google Maps sont gratuits, et des
 // données Google n'ont pas à ouvrir Apple Plans (conditions, § 14).

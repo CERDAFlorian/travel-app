@@ -1782,6 +1782,17 @@ ou fautifs. Le SQL, éprouvé sur PGlite, se rejoue sans effet.
 Ordre sur la prod : `0010`, `0011`, déploiement de F1 à F3, **puis** le SQL de M
 — jamais avant la carte Google.
 
+**F4 est fait sur dev le 26 septembre 2026, au geste.** Le bandeau d'une étape
+garde ses trois tuiles ; « Voir les photos » demande à Google la photo des
+lieux reliés. La liste des photos d'une fiche est gratuite (palier IDs Only),
+seule l'image chargée est facturée — une par lieu et par clic, jamais avant.
+Rien n'est stocké : la photo reste en mémoire le temps de la visite, et un
+bandeau déjà vu réapparaît sans nouveau clic. L'auteur, exigé par Google,
+s'affiche sur la photo et renvoie à son profil. « Une photo ? » ne reste qu'aux
+lieux non reliés ou sans photo, et ne suppose plus que le voyage est au Japon.
+Vérifié avec le vrai Google : Fushimi Inari, le Pavillon d'or et Arashiyama à
+Kyoto, trois photos facturées pour un clic.
+
 **L'ordre est imposé.** R d'abord : il ne dépend de rien et donne au test ses
 vrais titres. F1 avant F2 : une position Google n'a pas le droit d'apparaître
 sur la carte SVG. F3 en prod moins de 30 jours après F2. M après F3, pour la même
