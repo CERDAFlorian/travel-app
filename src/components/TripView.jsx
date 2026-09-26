@@ -341,7 +341,6 @@ function StepsColumn({
           <Fragment key={step.id}>
             <StepCard
               step={step}
-              tripTitle={view.title}
               readOnly={readOnly}
               // D'où l'on vient et où l'on va. L'onglet Jour par jour d'une
               // ville ne montre QUE cette ville : sans ses voisines, le trajet

@@ -1710,6 +1710,27 @@ Avant la mise en prod de F1, il reste :
 `projection.js`, `japan-geometry.js` et `build-map.mjs` ne servent plus : ils
 partent en F5, avec Nominatim.
 
+**F2 est fait sur dev le 26 septembre 2026.** `PlaceSearch` remplace le
+sélecteur Nominatim : le champ part du titre et reste modifiable, les
+suggestions Google arrivent pendant qu'on tape (jeton de session, 300 ms
+d'attente), biaisées autour de l'étape, et seules des villes pour situer une
+étape. Le lieu choisi coûte une fiche Essentials (`location` seul) ; on garde son
+place_id, ses coordonnées et leur date (`0010_google.sql`). Les coordonnées
+collées à la main restent possibles et rompent le lien Google. L'alerte des
+50 km bloque toujours, et dit que le centre de l'étape peut être le fautif.
+« Maps ↗ » ouvre Google Maps sur la fiche du lieu.
+
+Ce qui était prévu pour M en partie manuelle est fait ici : un lieu placé mais
+pas relié porte « À relier », une étape non reliée « Relier à Google » — c'est
+aussi ce qui corrige Shirakawa. Vérifié avec le vrai Google sur le voyage
+rapatrié : « JARDIN KENROKUEN », « Fushimi anari » et la ville de Shirakawa-gō
+sont proposés et s'enregistrent.
+
+**Avant de lancer l'app sur une base, `0010_google.sql` doit y être passée** :
+`api.js` lit les nouvelles colonnes, et une base sans elles ne charge plus aucun
+voyage. Sur la prod, dans cet ordre : la migration, puis le déploiement — et F3
+dans les 30 jours qui suivent.
+
 **L'ordre est imposé.** R d'abord : il ne dépend de rien et donne au test ses
 vrais titres. F1 avant F2 : une position Google n'a pas le droit d'apparaître
 sur la carte SVG. F3 en prod moins de 30 jours après F2. M après F3, pour la même

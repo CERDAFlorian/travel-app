@@ -81,9 +81,15 @@ export default defineConfig({
     // Surtout, ces valeurs empêchent un test de toucher la VRAIE base par
     // accident. Le jour où un test appellera Supabase pour de bon, il échouera
     // sur une URL qui n'existe pas plutôt que d'écrire dans la production.
+    //
+    // Google, à l'inverse, est VIDÉ : sans clé, carte et recherche se rendent
+    // dans leur état « non configuré », le même en local qu'en CI, et aucun
+    // test ne peut consommer le quota payant par accident.
     env: {
       VITE_SUPABASE_URL: 'https://base-de-test.supabase.co',
       VITE_SUPABASE_ANON_KEY: 'cle-publishable-de-test',
+      VITE_GOOGLE_MAPS_KEY: '',
+      VITE_GOOGLE_MAP_ID: '',
     },
   },
 });

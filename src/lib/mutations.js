@@ -222,12 +222,15 @@ export async function duplicateItemOnDay(step, item, dayOffset, slot = null) {
       price: item.price,
       currency: item.currency,
       notes: item.notes,
-      // Les coordonnées suivent, `geocoded_at` compris : c'est le même lieu,
-      // et le redemander à Nominatim pour une adresse déjà résolue serait une
-      // requête pour rien.
+      // Le lieu suit, place_id et date de synchronisation compris : c'est le
+      // même lieu, et le redemander à Google serait une requête payée pour
+      // rien. La date est recopiée telle quelle : les 30 jours courent depuis
+      // l'obtention des coordonnées, pas depuis la copie.
       lat: item.lat,
       lng: item.lng,
       geocoded_at: item.geocoded_at,
+      place_id: item.place_id ?? null,
+      place_synced_at: item.place_synced_at ?? null,
       position,
       day_offset: dayOffset,
       day_slot: slot,
@@ -244,22 +247,33 @@ export async function duplicateItemOnDay(step, item, dayOffset, slot = null) {
   return data.id;
 }
 
-// `geocoded_at` distingue les deux origines, comme le prévoit le schéma :
-// renseigné quand Nominatim a répondu, NULL quand les coordonnées ont été
-// collées à la main. Utile le jour où l'on voudra re-géocoder en masse sans
-// écraser ce qui a été corrigé manuellement.
-export async function setCoordinates(id, { lat, lng }, { geocoded }) {
-  const { error } = await supabase
-    .from('items')
-    .update({ lat, lng, geocoded_at: geocoded ? new Date().toISOString() : null })
-    .eq('id', id);
+// Coordonnées d'un lieu, et d'où elles viennent (0010_google.sql).
+//
+// Avec un `placeId`, elles viennent de Google : le place_id se garde
+// indéfiniment, les coordonnées 30 jours, comptés depuis `place_synced_at`.
+// Sans, elles ont été collées à la main : elles sont à nous, et un lien Google
+// antérieur est rompu — sinon le rafraîchissement des 30 jours écraserait la
+// correction manuelle. `geocoded_at` était la trace de Nominatim : il n'est
+// plus jamais posé.
+function placeColumns({ lat, lng, placeId }) {
+  return {
+    lat,
+    lng,
+    place_id: placeId ?? null,
+    place_synced_at: placeId ? new Date().toISOString() : null,
+    geocoded_at: null,
+  };
+}
+
+export async function setCoordinates(id, point) {
+  const { error } = await supabase.from('items').update(placeColumns(point)).eq('id', id);
   if (error) fail(error, 'Enregistrement des coordonnées');
 }
 
 export async function clearCoordinates(id) {
   const { error } = await supabase
     .from('items')
-    .update({ lat: null, lng: null, geocoded_at: null })
+    .update({ lat: null, lng: null, geocoded_at: null, place_id: null, place_synced_at: null })
     .eq('id', id);
   if (error) fail(error, 'Effacement des coordonnées');
 }
@@ -399,9 +413,11 @@ export async function setStepNights(trip, stepId, nights) {
   );
 }
 
-// Coordonnées d'une étape, posées depuis le géocodage.
-export async function setStepCoordinates(stepId, { lat, lng }) {
-  const { error } = await supabase.from('steps').update({ lat, lng }).eq('id', stepId);
+// Coordonnées d'une étape : mêmes règles que pour un lieu (voir
+// placeColumns), sans `geocoded_at`, que les étapes n'ont jamais eu.
+export async function setStepCoordinates(stepId, point) {
+  const { geocoded_at: _nominatim, ...columns } = placeColumns(point);
+  const { error } = await supabase.from('steps').update(columns).eq('id', stepId);
   if (error) fail(error, 'Enregistrement des coordonnées');
 }
 

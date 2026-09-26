@@ -139,6 +139,13 @@
       color: var(--ok);
     }
 
+    // Placé, mais pas relié à Google : la couleur du « placé », le tireté de
+    // l'action qui reste à faire.
+    &[data-relink] {
+      border-color: var(--ok);
+      color: var(--ok);
+    }
+
     &:focus-visible { @include mixins.focus-ring; }
     &:disabled { opacity: 0.5; cursor: progress; }
   }

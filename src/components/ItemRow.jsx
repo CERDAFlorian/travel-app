@@ -11,20 +11,15 @@ import {
   updateItem,
 } from '@/lib/mutations.js';
 import { isChosenHotel, otherHotels } from '@/lib/lodging.js';
-import GeocodePicker from './GeocodePicker.jsx';
+import { mapsUrl } from '@/lib/places.js';
+import PlaceSearch from './PlaceSearch.jsx';
 import ConfirmDialog from './ConfirmDialog.jsx';
 import TrashIcon from './TrashIcon.jsx';
 import './ItemRow.scss';
 
-// « Plan ↗ » sur iOS, « Maps ↗ » ailleurs — repris du design. L'universal link
-// ouvre l'app native sur iPhone et la version web ailleurs, sans branche de code.
-const IS_IOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
-const MAP_LABEL = IS_IOS ? 'Plan ↗' : 'Maps ↗';
-
-function mapUrl(item) {
-  if (item.lat === null || item.lng === null) return null;
-  return `https://maps.apple.com/?ll=${item.lat},${item.lng}&q=${encodeURIComponent(item.title)}`;
-}
+// « Maps ↗ » ouvre Google Maps partout, app native comprise quand elle est
+// installée : des données Google n'ont pas à ouvrir Apple Plans (L10, F2).
+const MAP_LABEL = 'Maps ↗';
 
 // Un prix saisi au clavier français s'écrit « 4 500 » ou « 12,50 ». Vide vaut
 // « pas de prix » — pas zéro : un item gratuit et un item dont on ignore le
@@ -39,7 +34,7 @@ function parsePrice(raw) {
 // Une ligne d'item, sur UNE ligne comme dans le design : pastille,
 // nom, note, pilule Plan, puis à droite l'étoile, LOCALISER, le prix et la
 // corbeille.
-export default function ItemRow({ item, step, tripTitle, readOnly, autoLocate, onChanged }) {
+export default function ItemRow({ item, step, readOnly, autoLocate, onChanged }) {
   // `autoLocate` n'est vrai qu'au montage de la ligne créée à l'instant : la
   // recherche part sans qu'on ait à cliquer « Localiser ».
   const [locating, setLocating] = useState(Boolean(autoLocate));
@@ -76,11 +71,14 @@ export default function ItemRow({ item, step, tripTitle, readOnly, autoLocate, o
   // permet pas de décider.
   const candidates = isHotel ? otherHotels(step, item) : [];
 
-  const href = mapUrl(item);
+  const href = mapsUrl(item);
   // Affiché en euros ; la saisie reste dans la devise d'origine — on tape le
   // prix qu'on paiera au comptoir, on lit le budget dans sa propre monnaie.
   const price = priceInEuros(item.price, item.currency);
   const located = item.lat !== null && item.lng !== null;
+  // Des coordonnées sans place_id viennent d'avant Google — Nominatim ou saisie
+  // à la main. Le lieu est à sa place, mais pas relié : ni fiche, ni photo.
+  const linked = Boolean(item.place_id);
 
   // Le contrôle de cohérence reste visible sur l'item enregistré : un
   // « enregistrer quand même » redeviendrait invisible dès le sélecteur fermé.
@@ -243,12 +241,17 @@ export default function ItemRow({ item, step, tripTitle, readOnly, autoLocate, o
               <button
                 type="button"
                 className="item__locate"
-                data-on={located || undefined}
+                data-on={(located && linked) || undefined}
+                data-relink={(located && !linked) || undefined}
                 disabled={busy}
-                title="Placer automatiquement sur la carte"
+                title={
+                  located && !linked
+                    ? 'Placé, mais pas encore relié à Google : ni fiche, ni photo'
+                    : 'Chercher ce lieu avec Google'
+                }
                 onClick={() => setLocating((value) => !value)}
               >
-                {located ? 'Localisé' : 'Localiser'}
+                {!located ? 'Localiser' : linked ? 'Localisé' : 'À relier'}
               </button>
 
               <input
@@ -303,18 +306,13 @@ export default function ItemRow({ item, step, tripTitle, readOnly, autoLocate, o
       </div>
 
       {locating && (
-        <GeocodePicker
+        <PlaceSearch
           title={item.title}
           stepName={step.name}
-          tripTitle={tripTitle}
-          reference={
-            step.lat != null && step.lng != null
-              ? { lat: Number(step.lat), lng: Number(step.lng) }
-              : null
-          }
+          near={step.lat != null && step.lng != null ? step : null}
           onCancel={() => setLocating(false)}
-          onSave={async (point, geocoded) => {
-            await setCoordinates(item.id, point, { geocoded });
+          onSave={async (point) => {
+            await setCoordinates(item.id, point);
             await onChanged();
             setLocating(false);
           }}

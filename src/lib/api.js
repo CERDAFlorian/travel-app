@@ -42,10 +42,10 @@ export async function fetchTrips() {
 const TRIP_SELECT = `
   id, slug, title, subtitle, start_date, end_date, theme, love_notes, share_token,
   steps (
-    id, position, name, date_start, date_end, nights, lat, lng, images,
+    id, position, name, date_start, date_end, nights, lat, lng, place_id, place_synced_at, images,
     items (
       id, category, title, url, address, price, currency,
-      booked, favorite, position, notes, lat, lng, geocoded_at,
+      booked, favorite, position, notes, lat, lng, geocoded_at, place_id, place_synced_at,
       day_offset, day_slot, day_position, start_time
     )
   ),
