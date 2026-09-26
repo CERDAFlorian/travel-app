@@ -8,132 +8,134 @@
     border-radius: var(--radius-lg);
   }
 
-  &__svg {
+  // Le fond Google. Tant qu'il n'est pas chargé — ou hors ligne — la mer du
+  // thème occupe la place : la page ne saute pas quand la carte arrive.
+  &__canvas {
     display: block;
     width: 100%;
-    height: auto;
-    // Sans ça, glisser la carte surligne les libellés en bleu : le navigateur
-    // interprète le mouvement comme une sélection de texte.
-    user-select: none;
-    -webkit-user-select: none;
-    // Indispensable : sans ça, iOS intercepte le glisser pour faire défiler la
-    // page et le pinch pour zoomer le document. La carte ne recevrait qu'une
-    // partie des gestes.
-    touch-action: none;
-    cursor: grab;
-
-    &:active { cursor: grabbing; }
+    aspect-ratio: 620 / 420;
+    background: radial-gradient(ellipse at 50% 45%, var(--map-sea), var(--map-sea-edge));
   }
 
-  &__land {
-    fill: var(--map-land);
-    stroke: var(--map-land-line);
-    // Sans vector-effect, le trait de côte s'épaissirait avec le zoom jusqu'à
-    // manger les petites îles.
-    stroke-width: 0.9;
-    vector-effect: non-scaling-stroke;
+  &__status {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    margin: 0;
+    padding: var(--sp-4);
+    color: var(--muted);
+    font-size: var(--fs-sm);
+    text-align: center;
   }
 
-  // Les liaisons d'une ville à l'autre : l'itinéraire lui-même.
-  &__legs path {
-    fill: none;
-    stroke: var(--accent);
-    stroke-width: 2;
-    stroke-dasharray: 7 6;
-    stroke-linecap: round;
-    opacity: 0.6;
-    vector-effect: non-scaling-stroke;
+  // Tout ce qu'on pose sur la carte part d'un point sans taille, posé sur sa
+  // coordonnée : épingle, pastille et nom se placent autour en pixels.
+  &__anchor {
+    position: relative;
+    width: 0;
+    height: 0;
   }
 
-  // Le rattachement d'un lieu à sa ville, dans la couleur de sa catégorie.
-  &__links line {
-    stroke: var(--cat-note);
-    stroke-width: 1.1;
-    stroke-dasharray: 3 4;
-    opacity: 0.55;
-    vector-effect: non-scaling-stroke;
+  // Centrée sur sa ville quelle que soit sa largeur : Tokyo 1·9 porte deux
+  // numéros, la pastille s'allonge au lieu de déborder.
+  &__pin {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: grid;
+    place-items: center;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 6px;
+    border: 2.5px solid var(--bg);
+    border-radius: 13px;
+    background: var(--accent);
+    color: var(--accent-contrast);
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 
-    &[data-cat='hotel']      { stroke: var(--cat-hotel); }
-    &[data-cat='activite']   { stroke: var(--cat-activite); }
-    &[data-cat='restaurant'] { stroke: var(--cat-restaurant); }
-    &[data-cat='shopping']   { stroke: var(--cat-shopping); }
-    &[data-cat='lieu']       { stroke: var(--cat-lieu); }
+    &.is-selected {
+      outline: 1.6px solid color-mix(in srgb, var(--accent) 45%, transparent);
+      outline-offset: 5px;
+    }
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  // Le contour de la couleur du fond garde le nom lisible par-dessus les
+  // pointillés et la côte, sans cartouche opaque — comme sur la carte SVG.
+  &__label {
+    position: absolute;
+    transform: translateY(-50%);
+    white-space: nowrap;
+    pointer-events: none;
+    text-shadow:
+      -1.5px 0 var(--bg), 1.5px 0 var(--bg), 0 -1.5px var(--bg), 0 1.5px var(--bg),
+      -1px -1px var(--bg), 1px 1px var(--bg), -1px 1px var(--bg), 1px -1px var(--bg);
+
+    &[hidden] { display: none; }
+
+    // Replié à gauche de son point, le nom s'y aligne par la fin.
+    &[data-side='left'] { transform: translate(-100%, -50%); }
+
+    // `left` et `top` sont posés par le composant, selon le côté retenu.
+    &--step {
+      color: var(--text-heading);
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    &--item {
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 13px;
+    }
   }
 
   // Pastille creuse, cerclée de la couleur de sa catégorie. Le remplissage
   // plein la rendrait illisible quand six se touchent autour d'une ville.
+  // Losange : coordonnées réelles. Rond : rattaché à sa ville en attendant
+  // d'être localisé. La forme dit l'état, sans légende à lire.
   &__dot {
-    fill: var(--map-sea);
-    stroke: var(--cat-note);
-    stroke-width: 2.2;
-
-    &[data-cat='hotel']      { stroke: var(--cat-hotel); }
-    &[data-cat='activite']   { stroke: var(--cat-activite); }
-    &[data-cat='restaurant'] { stroke: var(--cat-restaurant); }
-    &[data-cat='shopping']   { stroke: var(--cat-shopping); }
-    &[data-cat='lieu']       { stroke: var(--cat-lieu); }
-  }
-
-  // Le pointillé relie un label déporté à son ancre. Sans lui, un label posé à
-  // trente pixels de son point devient impossible à rattacher.
-  &__leader {
-    stroke: var(--border-strong);
-    stroke-width: 1;
-    stroke-dasharray: 2 2;
-  }
-
-  &__pin {
-    cursor: pointer;
-  }
-
-  &__pin-disc {
-    fill: var(--accent);
-    stroke: var(--bg);
-    stroke-width: 2.5;
-  }
-
-  &__halo {
-    fill: none;
-    stroke: var(--accent);
-    stroke-width: 1.6;
-    opacity: 0.45;
-  }
-
-  &__badge {
-    fill: var(--accent-contrast);
-    font-family: var(--font-body);
-    font-size: 15px;
-    font-weight: 700;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 11px;
+    height: 11px;
+    border: 2.2px solid var(--cat-note);
+    background: var(--map-sea);
+    transform: translate(-50%, -50%);
     pointer-events: none;
+
+    &--geo { transform: translate(-50%, -50%) rotate(45deg); }
+    &--ring { border-radius: 50%; }
+
+    &[data-cat='hotel']      { border-color: var(--cat-hotel); }
+    &[data-cat='activite']   { border-color: var(--cat-activite); }
+    &[data-cat='restaurant'] { border-color: var(--cat-restaurant); }
+    &[data-cat='shopping']   { border-color: var(--cat-shopping); }
+    &[data-cat='lieu']       { border-color: var(--cat-lieu); }
   }
 
-  // Un cran au-dessus, sans rattraper les lieux : une ville est un repère
-  // qu'on identifie d'un coup d'œil, pas un nom qu'on épelle.
-  &__step-label {
-    fill: var(--text-heading);
-    font-family: var(--font-display);
-    font-size: 18px;
-    font-weight: 600;
-    paint-order: stroke;
-    stroke: var(--bg);
-    stroke-width: 3;
+  // Le pointillé d'un lieu de la couronne vers sa ville, tracé en pixels.
+  &__ring-link {
+    position: absolute;
+    overflow: visible;
     pointer-events: none;
-  }
 
-  // paint-order + contour de la couleur du fond : le texte reste lisible
-  // par-dessus le trait de côte et les pointillés, sans cartouche opaque.
-  // 22 px : c'est ce qu'on cherche sur la carte — le nom d'un hôtel ou d'une
-  // activité. Les libellés sont contre-échelonnés, donc cette taille vaut à
-  // tous les niveaux de zoom, et l'algorithme de déport écarte ce qui se
-  // chevauche.
-  &__item-label {
-    fill: var(--text);
-    font-family: var(--font-body);
-    font-size: 22px;
-    paint-order: stroke;
-    stroke: var(--bg);
-    stroke-width: 3;
-    pointer-events: none;
+    line {
+      stroke-width: 1.1;
+      stroke-dasharray: 3 4;
+      opacity: 0.55;
+    }
   }
 
   &__zoom {
@@ -162,8 +164,10 @@
 
   &__hint {
     position: absolute;
+    // En haut : le bas de la carte appartient au logo et aux mentions de
+    // Google, qu'on n'a pas le droit de recouvrir.
     left: var(--sp-3);
-    bottom: var(--sp-2);
+    top: var(--sp-2);
     margin: 0;
     color: var(--muted);
     font-size: var(--fs-xs);

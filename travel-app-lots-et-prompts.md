@@ -1674,6 +1674,42 @@ voyage est géocodée dans le Fukushima, à 310 km de Shirakawa-go.
 
 Coût du test : environ 90 appels, dans la franchise gratuite.
 
+**Le fond de carte et trois décisions pour F1, le 26 septembre 2026.** Le style
+cloud (`design/carte-google-style.json`, format récent de Google) reprend la carte
+SVG : mer crème, terre kaki, rien de Google — ni noms, ni routes, ni rails, ni
+lieux, ni frontières. L'ancien format JSON, importé d'abord, était mal converti :
+villes blanches, routes et Shinkansen restaient visibles de près. Puis :
+
+- **les arcs entre villes ne suivent que les trajets saisis**, comme aujourd'hui ;
+- **la couronne des lieux non localisés est gardée**, en pixels autour de la
+  ville, pour voir une étape se remplir avant d'avoir tout localisé ;
+- **un nom de ville qui en chevauche un autre est masqué**, l'épingle numérotée
+  restant toujours visible ; il revient en zoomant (gestion native de Google,
+  sur la carte vectorielle).
+
+**F1 est fait sur dev le 26 septembre 2026.** `TripMap` affiche une carte Google
+(Map ID vectoriel, style cloud) chargée seulement quand elle approche de
+l'écran, sans paquet npm (`lib/googleMaps.js`). Toute la géométrie est dans
+`lib/mapGeometry.js`, testée : épingles groupées (Tokyo 1·9), couronne en
+pixels, arcs des trajets saisis, sélection au clic, placement des noms — à
+droite, sinon à gauche, sinon masqué. Losange pour un lieu localisé, rond pour
+un lieu en couronne, noms des lieux à partir du zoom 11, filtres inchangés.
+Hors ligne, sans clé ou clé refusée : un message à la place de la carte, le reste
+de l'itinéraire intact. Vérifié à l'écran sur le vrai voyage rapatrié (page
+d'essai hors commit), tests et build au vert, clé « scripts » absente du build.
+
+Avant la mise en prod de F1, il reste :
+
+- vérifier que le style **publié** est bien la version récente : sur la page
+  d'essai, des zones urbaines blanches ou des routes grises de près trahissent
+  l'ancienne ;
+- créer les secrets GitHub `VITE_GOOGLE_MAPS_KEY` et `VITE_GOOGLE_MAP_ID`,
+  que `deploy.yml` passe au build Docker ;
+- trancher la fenêtre de mise en prod (voir « À trancher »).
+
+`projection.js`, `japan-geometry.js` et `build-map.mjs` ne servent plus : ils
+partent en F5, avec Nominatim.
+
 **L'ordre est imposé.** R d'abord : il ne dépend de rien et donne au test ses
 vrais titres. F1 avant F2 : une position Google n'a pas le droit d'apparaître
 sur la carte SVG. F3 en prod moins de 30 jours après F2. M après F3, pour la même
