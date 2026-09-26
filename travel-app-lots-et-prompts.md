@@ -1759,6 +1759,29 @@ redemandée par place_id avec le vrai Google.
 Supabase. Si l'activation est refusée : dashboard → Integrations → Cron, puis
 rejouer le fichier. À passer sur chaque base, après `0010`.
 
+**La vue partagée n'affiche la carte qu'à la demande** (26 septembre 2026) :
+chaque visiteur d'un lien coûterait un affichage facturé ; un bouton « Afficher
+la carte » ne fait payer que ceux qui la veulent. Aucune requête Google avant le
+clic.
+
+**M est outillé le 26 septembre 2026.** `scripts/relier-google.mjs` lit un export
+de R, interroge Google (recherche texte, une par lieu non relié) et écrit un SQL
+des seuls liens sûrs, à passer à la main. La règle (`src/lib/placeMatch.js`,
+testée sur les vrais cas) : même endroit à 300 m près, quel que soit le nom
+(« Pavillon d'or » / Kinkaku-ji) ; ou même nom — accents, tirets et une faute
+d'une lettre tolérés — à moins de 50 km de l'étape et à moins de 1 km de la
+position actuelle ; jamais un item vers une ville ; une étape ne bouge pas de
+plus de 25 km. Les étapes passent d'abord : leurs lieux sont jugés sur leur
+vrai centre.
+
+Sur le vrai voyage : 7 étapes sur 9 et 18 lieux sur 29 reliés, aucun faux. À la
+main : Shirakawa (310 km — l'homonyme du Fukushima) et ses trois lieux jugés
+sur ce faux centre, Miyajima (« Itsukushima » pour Google), et les titres vagues
+ou fautifs. Le SQL, éprouvé sur PGlite, se rejoue sans effet.
+
+Ordre sur la prod : `0010`, `0011`, déploiement de F1 à F3, **puis** le SQL de M
+— jamais avant la carte Google.
+
 **L'ordre est imposé.** R d'abord : il ne dépend de rien et donne au test ses
 vrais titres. F1 avant F2 : une position Google n'a pas le droit d'apparaître
 sur la carte SVG. F3 en prod moins de 30 jours après F2. M après F3, pour la même

@@ -107,6 +107,30 @@ Vérifier que le job existe :
 select jobname, schedule, active from cron.job;
 ```
 
+### Relier l'existant à Google
+
+Les lieux saisis avant Google n'ont pas de `place_id`. `scripts/relier-google.mjs`
+relie ceux pour qui c'est sûr (règle dans `src/lib/placeMatch.js`, testée) :
+
+1. **Sur prod**, `export-voyage.sql` → enregistrer le JSON hors du dépôt. C'est
+   aussi la sauvegarde d'avant liaison.
+2. `node scripts/relier-google.mjs chemin/vers/export.json` : il interroge
+   Google (clé `GOOGLE_MAPS_TEST_KEY`, jamais la clé navigateur), écrit à côté
+   de l'export un `….relier-google.sql` et liste ce qui reste à relier à la
+   main, avec la raison. Il ne touche à aucune base.
+3. **Sur dev**, rapatrier ce même export (voir plus bas), passer le SQL, et
+   vérifier dans l'app.
+4. **Sur prod**, passer le même SQL — **seulement une fois la carte Google
+   déployée** : l'ancienne app afficherait des coordonnées Google sur la carte
+   SVG, ce que les conditions de Google interdisent.
+
+Chaque ligne ne touche qu'un lieu encore non relié : le fichier se rejoue, et
+n'écrase rien de ce qui a été relié à la main depuis l'export. Corriger d'abord
+les étapes mal placées (« Relier à Google » dans l'app) puis réexporter : les
+lieux d'une étape fausse sont jugés trop loin, et restent à la main.
+
+**Ne pas commiter** l'export ni le SQL produit : c'est le voyage de quelqu'un.
+
 ### Rapatrier un voyage de prod sur dev
 
 Le sens inverse de la promotion : amener le **vrai** voyage, bien avancé, sur
