@@ -37,16 +37,21 @@ export async function newSession() {
 
 // La requête de suggestions, sans Google : testable.
 //
-// `near` : le centre de l'étape, pour biaiser et mesurer la distance.
-// `cities` : pour situer une étape, on ne veut que des villes.
-export function suggestionRequest(input, { session, near = null, cities = false } = {}) {
+// `bias` : le point autour duquel chercher, et d'où mesurer la distance — le
+// centre de l'étape pour un lieu, l'étape voisine pour une étape.
+//
+// AUCUN filtre de type, pas même pour une étape. Le filtre « villes » écartait
+// Miyajima (une île, quartier de Hatsukaichi), Kōyasan et Kamikōchi : une étape
+// de voyage n'est pas toujours une ville au sens de Google. Le biais autour de
+// l'étape voisine suffit à mettre la bonne en tête (vérifié le 26 septembre
+// 2026 sur Miyajima, Kōyasan, Kamikōchi, Shirakawa-gō, Kyoto, Tokyo, Osaka).
+export function suggestionRequest(input, { session, bias = null } = {}) {
   const request = { input, sessionToken: session, language: 'fr' };
-  if (near) {
-    const center = { lat: Number(near.lat), lng: Number(near.lng) };
+  if (bias) {
+    const center = { lat: Number(bias.lat), lng: Number(bias.lng) };
     request.locationBias = { center, radius: BIAS_RADIUS_M };
     request.origin = center;
   }
-  if (cities) request.includedPrimaryTypes = ['(cities)'];
   return request;
 }
 

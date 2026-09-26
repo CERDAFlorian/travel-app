@@ -18,9 +18,13 @@ import './PlaceSearch.scss';
 // établissement parmi d'autres. On montre, l'utilisateur choisit — la règle de
 // L4 tient.
 //
-// `near` sert au biais géographique et au contrôle de cohérence : c'est le
-// centre de l'étape pour un item, null pour une étape elle-même. `cities`
-// restreint les suggestions aux villes, pour situer une étape.
+// `near` est la référence du contrôle de cohérence des 50 km : le centre de
+// l'étape pour un lieu, null pour une étape elle-même — deux étapes
+// successives sont normalement loin l'une de l'autre.
+//
+// `bias` oriente la recherche et mesure la distance affichée : par défaut
+// `near`, et pour une étape, l'étape voisine (`biasName` la nomme). Aucun
+// filtre de type : une étape peut être une île ou un village de montagne.
 //
 // `onSave({ lat, lng, placeId })` : placeId vaut null pour des coordonnées
 // collées à la main.
@@ -30,7 +34,16 @@ import './PlaceSearch.scss';
 const DEBOUNCE_MS = 300;
 const MIN_CHARS = 2;
 
-export default function PlaceSearch({ title, stepName, near, cities = false, onSave, onCancel }) {
+export default function PlaceSearch({
+  title,
+  stepName,
+  near,
+  bias = near,
+  biasName = stepName,
+  forStep = false,
+  onSave,
+  onCancel,
+}) {
   const online = useOnline();
   const available = hasGoogleMaps() && online;
 
@@ -64,7 +77,7 @@ export default function PlaceSearch({ title, stepName, near, cities = false, onS
       setError(null);
       try {
         session.current ??= await newSession();
-        const results = await suggest(input, { session: session.current, near, cities });
+        const results = await suggest(input, { session: session.current, bias });
         if (ticket !== latest.current) return;
         setSuggestions(results);
         // Rien trouvé : le champ de coordonnées devient l'action principale.
@@ -82,7 +95,7 @@ export default function PlaceSearch({ title, stepName, near, cities = false, onS
     }, DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
-  }, [query, available, near, cities]);
+  }, [query, available, bias]);
 
   const distanceOf = (point) =>
     near ? haversine({ lat: Number(near.lat), lng: Number(near.lng) }, point) : null;
@@ -172,7 +185,7 @@ export default function PlaceSearch({ title, stepName, near, cities = false, onS
             value={query}
             autoFocus
             onChange={(event) => setQuery(event.target.value)}
-            placeholder={cities ? 'Une ville…' : 'Un lieu, un hôtel, un restaurant…'}
+            placeholder={forStep ? 'Une ville, une île, un village…' : 'Un lieu, un hôtel, un restaurant…'}
             autoComplete="off"
           />
         </label>
@@ -204,7 +217,9 @@ export default function PlaceSearch({ title, stepName, near, cities = false, onS
         <>
           <ul className="place-search__list">
             {suggestions.map((suggestion) => {
-              const far = suggestion.km != null && suggestion.km > MAX_DISTANCE_FROM_STEP_KM;
+              // Loin de l'étape : seulement pour un lieu. Une étape est
+              // mesurée depuis sa voisine, loin par nature.
+              const far = near != null && suggestion.km != null && suggestion.km > MAX_DISTANCE_FROM_STEP_KM;
               return (
                 <li key={suggestion.placeId}>
                   <button
@@ -217,7 +232,7 @@ export default function PlaceSearch({ title, stepName, near, cities = false, onS
                     <span className="place-search__label">{suggestion.main}</span>
                     <span className="place-search__meta">
                       {suggestion.secondary}
-                      {suggestion.km != null && ` · ${formatDistance(suggestion.km)} de ${stepName}`}
+                      {suggestion.km != null && biasName && ` · ${formatDistance(suggestion.km)} de ${biasName}`}
                     </span>
                   </button>
                 </li>

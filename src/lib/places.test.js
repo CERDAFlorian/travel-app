@@ -9,13 +9,15 @@ describe('suggestionRequest', () => {
 
   // Le biais oriente sans filtrer : un lieu plus loin reste proposable.
   it('biaise autour de l’étape et mesure la distance depuis elle', () => {
-    const request = suggestionRequest('Kenrokuen', { near: { lat: '36.56', lng: '136.65' } });
+    const request = suggestionRequest('Kenrokuen', { bias: { lat: '36.56', lng: '136.65' } });
     expect(request.locationBias).toEqual({ center: { lat: 36.56, lng: 136.65 }, radius: BIAS_RADIUS_M });
     expect(request.origin).toEqual({ lat: 36.56, lng: 136.65 });
   });
 
-  it('ne propose que des villes pour situer une étape', () => {
-    expect(suggestionRequest('Kyoto', { cities: true }).includedPrimaryTypes).toEqual(['(cities)']);
+  // Le filtre « villes » écartait Miyajima, Kōyasan, Kamikōchi : une étape
+  // n'est pas toujours une ville au sens de Google.
+  it('ne filtre jamais par type', () => {
+    expect(suggestionRequest('Miyajima', { bias: { lat: 34.39, lng: 132.45 } })).not.toHaveProperty('includedPrimaryTypes');
   });
 });
 

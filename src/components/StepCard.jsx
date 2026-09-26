@@ -42,6 +42,11 @@ export default function StepCard({
   // Vrai au montage de l'étape qu'on vient d'ajouter : elle cherche sa
   // position toute seule.
   const [locating, setLocating] = useState(Boolean(autoLocate));
+  // Où orienter la recherche d'une étape : l'étape d'avant, sinon celle
+  // d'après. Un voyage avance de proche en proche — c'est ce qui départage
+  // les deux Shirakawa. Seulement si elle est elle-même située.
+  const situated = (other) => (other?.lat != null && other?.lng != null ? other : null);
+  const aroundStep = situated(neighbours?.previous) ?? situated(neighbours?.next);
 
   const itemsByCategory = new Map(CATEGORIES.map(({ key }) => [key, []]));
   for (const item of step.items) {
@@ -218,10 +223,13 @@ export default function StepCard({
             <PlaceSearch
               title={step.name}
               stepName={step.name}
-              // Aucune référence : une étape EST la référence, il n'y a rien
-              // à quoi comparer sa distance. Et seulement des villes.
+              // Aucune référence des 50 km : une étape EST la référence. La
+              // recherche s'oriente autour de l'étape voisine, qui met la
+              // bonne Shirakawa ou le bon Miyajima en tête.
               near={null}
-              cities
+              bias={aroundStep}
+              biasName={aroundStep?.name}
+              forStep
               onCancel={() => setLocating(false)}
               onSave={async (point) => {
                 await setStepCoordinates(step.id, point);
