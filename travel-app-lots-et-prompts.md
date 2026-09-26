@@ -19,6 +19,11 @@ Branche de travail : `dev`. `main` est en retard, la fusion se fera par PR.
 la vise ; les secrets GitHub continuent de viser la prod. La procédure de
 promotion dev → prod est dans `supabase/README.md`, section « Deux bases ».
 
+**L10 spécifié le 26 septembre 2026**, pas commencé : passer à Google — carte,
+recherche, photos — en optimisant les coûts au maximum, après le premier gros
+retour des utilisateurs sur LOCALISER. Deux arbitrages restent ouverts ; tout est
+dans la section L10, tout en bas du fichier.
+
 **L9 spécifié le 22 septembre 2026**, pas commencé : le programme jour par jour —
 organiser activités, restaurants et visites à l'intérieur d'une ville. Le modèle et
 les neuf arbitrages sont en bas du fichier, après L8.
@@ -263,6 +268,7 @@ Colle un prompt, laisse la boucle tourner, vérifie, commit, passe au suivant. N
 | ~~**L7**~~ | ~~PWA, précache, bouton sync, QA mobile~~ | ✅ fait | Prêt pour le voyage |
 | ~~**L8**~~ | ~~Séparer la base de dev de la base de prod~~ | ✅ outillé | On peut casser sans risque |
 | ~~**L9**~~ | ~~Le programme jour par jour — 4 features, voir la section dédiée~~ | ✅ fait | On sait quoi faire chaque jour |
+| **L10** | Full Google : carte, recherche, photos, règle des 30 jours, rapatriement de la prod et migration de l'existant | à estimer après F0 | On trouve n'importe quel lieu |
 
 **Cible réaliste jour 1 : L0 → L3.**
 
@@ -1525,6 +1531,170 @@ STOP
 - Ne duplique pas la logique de days.js : si une fonction manque, ajoute-la là
   avec ses tests, jamais dans le composant.
 ```
+
+---
+
+## L10 — Full Google
+
+**Spécifié le 26 septembre 2026**, pas commencé. Premier gros retour des
+utilisateurs : LOCALISER ne trouve presque jamais les hôtels, restaurants et
+activités, propose le même lieu trois fois, et des photos de démo s'affichaient
+sur des lieux non localisés. Diagnostic mesuré le 25 septembre sur de vraies
+requêtes : Nominatim exige que chaque mot du titre figure dans OpenStreetMap
+(« Jardin Kenrokuen » → 0, « Kenrokuen » → 1), et interprète « Hôtel à Asakusa »
+comme « n'importe quel hôtel d'Asakusa ». Décision le 26 : **tout passer à
+Google, en optimisant les coûts au maximum.**
+
+Déjà fait avant le lot : le bouton « Localiser les N lieux » est retiré (en
+suspens, il demanderait une page dédiée), la bibliothèque de photos de démo
+aussi (27 images).
+
+### Pourquoi c'est un lot, pas un changement de fournisseur
+
+Les conditions de Google Maps Platform (section 14, version du 10 juin 2026)
+imposent trois choses que l'architecture actuelle contredit :
+
+- **aucun contenu Places sur une carte non-Google** → la carte SVG part en même
+  temps que Nominatim ;
+- **les coordonnées Google se gardent 30 jours au plus**, puis s'effacent ou se
+  redemandent. Seul le `place_id` se garde indéfiniment ;
+- **les photos Google ne se stockent pas** : chaque affichage est un appel
+  facturé.
+
+### Les arbitrages
+
+Décidés le 26 septembre 2026.
+
+**1. Tout passe par Google.** Carte (Maps JavaScript API), recherche (Places API
+New), photos (Place Photos). Nominatim et la carte SVG sortent en fin de lot.
+
+**2. Une clé navigateur, pas de serveur.** Restreinte à nos domaines (prod, dev,
+localhost) et aux deux API, plafonnée par des quotas journaliers dans Google
+Cloud, doublée d'une alerte de budget. Un abus épuise le quota du jour, il ne
+coûte rien de plus. Une fonction Supabase ne s'impose que si un abus apparaît.
+
+**3. Des suggestions pendant qu'on tape, jamais un bouton « Chercher ».**
+Autocomplete avec jeton de session — gratuit quand la session se termine par un
+choix — puis une fiche Place Details Essentials : position, et références de
+photos sans supplément. La recherche texte (Text Search Pro, 32 $ les 1 000)
+n'est utilisée que par la migration de l'existant.
+
+**4. La carte se charge quand on l'affiche**, une seule instance par visite.
+Hors ligne : « carte indisponible », tout le reste de l'itinéraire fonctionne.
+
+**5. Le titre reste celui de l'utilisateur.** Nom, adresse et note Google
+s'affichent en direct et ne s'enregistrent pas.
+
+**6. Les coordonnées qui ne viennent pas de Google restent.** Seed, saisie
+manuelle, Nominatim : elles sont à nous, hors règle des 30 jours. Elles sont
+remplacées le jour où l'item est relié à Google.
+
+**7. Le bouton Plan ouvre Google Maps** sur le `place_id` (les liens Maps sont
+gratuits), à la place d'Apple Plans.
+
+### À trancher
+
+- **Quand charger les photos (avant F4).** Recommandé : au geste — « Voir les
+  photos » sur une étape, ou l'ouverture d'un lieu : ≈ 35 $/mois à 300 actifs.
+  L'étape sélectionnée coûterait ≈ 370 $, le chargement au défilement ≈ 560 $.
+- **La fenêtre de mise en prod.** Des voyages sont en cours du 17 octobre au
+  26 novembre (3e compte du 17/10 au 05/11, le nôtre du 07/11 au 26/11). Mise en
+  prod avant le 17 octobre si F0 à F3 sont solides, sinon après le 26 novembre —
+  jamais entre les deux : la carte cesserait de marcher hors ligne en plein
+  voyage.
+
+Budget estimé avec l'arbitrage recommandé : ≈ 0 € pour 3 comptes, ≈ 60 $/mois à
+300 actifs, ≈ 330 $/mois à 1 000.
+
+### Pièges repérés avant d'écrire
+
+**`trip_by_share_token` construit son JSON colonne par colonne.** `place_id` et
+`place_synced_at` doivent y entrer, sinon la vue partagée n'a ni photos ni
+bouton Plan.
+
+**Les jetons de session.** Sans eux, chaque lettre tapée est facturée. Attendre
+quelques lettres et une courte pause avant d'interroger Google.
+
+**Les références de photos expirent.** On ne les stocke pas : on les redemande
+au moment d'afficher, par une fiche « IDs Only », gratuite.
+
+**IndexedDB garde les coordonnées hors ligne.** C'est un cache temporaire
+autorisé, à condition que la purge serveur des 30 jours s'y propage au prochain
+passage en ligne.
+
+**La clé part dans le bundle** (`VITE_GOOGLE_MAPS_KEY`). Sa protection, ce sont
+les restrictions de domaine, pas le secret. La CI doit builder sans elle.
+
+**Le rapatriement ne rattache jamais « tous les comptes ».** C'est ce que fait
+`seed.sql`, et c'est ce qui l'a rendu dangereux.
+
+### Le découpage
+
+| Étape | Ce qu'on gagne | Google |
+|---|---|---|
+| **R · Rapatrier le voyage de prod sur dev** | Travailler et tester sur le vrai voyage, bien avancé, sans toucher la prod. L'export sert aussi de sauvegarde avant M | non |
+| **F0 · Le test** | Google contre Nominatim sur les vrais titres rapatriés, et une page d'essai de la carte. On y va ou pas | clé de test |
+| **F1 · La carte Google** | Même dessin : épingles numérotées, pastilles de catégorie, arcs en tirets entre les villes, pointillés vers les lieux. Marche avec les coordonnées actuelles | Maps JS |
+| **F2 · La recherche Google** | Suggestions pendant qu'on tape, `place_id` enregistré, Plan → Google Maps. Migration `0010_google.sql` | Places |
+| **F3 · Les 30 jours** | Rafraîchissement à l'ouverture du voyage, purge nocturne, « Préparer hors ligne » rafraîchit tout pour couvrir un voyage de 20 jours | Places |
+| **M · Migrer l'existant** | Tous les lieux déjà saisis reliés à Google : automatiquement quand c'est sûr, à la main sinon. Dev d'abord, prod ensuite | Places |
+| **F4 · Les photos Google** | Selon l'arbitrage, avec le crédit de l'auteur | Photos |
+| **F5 · Le ménage** | Nominatim, carte SVG, projection, étiquettes, `build-map`, et leurs tests | — |
+
+**L'ordre est imposé.** R d'abord : il ne dépend de rien et donne au test ses
+vrais titres. F1 avant F2 : une position Google n'a pas le droit d'apparaître
+sur la carte SVG. F3 en prod moins de 30 jours après F2. M après F3, pour la même
+raison, et avant F4, qui a besoin des `place_id`.
+
+### R — Rapatrier le voyage de prod sur dev
+
+Fidèle à L8 : **rien n'est automatique, aucun identifiant de prod ne sort des
+secrets GitHub.** Deux fichiers SQL dans `supabase/outils/`, passés à la main
+dans le SQL Editor :
+
+- **`export-voyage.sql`, sur prod.** Un `select` en lecture seule qui rend une
+  seule valeur JSON : le voyage (sans `share_token`), ses étapes, items,
+  liaisons, vols et expériences, chaque ligne complète (`to_jsonb`). On copie la
+  cellule ou on télécharge le résultat. C'est aussi la sauvegarde de la prod
+  avant M.
+- **`import-voyage.sql`, sur dev.** On colle le JSON ; il supprime la copie de
+  dev du même slug (cascade), réinsère tout **avec les mêmes UUID**
+  (`jsonb_populate_recordset`), et rattache les comptes de dev **nommés par
+  adresse** en tête du fichier. Garde-fou identique à `seed.sql` : une ligne à
+  décommenter. Il se termine sur les comptages.
+
+Voyage visé : `japon-2026`, a priori celui qui est bien avancé. Celui du
+3e compte ne se copie que si on en a besoin — c'est la donnée de quelqu'un
+d'autre.
+
+Rejouable : on rapatrie de nouveau juste avant F0, puis juste avant M pour
+répéter la migration sur une copie fraîche.
+
+Piège : une colonne `not null` présente en dev et absente de la prod arrive à
+`null` par `jsonb_populate_recordset`. Rapatrier quand les deux schémas sont
+alignés, ou compléter la colonne dans l'import.
+
+### M — Migrer ce qui est déjà créé
+
+Pour tous les voyages existants, dev puis prod. **Rien n'est supprimé.**
+
+1. **Le schéma vient de F2** : les nouvelles colonnes naissent à `null`, qui
+   veut dire « pas encore relié ».
+2. **Le rattachement automatique** par un script lancé depuis le poste
+   (`scripts/relier-google.mjs`). Il lit l'export de R, cherche chaque item de
+   catégorie `onMap` sans `place_id` (Text Search, biais autour de l'étape) et
+   ne relie **que les cas sûrs** : nom retrouvé dans le titre, à moins de 50 km
+   de l'étape, et à moins de 1 km des coordonnées actuelles quand l'item en a.
+   Il produit un fichier SQL d'`update … where id = … and place_id is null`,
+   passé à la main comme toute migration, et la liste des cas douteux.
+3. **Le reste à la main, dans l'app.** Un item non relié porte un discret « À
+   relier » ; un clic ouvre la recherche de F2 pré-remplie avec son titre. Le
+   même geste qu'un ajout, pas une page de plus.
+4. **Les étapes gardent leurs coordonnées.** Un centre de ville issu du seed ou
+   saisi à la main est à nous, et suffit à ancrer la carte.
+
+Coût : quelques centaines de recherches, une seule fois, dans la franchise de
+5 000 par mois → 0 €.
 
 ---
 
