@@ -113,6 +113,7 @@ const files = {
   legPrices: 'supabase/migrations/0008_prix_trajets.sql',
   loveNotes: 'supabase/migrations/0009_mots_doux.sql',
   google: 'supabase/migrations/0010_google.sql',
+  purgeGoogle: 'supabase/migrations/0011_purge_google.sql',
   seed: 'supabase/seed.sql',
 };
 

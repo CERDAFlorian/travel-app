@@ -1731,6 +1731,34 @@ sont proposés et s'enregistrent.
 voyage. Sur la prod, dans cet ordre : la migration, puis le déploiement — et F3
 dans les 30 jours qui suivent.
 
+**Correctif F2 du 26 septembre 2026 : une étape se cherche sans filtre.** Le
+filtre « villes » écartait Miyajima, Kōyasan et Kamikōchi — pour Google, ce ne
+sont pas des villes. La recherche d'une étape s'oriente désormais autour de
+l'étape voisine (la précédente, sinon la suivante), sans alerte des 50 km.
+
+**F3 est fait sur dev le 26 septembre 2026.** La règle des 30 jours tient par
+trois mécanismes :
+
+- **à l'affichage** (`hideExpired`, dans `useTrip` et `useSharedTrip`) : une
+  coordonnée Google de plus de 30 jours ne s'affiche jamais, même tirée du
+  cache hors ligne ;
+- **à l'ouverture d'un voyage**, pour qui peut l'écrire (`useRefreshPlaces`) :
+  les lieux Google de plus de 25 jours sont redemandés à Google par leur
+  place_id — une fois par visite, un lieu en échec n'est pas retenté en boucle ;
+  « Préparer le voyage » rafraîchit tout ce qui a plus d'un jour, pour tenir
+  30 jours hors ligne ;
+- **en base, chaque nuit** (`0011_purge_google.sql`, pg_cron à 3 h 17 UTC) :
+  les coordonnées Google de plus de 30 jours sont effacées, le place_id gardé.
+  Les coordonnées à nous ne sont jamais touchées. Ni anon ni les comptes ne
+  peuvent lancer la purge.
+
+Éprouvé : la purge sur PGlite (hors pg_cron, absent de PGlite), la position
+redemandée par place_id avec le vrai Google.
+
+**`0011_purge_google.sql` active pg_cron** avec la commande de la documentation
+Supabase. Si l'activation est refusée : dashboard → Integrations → Cron, puis
+rejouer le fichier. À passer sur chaque base, après `0010`.
+
 **L'ordre est imposé.** R d'abord : il ne dépend de rien et donne au test ses
 vrais titres. F1 avant F2 : une position Google n'a pas le droit d'apparaître
 sur la carte SVG. F3 en prod moins de 30 jours après F2. M après F3, pour la même

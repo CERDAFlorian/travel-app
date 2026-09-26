@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { fetchTrip, fetchTrips } from '@/lib/api.js';
 import { requestPersistence, writeTrip, writeTripList } from '@/lib/db.js';
+import { refreshPlaces } from '@/lib/placeRefresh.js';
 import { whisperFor } from '@/lib/lovenotes.js';
 import './PrepareOffline.scss';
 
@@ -12,6 +13,10 @@ import './PrepareOffline.scss';
 // ait consulté, et vérifie que le service worker a bien son précache.
 //
 // Le moment de s'en servir est la veille du départ, en wifi.
+//
+// Il rafraîchit aussi, auprès de Google, les coordonnées des lieux reliés qui
+// ont plus d'un jour (L10, F3) : on en a le droit 30 jours, qui couvrent ainsi
+// un voyage de trois semaines hors ligne.
 async function countPrecached() {
   try {
     const names = await caches.keys();
@@ -46,7 +51,10 @@ export default function PrepareOffline() {
 
       for (const trip of trips) {
         setState({ status: 'running', done, total, label: `${trip.title}…` });
-        const full = await fetchTrip(trip.slug);
+        let full = await fetchTrip(trip.slug);
+        if (full && (await refreshPlaces(full, { olderThanDays: 1 })) > 0) {
+          full = await fetchTrip(trip.slug);
+        }
         if (full) await writeTrip(trip.slug, full, Date.now());
         done += 1;
       }

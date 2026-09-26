@@ -92,6 +92,21 @@ recréer la fonction** — elle construit son JSON colonne par colonne. C'est le
 piège du projet : 0005, 0006, 0007 et 0008 s'y sont tous heurtés. Une vue
 partagée qui affiche un champ vide sans rien signaler, c'est toujours ça.
 
+### La purge nocturne des coordonnées Google
+
+`0011_purge_google.sql` planifie avec **pg_cron** une purge chaque nuit : les
+coordonnées venues de Google s'effacent au bout de 30 jours, comme l'exigent
+ses conditions (L10, F3). Le fichier active lui-même l'extension ; si Supabase
+le refuse, l'activer depuis le dashboard — **Integrations → Cron** — puis
+rejouer le fichier. **Chaque base** a son extension et son job : à faire sur
+dev ET sur prod.
+
+Vérifier que le job existe :
+
+```sql
+select jobname, schedule, active from cron.job;
+```
+
 ### Rapatrier un voyage de prod sur dev
 
 Le sens inverse de la promotion : amener le **vrai** voyage, bien avancé, sur

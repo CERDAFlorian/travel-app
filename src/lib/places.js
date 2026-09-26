@@ -83,6 +83,16 @@ export async function resolve(suggestion) {
   return { placeId: place.id, lat: place.location.lat(), lng: place.location.lng() };
 }
 
+// La position d'un lieu déjà relié, redemandée à partir de son place_id : la
+// règle des 30 jours (F3). Même fiche Essentials qu'au choix du lieu, sans
+// session — il n'y a pas de suggestions à couvrir.
+export async function locationOf(placeId) {
+  const { Place } = await places();
+  const place = new Place({ id: placeId });
+  await place.fetchFields({ fields: ['location'] });
+  return { placeId, lat: place.location.lat(), lng: place.location.lng() };
+}
+
 // Le lien « Maps ↗ » d'un item. Relié à Google, il ouvre la fiche exacte du
 // lieu ; sinon, ses coordonnées. Les liens Google Maps sont gratuits, et des
 // données Google n'ont pas à ouvrir Apple Plans (conditions, § 14).

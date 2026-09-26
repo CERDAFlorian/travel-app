@@ -20,6 +20,7 @@ import LoveNote from '@/components/LoveNote.jsx';
 import { addStep, moveStep, removeStep, setStepNights } from '@/lib/mutations.js';
 import { resolveItinerary, timelineEntries } from '@/lib/itinerary.js';
 import { LoveNotesProvider } from '@/hooks/useLoveNotes.js';
+import { useRefreshPlaces } from '@/hooks/useRefreshPlaces.js';
 import './TripView.scss';
 
 // L'itinéraire, mis en page comme le design.
@@ -51,6 +52,10 @@ export default function TripView({
   // perdrait son zoom et sa position au moment précis où l'on s'en sert.
   const [byDay, setByDay] = useState(false);
   const [justAddedStep, setJustAddedStep] = useState(null);
+
+  // La règle des 30 jours : les lieux Google qui vont expirer sont redemandés
+  // à l'ouverture, par qui peut écrire le voyage.
+  useRefreshPlaces(trip, { enabled: !readOnly && !shared && !isOffline, onChanged });
 
   // LA HAUTEUR DE LA FRISE SE MESURE, ELLE NE SE DEVINE PLUS.
   //
