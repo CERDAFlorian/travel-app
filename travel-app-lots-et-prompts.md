@@ -1598,10 +1598,11 @@ gratuits), à la place d'Apple Plans.
   photos » sur une étape, ou l'ouverture d'un lieu : ≈ 35 $/mois à 300 actifs.
   L'étape sélectionnée coûterait ≈ 370 $, le chargement au défilement ≈ 560 $.
 - **La fenêtre de mise en prod.** Des voyages sont en cours du 17 octobre au
-  26 novembre (3e compte du 17/10 au 05/11, le nôtre du 07/11 au 26/11). Mise en
-  prod avant le 17 octobre si F0 à F3 sont solides, sinon après le 26 novembre —
-  jamais entre les deux : la carte cesserait de marcher hors ligne en plein
-  voyage.
+  29 novembre (3e compte du 17/10 au 05/11 ; le nôtre part le 07/11 et, d'après
+  le voyage de prod exporté le 26 septembre, rentre le 28/11 pour atterrir le
+  29/11). Mise en prod avant le 17 octobre si F0 à F3 sont solides, sinon après
+  le 29 novembre — jamais entre les deux : la carte cesserait de marcher hors
+  ligne en plein voyage.
 
 Budget estimé avec l'arbitrage recommandé : ≈ 0 € pour 3 comptes, ≈ 60 $/mois à
 300 actifs, ≈ 330 $/mois à 1 000.
