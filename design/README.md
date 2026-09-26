@@ -123,3 +123,23 @@ Le design fait correspondre des **mots-clés du titre de l'item** à une image
 Retiré en septembre 2026 avec ses 27 images : c'était une bibliothèque de démo,
 figée sur un voyage au Japon, qui affichait une photo sans rien savoir du lieu.
 Les illustrations du `.dc.html` qui en dépendaient ne s'affichent donc plus.
+
+## Style de la carte Google (L10)
+
+`carte-google-style.json` est la **source de vérité** du fond de carte Google.
+Il reprend la carte SVG : mer crème (`#fbf3e3`), terre kaki (`#dfdcbc`), et
+**rien d'autre** — ni noms, ni routes, ni lieux, ni transports, ni frontières de
+Google. Seuls restent les dessins de l'app : épingles, pastilles, arcs et
+pointillés du voyage. Le logo Google et la ligne d'attribution, eux, sont
+obligatoires.
+
+Il ne s'applique pas depuis le code : un Map ID impose le style « cloud ». On
+l'importe à la main, comme le SQL :
+
+1. Google Cloud → Google Maps Platform → **Styles de carte** → créer un style →
+   importer ce fichier JSON → enregistrer ;
+2. **Gestion des plans** → l'ID de carte `travel-app` → associer ce style.
+
+Google convertit ce JSON à son format récent, de façon « approximative » selon
+sa documentation : vérifier le rendu après import. Toute retouche faite dans
+l'éditeur se réexporte ici (bouton Export), pour que le fichier reste la vérité.
