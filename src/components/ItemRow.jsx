@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react';
 import { eurosInput, fromEuros, priceInEuros, toEuros } from '@/lib/currency.js';
 import { haversine, formatDistance, MAX_DISTANCE_FROM_STEP_KM } from '@/lib/geo.js';
-import { imageFor } from '@/lib/photos.js';
 import {
   deleteItem,
   sealHotel,
@@ -37,7 +36,7 @@ function parsePrice(raw) {
   return Number.isFinite(value) && value >= 0 ? { value } : { error: true };
 }
 
-// Une ligne d'item, sur UNE ligne comme dans le design : vignette, pastille,
+// Une ligne d'item, sur UNE ligne comme dans le design : pastille,
 // nom, note, pilule Plan, puis à droite l'étoile, LOCALISER, le prix et la
 // corbeille.
 export default function ItemRow({ item, step, tripTitle, readOnly, autoLocate, onChanged }) {
@@ -82,7 +81,6 @@ export default function ItemRow({ item, step, tripTitle, readOnly, autoLocate, o
   // prix qu'on paiera au comptoir, on lit le budget dans sa propre monnaie.
   const price = priceInEuros(item.price, item.currency);
   const located = item.lat !== null && item.lng !== null;
-  const thumb = imageFor(item.title);
 
   // Le contrôle de cohérence reste visible sur l'item enregistré : un
   // « enregistrer quand même » redeviendrait invisible dès le sélecteur fermé.
@@ -98,15 +96,6 @@ export default function ItemRow({ item, step, tripTitle, readOnly, autoLocate, o
   return (
     <li className="item">
       <div className="item__line">
-        {thumb && (
-          <span
-            className="item__thumb"
-            role="img"
-            aria-label={item.title}
-            style={{ backgroundImage: `url(${thumb})` }}
-          />
-        )}
-
         <span className="item__dot" data-cat={item.category} aria-hidden="true" />
 
         {/* Le design ne propose pas de bouton « modifier » : on clique le nom.

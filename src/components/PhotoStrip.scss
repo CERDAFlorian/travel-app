@@ -15,16 +15,9 @@
     background: var(--surface-tint);
   }
 
-  &__img,
   &__slot {
     width: 100%;
     height: clamp(70px, 8vw, 108px);
-    background-color: var(--surface-tint);
-    background-size: cover;
-    background-position: center;
-  }
-
-  &__slot {
     display: flex;
     flex-direction: column;
     align-items: center;
