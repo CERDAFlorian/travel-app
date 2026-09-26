@@ -1641,6 +1641,13 @@ les restrictions de domaine, pas le secret. La CI doit builder sans elle.
 | **F4 · Les photos Google** | Selon l'arbitrage, avec le crédit de l'auteur | Photos |
 | **F5 · Le ménage** | Nominatim, carte SVG, projection, étiquettes, `build-map`, et leurs tests | — |
 
+**R est outillé le 26 septembre 2026.** Les deux fichiers ont été éprouvés sur
+deux bases PostgreSQL (PGlite) montées avec les vraies migrations : 20
+vérifications, dont le refus sans garde-fou, le refus sans adresse connue, les
+caractères piégeux et la rejouabilité. Reste à le passer à la main, prod puis
+dev — procédure dans `supabase/README.md`, « Rapatrier un voyage de prod sur
+dev ».
+
 **L'ordre est imposé.** R d'abord : il ne dépend de rien et donne au test ses
 vrais titres. F1 avant F2 : une position Google n'a pas le droit d'apparaître
 sur la carte SVG. F3 en prod moins de 30 jours après F2. M après F3, pour la même

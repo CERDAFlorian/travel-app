@@ -315,6 +315,51 @@ if (Object.keys(clean).length === Object.keys(files).length) {
   }
 }
 
+// --- Outils (supabase/outils/) ----------------------------------------------
+//
+// Ce ne sont pas des migrations : on ne les rejoue pas, on les passe à la main
+// quand on en a besoin. Mais l'un tourne sur la PROD et l'autre REMPLACE un
+// voyage entier : leurs garde-fous se vérifient à chaque commit, comme ceux
+// des migrations.
+
+const tools = {
+  exportVoyage: 'supabase/outils/export-voyage.sql',
+  importVoyage: 'supabase/outils/import-voyage.sql',
+};
+
+const exportRaw = read(tools.exportVoyage);
+if (exportRaw !== null) {
+  const sql = strip(exportRaw, tools.exportVoyage);
+  checkBalance(sql, tools.exportVoyage);
+  // Il se lance sur la prod : pas une seule écriture, même par mégarde. Pas de
+  // transaction non plus — un `commit` final masquerait le JSON dans le SQL
+  // Editor, et un `select` seul n'écrit rien.
+  const write = /\b(insert|update|delete|drop|alter|truncate|create|grant|revoke|begin|commit)\b/i.exec(sql);
+  if (write) fail(tools.exportVoyage, `« ${write[1]} » dans un fichier qui tourne sur la prod en lecture seule`);
+  if (!/- 'share_token'/.test(exportRaw)) {
+    fail(tools.exportVoyage, "le jeton de partage de la prod doit rester hors de l'export");
+  }
+}
+
+const importRaw = read(tools.importVoyage);
+if (importRaw !== null) {
+  const sql = strip(importRaw, tools.importVoyage);
+  checkBalance(sql, tools.importVoyage);
+  checkTransaction(sql, tools.importVoyage);
+  if (!/to_regclass\('pg_temp\.oui_c_est_la_base_de_dev'\) is null/.test(importRaw)) {
+    fail(tools.importVoyage, 'garde-fou absent : rien n\'empêcherait de remplacer un voyage de prod');
+  }
+  if (!/^-- create temporary table oui_c_est_la_base_de_dev/m.test(importRaw)) {
+    fail(tools.importVoyage, 'le garde-fou doit rester commenté dans le fichier commité');
+  }
+  // Rattacher « tous les comptes » a rendu seed.sql dangereux : l'import ne
+  // rattache que les adresses qu'on lui nomme.
+  const members = /insert into public\.trip_members[\s\S]*?;/i.exec(sql)?.[0] ?? '';
+  if (!/membres_dev/.test(members)) {
+    fail(tools.importVoyage, 'le rattachement doit passer par les adresses de membres_dev, jamais par tous les comptes');
+  }
+}
+
 // --- Sortie -----------------------------------------------------------------
 
 if (errors.length) {

@@ -92,6 +92,34 @@ recréer la fonction** — elle construit son JSON colonne par colonne. C'est le
 piège du projet : 0005, 0006, 0007 et 0008 s'y sont tous heurtés. Une vue
 partagée qui affiche un champ vide sans rien signaler, c'est toujours ça.
 
+### Rapatrier un voyage de prod sur dev
+
+Le sens inverse de la promotion : amener le **vrai** voyage, bien avancé, sur
+la base de dev, pour éprouver une évolution sur de la vraie donnée sans
+toucher la prod. Deux fichiers de `supabase/outils/`, passés à la main :
+
+1. **Sur prod**, `export-voyage.sql` (slug à ajuster en bas du fichier) → Run.
+   Une ligne revient, colonne `voyage` : copier la cellule, ou Export → JSON.
+   Le fichier ne contient qu'un `select` — `npm run sql:check` refuse qu'il
+   contienne la moindre écriture. Le JSON obtenu vaut aussi **sauvegarde** :
+   en prendre un avant toute migration qui réécrit la donnée de prod.
+2. **Sur dev**, `import-voyage.sql` : remplir ses trois zones « À REMPLIR »
+   (décommenter le garde-fou, nommer les comptes de dev par adresse, coller le
+   JSON), Run. Une ligne de comptages revient.
+
+L'import **remplace** le voyage de même identifiant ou de même slug, et
+réinsère tout avec les mêmes UUID. Il ne rattache que les adresses nommées —
+jamais « tous les comptes », comme le fait `seed.sql`. Si un comptage ne
+correspond pas à l'export, tout est annulé. Le lien de partage de la prod
+(`share_token`) ne voyage pas.
+
+**Ne pas commiter `import-voyage.sql` rempli** : il contiendrait des adresses
+et le voyage de quelqu'un.
+
+Les deux bases doivent avoir le **même schéma** : une colonne présente d'un
+seul côté arriverait vide, et une colonne `not null` ferait échouer l'import.
+Rapatrier après avoir appliqué les mêmes migrations des deux côtés.
+
 ### Repartir de zéro sur dev
 
 ```sh
