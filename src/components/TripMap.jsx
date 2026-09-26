@@ -65,11 +65,15 @@ function anchor() {
   return element('div', 'map__anchor');
 }
 
-export default function TripMap({ trip, selectedStepId, onSelectStep }) {
+// `onDemand` : la carte attend un clic au lieu de se charger à l'approche de
+// l'écran. C'est le cas de la vue partagée — chaque visiteur d'un lien qui
+// circule coûterait un affichage facturé ; seuls ceux qui veulent la carte la
+// paient.
+export default function TripMap({ trip, selectedStepId, onSelectStep, onDemand = false }) {
   const [filters, setFilters] = useState(
     () => new Set(['steps', ...CATEGORIES.filter((c) => c.onMap).map((c) => c.key)]),
   );
-  const [status, setStatus] = useState(() => (hasGoogleMaps() ? 'idle' : 'config'));
+  const [status, setStatus] = useState(() => (!hasGoogleMaps() ? 'config' : onDemand ? 'demand' : 'idle'));
   const [zoom, setZoom] = useState(null);
   const online = useOnline();
 
@@ -323,6 +327,14 @@ export default function TripMap({ trip, selectedStepId, onSelectStep }) {
         <div ref={canvasRef} className="map__canvas" role="region" aria-label={`Carte du voyage ${trip.title}`} />
 
         {message && <p className="map__status">{message}</p>}
+
+        {status === 'demand' && (
+          <div className="map__status">
+            <button type="button" className="map__demand" onClick={() => setStatus('idle')}>
+              Afficher la carte
+            </button>
+          </div>
+        )}
 
         {status === 'ready' && (
           <div className="map__zoom">

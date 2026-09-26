@@ -296,7 +296,7 @@ export default function TripView({
               <div className="trip__map-head">
                 <h2 className="trip__map-title">La carte du voyage</h2>
               </div>
-              <TripMap trip={view} selectedStepId={selectedStepId} onSelectStep={selectStep} />
+              <TripMap trip={view} selectedStepId={selectedStepId} onSelectStep={selectStep} onDemand={shared} />
               <TravelTimes steps={view.steps} legs={view.legs} />
             </div>
           </aside>

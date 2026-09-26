@@ -29,6 +29,20 @@
     text-align: center;
   }
 
+  &__demand {
+    padding: var(--sp-2) var(--sp-4);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--surface-raised);
+    color: var(--text-heading);
+    font: inherit;
+    font-size: var(--fs-sm);
+    cursor: pointer;
+
+    &:hover { border-color: var(--accent); }
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
   // Tout ce qu'on pose sur la carte part d'un point sans taille, posé sur sa
   // coordonnée : épingle, pastille et nom se placent autour en pixels.
   &__anchor {
