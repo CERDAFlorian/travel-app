@@ -1649,6 +1649,31 @@ caractères piégeux et la rejouabilité. Reste à le passer à la main, prod pu
 dev — procédure dans `supabase/README.md`, « Rapatrier un voyage de prod sur
 dev ».
 
+**F0 est fait le 26 septembre 2026 : on y va.** Sur les 29 lieux géographiques
+du vrai voyage rapatrié :
+
+| | Nominatim (aujourd'hui) | Google |
+|---|---|---|
+| Lieu trouvé | 15 | **27** |
+| Photo disponible | — | 27 |
+
+Google retrouve tout ce que Nominatim ratait — « JARDIN KENROKUEN », « QUARTIER
+HIGASHI CHAYA », le ryokan « Onyado Yuinosho », « Fushimi anari » (faute de
+frappe), « Torii flottante », « Disney sea ». Là où Nominatim trouvait, les deux
+concordent à moins de 1 km. Les deux échecs : « Ryan-j », que les suggestions
+rattrapent dès qu'on tape (Ryōan-ji), et « SHÔn RYÔri », qui n'est pas un lieu.
+Un titre générique (« OKONOMIYAKI », « ONSEN EN MONTAGNE ») rend un établissement
+parmi d'autres : Google propose, l'utilisateur choisit — la règle de L4 tient.
+
+La page d'essai de la carte (voyage réel, clé navigateur, Map ID vectoriel)
+affiche épingles numérotées, pastilles de catégorie, arcs en tirets et
+pointillés vers les lieux. Deux enseignements pour F1 : les étiquettes se
+chevauchent (Kyoto/Osaka/Kōyasan, Hiroshima/Miyajima) et doivent être gérées,
+et un centre d'étape faux se voit tout de suite — l'étape « Shirakawa » du vrai
+voyage est géocodée dans le Fukushima, à 310 km de Shirakawa-go.
+
+Coût du test : environ 90 appels, dans la franchise gratuite.
+
 **L'ordre est imposé.** R d'abord : il ne dépend de rien et donne au test ses
 vrais titres. F1 avant F2 : une position Google n'a pas le droit d'apparaître
 sur la carte SVG. F3 en prod moins de 30 jours après F2. M après F3, pour la même
