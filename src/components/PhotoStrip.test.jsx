@@ -2,17 +2,19 @@ import { describe, expect, it } from 'vitest';
 import { renderToString } from 'react-dom/server';
 import PhotoStrip from './PhotoStrip.jsx';
 
-// Le bandeau sans Google : en CI et dans les tests, la clé est vide
-// (vite.config.js). Il ne doit rien proposer qu'il ne peut pas tenir.
-describe('PhotoStrip sans clé Google', () => {
+// Le bandeau n'affiche que des photos enregistrées — Wikimedia ou collées par
+// l'utilisateur —, jamais de photo Google (27 septembre 2026).
+describe('PhotoStrip', () => {
   const items = [
     { id: 'a', title: 'Fushimi Inari', category: 'lieu', place_id: 'ChIJ-fushimi' },
     { id: 'b', title: 'Temple inconnu', category: 'lieu', place_id: null },
+    { id: 'c', title: 'Pavillon d’or', category: 'lieu', place_id: 'ChIJ-kinkaku', photo_url: 'https://upload.wikimedia.org/k.jpg', photo_credit: 'Jaycangel', photo_license: 'CC BY-SA 3.0', photo_page: 'https://commons.wikimedia.org/wiki/File:k.jpg' },
   ];
   const html = renderToString(<PhotoStrip items={items} stepName="Kyoto" />);
 
-  it('ne propose pas « Voir les photos »', () => {
+  it('ne propose jamais de photo Google', () => {
     expect(html).not.toContain('Voir les photos');
+    expect(html).not.toContain('googleapis');
   });
 
   it('garde une tuile par lieu mis en avant', () => {
@@ -20,10 +22,14 @@ describe('PhotoStrip sans clé Google', () => {
     expect(html).toContain('Temple inconnu');
   });
 
-  // Relié, un lieu attend ses photos Google : la recherche d'images n'est
-  // proposée qu'à celui qui n'en aura pas.
-  it('ne propose la recherche d’images qu’au lieu non relié', () => {
-    expect(html.match(/Une photo \?/g)).toHaveLength(1);
+  it('affiche la photo enregistrée, avec son auteur et sa licence', () => {
+    expect(html).toContain('src="https://upload.wikimedia.org/k.jpg"');
+    expect(html).toContain('Jaycangel · CC BY-SA 3.0');
+  });
+
+  // Sans photo, relié à Google ou non : la recherche d'images reste l'invite.
+  it('propose la recherche d’images à chaque lieu sans photo', () => {
+    expect(html.match(/Une photo \?/g)).toHaveLength(2);
   });
 
   // La recherche d'images ne suppose plus que le voyage est au Japon.

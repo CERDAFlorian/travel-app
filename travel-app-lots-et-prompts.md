@@ -1820,6 +1820,10 @@ Sur le vrai voyage : villes 9/9, lieux touristiques 13/15 (les deux manqués ont
 une faute de frappe dans leur titre), hôtels 0/1. L'affiliation (Booking pour
 les hôtels) viendra plus tard.
 
+**Plus aucune photo de Google, le 27 septembre 2026.** Le bouton « Voir les
+photos » (F4, Google au geste) est retiré, et avec lui tout appel aux photos de
+Places. Les photos viennent de Wikimedia, ou de l'utilisateur par copier-coller.
+
 **L'ordre est imposé.** R d'abord : il ne dépend de rien et donne au test ses
 vrais titres. F1 avant F2 : une position Google n'a pas le droit d'apparaître
 sur la carte SVG. F3 en prod moins de 30 jours après F2. M après F3, pour la même
