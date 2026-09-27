@@ -115,7 +115,7 @@ export async function sealHotel(step, id) {
   if (doomed.length === 0) return;
 
   const { error: sweep } = await supabase.from('items').delete().in('id', doomed);
-  if (sweep) fail(sweep, 'Suppression des hôtels non retenus');
+  if (sweep) fail(sweep, 'Suppression des logements non retenus');
 }
 
 // Défait le scellement. Les candidats supprimés ne reviennent pas — c'est

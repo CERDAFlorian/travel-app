@@ -1854,6 +1854,27 @@ changement de position du lieu, là où une photo Wikimedia est cherchée de
 nouveau. Le service worker garde aussi les photos collées (`photos-collees`) :
 un nom n'est jamais réutilisé, CacheFirst ne sert donc jamais une vieille image.
 
+**Les photos de logements : aucune source ouverte (vérifié le 27 septembre
+2026).** « Hôtel » devient « Logement » à l'écran — un Airbnb n'est pas un
+hôtel ; la clé reste `hotel`. Pour leurs photos :
+
+- **Booking** : la Demand API exige depuis juillet 2026 le statut de partenaire
+  affilié « géré », un contrat et un chargé de compte ; même alors, les images
+  s'affichent par leur adresse, sans les télécharger.
+- **Expedia / Hotels.com** (Rapid API) : partenaires sélectionnés sur leur
+  volume de réservations, des mois d'intégration.
+- **Airbnb** : aucune API publique, programme partenaires sur invitation.
+- **Tripadvisor** : clé en libre-service, mais rien ne se garde hormis
+  l'identifiant du lieu — chaque affichage est un appel, payant au-delà du
+  quota gratuit, avec logo et lien obligatoires : le modèle des photos Google
+  qu'on a écarté. L'ancienne Content API cède la place à « Terra ».
+- **L'aperçu d'un lien Booking** (`og:image`) : Booking renvoie une page
+  anti-robot à une requête ordinaire, et pour le Ritz son aperçu est… une photo
+  de Paris.
+
+Donc : copier-coller par l'utilisateur, qui a l'annonce sous les yeux quand il
+réserve. L'affiliation Booking se reposera quand l'app aura du trafic.
+
 À savoir : une image copiée sur le web appartient à son auteur. Elle reste dans
 le voyage, mais le lien de partage la montre à qui l'a reçu — un usage privé
 tant que le lien circule entre proches.
