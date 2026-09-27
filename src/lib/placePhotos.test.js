@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { photosToFind } from './placePhotos.js';
+import { canPastePhoto, photosToFind } from './placePhotos.js';
 
 const trip = {
   steps: [
@@ -33,5 +33,18 @@ describe('photosToFind', () => {
 
   it('tolère un voyage absent', () => {
     expect(photosToFind(null)).toEqual([]);
+  });
+});
+
+describe('canPastePhoto', () => {
+  it('ouvre le collage aux lieux touristiques et aux activités', () => {
+    expect(canPastePhoto({ category: 'lieu' })).toBe(true);
+    expect(canPastePhoto({ category: 'activite' })).toBe(true);
+  });
+
+  it('le ferme aux hôtels, restaurants, boutiques et notes', () => {
+    for (const category of ['hotel', 'restaurant', 'shopping', 'note']) {
+      expect(canPastePhoto({ category })).toBe(false);
+    }
   });
 });

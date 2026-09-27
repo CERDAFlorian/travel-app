@@ -4,7 +4,7 @@ import { imageFromPaste } from '@/lib/userPhoto.js';
 import { useOnline } from '@/hooks/useOnline.js';
 import './PhotoPaste.scss';
 
-// Le panneau « Photo » d'un lieu ou d'une ville (L10).
+// Le panneau « Photo » d'un lieu touristique ou d'une activité (L10).
 //
 // Plus aucune photo de Google : quand Wikimedia ne trouve rien, l'utilisateur
 // colle la sienne. Le chemin le plus court est un copier-coller — on copie une
@@ -12,9 +12,9 @@ import './PhotoPaste.scss';
 // le panneau est ouvert, Cmd+V (ou Ctrl+V) n'importe où colle ici : c'est le
 // geste qu'on a déjà dans les doigts. « Choisir une image » couvre le reste :
 // une photo de la galerie, une capture d'écran.
-export default function PhotoPaste({ kind, place, searchQuery, onChanged, onClose }) {
+export default function PhotoPaste({ item, searchQuery, onChanged, onClose }) {
   const online = useOnline();
-  const { busy, error, paste, save, remove } = usePhotoPaste({ kind, place, onChanged });
+  const { busy, error, paste, save, remove } = usePhotoPaste({ item, onChanged });
   const fileRef = useRef(null);
 
   useEffect(() => {
@@ -30,14 +30,14 @@ export default function PhotoPaste({ kind, place, searchQuery, onChanged, onClos
     return () => document.removeEventListener('paste', onPaste);
   }, [save, onClose]);
 
-  const credit = [place.photo_credit, place.photo_license].filter(Boolean).join(' · ');
+  const credit = [item.photo_credit, item.photo_license].filter(Boolean).join(' · ');
 
   return (
     <div className="photo-paste" onClick={(event) => event.stopPropagation()}>
-      {place.photo_url && place.photo_source === 'wikimedia' && (
+      {item.photo_url && item.photo_source === 'wikimedia' && (
         <p className="photo-paste__credit">
           Photo {credit && <>: {credit} </>}·{' '}
-          <a href={place.photo_page ?? place.photo_url} target="_blank" rel="noreferrer">
+          <a href={item.photo_page ?? item.photo_url} target="_blank" rel="noreferrer">
             Wikimedia Commons
           </a>
         </p>
@@ -77,7 +77,7 @@ export default function PhotoPaste({ kind, place, searchQuery, onChanged, onClos
         >
           Chercher une image ↗
         </a>
-        {place.photo_url && (
+        {item.photo_url && (
           <button type="button" className="photo-paste__remove" disabled={busy || !online} onClick={remove}>
             Retirer la photo
           </button>

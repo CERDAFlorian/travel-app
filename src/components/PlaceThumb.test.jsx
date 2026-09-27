@@ -42,10 +42,19 @@ describe('PlaceThumb', () => {
 });
 
 describe('PhotoStrip', () => {
-  const items = [{ ...sansPhoto, category: 'lieu', featured: true }];
+  const items = [{ ...sansPhoto, category: 'lieu' }];
 
   it('propose d’ajouter une photo à une tuile vide', () => {
     expect(renderToString(<PhotoStrip items={items} stepName="Kanazawa" />)).toContain('Une photo ?');
+  });
+
+  // Coller une photo : lieux touristiques et activités seulement.
+  it('ne propose rien pour un restaurant ou une boutique mis en avant', () => {
+    for (const category of ['restaurant', 'shopping']) {
+      const html = renderToString(<PhotoStrip items={[{ ...sansPhoto, category, favorite: true }]} stepName="Kanazawa" />);
+      expect(html).toContain('Hôtel Mystays');
+      expect(html).not.toContain('Une photo ?');
+    }
   });
 
   // La vue partagée ne modifie rien.

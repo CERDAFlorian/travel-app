@@ -14,9 +14,8 @@ describe('targetSize', () => {
 
 describe('storagePath', () => {
   // Les règles du stockage remontent au voyage par ces deux dossiers.
-  it('range une photo sous son genre et son identifiant', () => {
-    expect(storagePath('item', 'abc', 'r')).toBe('items/abc/r.jpg');
-    expect(storagePath('step', 'kyoto', 'r')).toBe('steps/kyoto/r.jpg');
+  it('range une photo sous son item', () => {
+    expect(storagePath('abc', 'r')).toBe('items/abc/r.jpg');
   });
 });
 

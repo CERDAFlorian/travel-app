@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { featured } from '@/lib/photos.js';
+import { canPastePhoto } from '@/lib/placePhotos.js';
 import PhotoPaste from './PhotoPaste.jsx';
 import './PhotoStrip.scss';
 
@@ -12,8 +13,9 @@ import './PhotoStrip.scss';
 // est celle qu'on a enregistrée pour le lieu (0012_photos.sql) : Wikimedia,
 // trouvée toute seule, ou celle que l'utilisateur a collée. Elle s'affiche
 // d'elle-même, tout le temps, hors ligne compris. Un lieu sans photo garde son
-// emplacement : le nom, puis « Une photo ? », qui ouvre sous le bandeau le
-// panneau où coller une image (PhotoPaste). En lecture seule, le nom seul.
+// emplacement : le nom, puis — pour un lieu touristique ou une activité —
+// « Une photo ? », qui ouvre sous le bandeau le panneau où coller une image
+// (PhotoPaste). En lecture seule, le nom seul.
 //
 // Le libellé reste court par contrainte : une tuile fait un tiers de la carte,
 // soit ~110px sur mobile, ce qui laisse une dizaine de caractères.
@@ -84,7 +86,7 @@ export default function PhotoStrip({ items, stepName, readOnly, onChanged }) {
               ) : (
                 <div className="photo-strip__slot">
                   <span className="photo-strip__slot-name">{tile.title}</span>
-                  {!readOnly && (
+                  {!readOnly && canPastePhoto(tile) && (
                     <button
                       type="button"
                       className="photo-strip__add"
@@ -108,8 +110,7 @@ export default function PhotoStrip({ items, stepName, readOnly, onChanged }) {
 
       {editing && (
         <PhotoPaste
-          kind="item"
-          place={editing}
+          item={editing}
           searchQuery={`${editing.title} ${stepName}`}
           onChanged={onChanged}
           onClose={() => setEditingId(null)}

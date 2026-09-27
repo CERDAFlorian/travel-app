@@ -1,21 +1,20 @@
 import { useState } from 'react';
 import { readClipboardImage, removeStoredPhoto, uploadPhoto } from '@/lib/userPhoto.js';
-import { setItemPhoto, setStepPhoto } from '@/lib/mutations.js';
+import { setItemPhoto } from '@/lib/mutations.js';
 
-// Coller, choisir ou retirer la photo d'un lieu ou d'une ville (L10).
-// `kind` : 'item' ou 'step'. `place` : la ligne, avec sa photo actuelle.
-export function usePhotoPaste({ kind, place, onChanged }) {
+// Coller, choisir ou retirer la photo d'un lieu (L10). `item` : la ligne, avec
+// sa photo actuelle.
+export function usePhotoPaste({ item, onChanged }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
-  const write = kind === 'step' ? setStepPhoto : setItemPhoto;
-  const ours = place?.photo_source === 'user' ? place.photo_url : null;
+  const ours = item?.photo_source === 'user' ? item.photo_url : null;
 
   async function save(blob) {
     setBusy(true);
     setError(null);
     try {
-      const url = await uploadPhoto({ kind, id: place.id, blob, previousUrl: ours });
-      await write(place.id, { url, credit: null, license: null, page: null }, 'user');
+      const url = await uploadPhoto({ itemId: item.id, blob, previousUrl: ours });
+      await setItemPhoto(item.id, { url, credit: null, license: null, page: null }, 'user');
       await onChanged?.();
       return true;
     } catch (failure) {
@@ -53,8 +52,8 @@ export function usePhotoPaste({ kind, place, onChanged }) {
     setBusy(true);
     setError(null);
     try {
-      if (ours) await removeStoredPhoto(ours, { kind, id: place.id });
-      await write(place.id, null);
+      if (ours) await removeStoredPhoto(ours, item.id);
+      await setItemPhoto(item.id, null);
       await onChanged?.();
     } catch (failure) {
       setError(failure.message);

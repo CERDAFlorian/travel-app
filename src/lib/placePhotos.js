@@ -8,6 +8,13 @@
 
 export const PHOTO_CATEGORIES = new Set(['lieu', 'hotel']);
 
+// Où l'utilisateur peut coller sa propre photo : les lieux touristiques et les
+// activités, là où une image aide à choisir (décidé le 27 septembre 2026).
+// Pas les villes, pas les hôtels, restaurants ni boutiques.
+export const PASTE_CATEGORIES = new Set(['lieu', 'activite']);
+
+export const canPastePhoto = (item) => PASTE_CATEGORIES.has(item?.category);
+
 const pending = (point) => point.lat != null && point.lng != null && !point.photo_checked_at;
 
 // Les villes d'abord : ce sont elles qui se voient en tête de chaque étape.

@@ -1824,11 +1824,12 @@ les hôtels) viendra plus tard.
 photos » (F4, Google au geste) est retiré, et avec lui tout appel aux photos de
 Places. Les photos viennent de Wikimedia, ou de l'utilisateur par copier-coller.
 
-**La photo collée.** Quand Wikimedia ne trouve rien — un hôtel, un restaurant,
-un titre vague —, l'utilisateur met la sienne. Qui peut modifier le voyage voit
-un emplacement en pointillés « + » à gauche de chaque lieu (toutes les
-catégories de la carte, pas les notes), sur le médaillon de la ville, et
-« Une photo ? » sur les tuiles vides du bandeau. Le clic ouvre le panneau
+**La photo collée.** Quand Wikimedia ne trouve rien, l'utilisateur met la
+sienne — **pour les lieux touristiques et les activités seulement** (décidé le
+27 septembre 2026 : pas les villes, pas les hôtels, restaurants ni boutiques ;
+`PASTE_CATEGORIES` dans `placePhotos.js`). Qui peut modifier le voyage voit un
+emplacement en pointillés « + » à gauche de ces lignes, et « Une photo ? » sur
+leurs tuiles vides du bandeau. Le clic ouvre le panneau
 « Photo » (`PhotoPaste`) : **Cmd+V** n'importe où colle l'image ; « Coller la
 photo » lit le presse-papier sur clic (avec un message clair si le navigateur
 refuse ou s'il n'y a pas d'image) ; « Choisir une image » prend un fichier ;
@@ -1838,7 +1839,8 @@ tout cela : la photo seule.
 
 `lib/userPhoto.js` (testé) réduit l'image dans le navigateur — 1 200 px au plus,
 JPEG 0,82, quelques centaines de Ko — puis l'envoie dans l'espace `photos` de
-Supabase, sous `items/<id>/…` ou `steps/<id>/…` avec un nom aléatoire.
+Supabase, sous `items/<id>/…` avec un nom aléatoire (la règle SQL accepte aussi
+`steps/<id>/…`, inutilisé depuis qu'on ne colle plus sur les villes).
 `0013_photos_collees.sql` ajoute `photo_source` (`'wikimedia'` ou `'user'`),
 crée l'espace — public en lecture pour la vue partagée, 1 Mo par fichier — et
 ne laisse déposer ou retirer une photo qu'aux membres qui peuvent modifier le

@@ -12,7 +12,7 @@ import {
 } from '@/lib/mutations.js';
 import { isChosenHotel, otherHotels } from '@/lib/lodging.js';
 import { mapsUrl } from '@/lib/places.js';
-import { categoryOf } from '@/lib/categories.js';
+import { canPastePhoto } from '@/lib/placePhotos.js';
 import { removeStoredPhoto } from '@/lib/userPhoto.js';
 import PlaceSearch from './PlaceSearch.jsx';
 import PlaceThumb from './PlaceThumb.jsx';
@@ -99,10 +99,11 @@ export default function ItemRow({ item, step, readOnly, autoLocate, onChanged })
   return (
     <li className="item">
       <div className="item__line">
-        {/* Une photo pour ce qui a un lieu ; pas pour une note perso. */}
-        {categoryOf(item.category)?.onMap && (
-          <PlaceThumb place={item} onEdit={readOnly ? undefined : () => setPhotoOpen((open) => !open)} />
-        )}
+        {/* Coller une photo : lieux touristiques et activités seulement. */}
+        <PlaceThumb
+          place={item}
+          onEdit={!readOnly && canPastePhoto(item) ? () => setPhotoOpen((open) => !open) : undefined}
+        />
         <span className="item__dot" data-cat={item.category} aria-hidden="true" />
 
         {/* Le design ne propose pas de bouton « modifier » : on clique le nom.
@@ -316,8 +317,7 @@ export default function ItemRow({ item, step, readOnly, autoLocate, onChanged })
 
       {photoOpen && (
         <PhotoPaste
-          kind="item"
-          place={item}
+          item={item}
           searchQuery={`${item.title} ${step.name}`}
           onChanged={onChanged}
           onClose={() => setPhotoOpen(false)}
@@ -347,7 +347,7 @@ export default function ItemRow({ item, step, readOnly, autoLocate, onChanged })
           await run(async () => {
             await deleteItem(item.id);
             // Sa photo collée quitte le stockage avec lui (si nulle copie ne la montre).
-            if (item.photo_source === 'user') await removeStoredPhoto(item.photo_url, { kind: 'item', id: item.id });
+            if (item.photo_source === 'user') await removeStoredPhoto(item.photo_url, item.id);
           });
           setAsking(false);
         }}

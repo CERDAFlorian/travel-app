@@ -6,7 +6,6 @@ import { formatStepDates } from '@/lib/dates.js';
 import { setStepCoordinates } from '@/lib/mutations.js';
 import PlaceSearch from './PlaceSearch.jsx';
 import PlaceThumb from './PlaceThumb.jsx';
-import PhotoPaste from './PhotoPaste.jsx';
 import ConfirmDialog from './ConfirmDialog.jsx';
 import TrashIcon from './TrashIcon.jsx';
 import PhotoStrip from './PhotoStrip.jsx';
@@ -44,7 +43,6 @@ export default function StepCard({
   // Vrai au montage de l'étape qu'on vient d'ajouter : elle cherche sa
   // position toute seule.
   const [locating, setLocating] = useState(Boolean(autoLocate));
-  const [photoOpen, setPhotoOpen] = useState(false);
   // Où orienter la recherche d'une étape : l'étape d'avant, sinon celle
   // d'après. Un voyage avance de proche en proche — c'est ce qui départage
   // les deux Shirakawa. Seulement si elle est elle-même située.
@@ -133,7 +131,7 @@ export default function StepCard({
 
       <div className="step__body">
         <div className="step__head">
-          <PlaceThumb place={step} size="city" onEdit={readOnly ? undefined : () => setPhotoOpen((open) => !open)} />
+          <PlaceThumb place={step} size="city" />
           <h2 className="step__name">{step.name}</h2>
           <span className="step__dates">{formatStepDates(step.date_start, step.date_end)}</span>
           {/* Les nuits pilotent tout l'enchaînement : changer une nuit ici
@@ -242,16 +240,6 @@ export default function StepCard({
               }}
             />
           </div>
-        )}
-
-        {photoOpen && (
-          <PhotoPaste
-            kind="step"
-            place={step}
-            searchQuery={step.name}
-            onChanged={onChanged}
-            onClose={() => setPhotoOpen(false)}
-          />
         )}
 
         <PhotoStrip items={step.items} stepName={step.name.split(' ')[0]} readOnly={readOnly} onChanged={onChanged} />

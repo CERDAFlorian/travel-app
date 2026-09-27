@@ -1,6 +1,7 @@
 // Les photos collées par l'utilisateur (L10, 0013_photos_collees.sql).
 //
-// Quand Wikimedia ne trouve rien, l'utilisateur colle sa propre image. Elle
+// Quand Wikimedia ne trouve rien, l'utilisateur colle sa propre image — pour
+// un lieu touristique ou une activité (placePhotos.js, PASTE_CATEGORIES). Elle
 // est réduite dans le navigateur — 1 200 px au plus, JPEG — avant l'envoi :
 // quelques centaines de Ko au lieu de plusieurs Mo, un envoi rapide en 4G et un
 // stockage qui tient des milliers de photos dans l'offre gratuite de Supabase.
@@ -17,10 +18,10 @@ export function targetSize(width, height, max = MAX_SIDE) {
   return { width: Math.round(width * ratio), height: Math.round(height * ratio) };
 }
 
-// items/<id>/<aléatoire>.jpg ou steps/<id>/<aléatoire>.jpg : les règles du
-// stockage remontent au voyage par ces deux premiers dossiers.
-export function storagePath(kind, id, random = crypto.randomUUID()) {
-  return `${kind === 'step' ? 'steps' : 'items'}/${id}/${random}.jpg`;
+// items/<id>/<aléatoire>.jpg : les règles du stockage remontent au voyage par
+// ces deux premiers dossiers.
+export function storagePath(itemId, random = crypto.randomUUID()) {
+  return `items/${itemId}/${random}.jpg`;
 }
 
 // Le chemin d'une photo à nous, retrouvé depuis son adresse publique — pour la
@@ -70,33 +71,31 @@ async function shrink(blob) {
 
 // Réduit, envoie, et rend l'adresse publique. L'ancienne photo collée, s'il y
 // en a une, est retirée du stockage (voir removeStoredPhoto).
-export async function uploadPhoto({ kind, id, blob, previousUrl = null }) {
+export async function uploadPhoto({ itemId, blob, previousUrl = null }) {
   const jpeg = await shrink(blob);
-  const path = storagePath(kind, id);
+  const path = storagePath(itemId);
   const { error } = await supabase.storage
     .from(BUCKET)
     .upload(path, jpeg, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false });
   if (error) throw new Error(`Envoi de la photo refusé : ${error.message}`);
 
-  await removeStoredPhoto(previousUrl, { kind, id });
+  await removeStoredPhoto(previousUrl, itemId);
 
   return supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
 }
 
-// Retire du stockage la photo collée d'un lieu ou d'une ville, quand plus rien
-// ne la montre. « Dupliquer sur un autre jour » copie la photo avec l'item :
+// Retire du stockage la photo collée d'un lieu, quand plus rien ne la montre. « Dupliquer sur un autre jour » copie la photo avec l'item :
 // les deux copies partagent alors le même fichier, et le retirer pour l'une
 // casserait l'autre. Au mieux : dans le doute, ou si la suppression échoue, le
 // fichier reste — un fichier en trop ne se voit pas, une image cassée si.
-export async function removeStoredPhoto(url, { kind, id }) {
+export async function removeStoredPhoto(url, itemId) {
   const path = pathFromUrl(url);
   if (!path) return;
-  const table = kind === 'step' ? 'steps' : 'items';
   const { count, error } = await supabase
-    .from(table)
+    .from('items')
     .select('id', { count: 'exact', head: true })
     .eq('photo_url', url)
-    .neq('id', id);
+    .neq('id', itemId);
   if (error || count !== 0) return;
   await supabase.storage.from(BUCKET).remove([path]).catch(() => {});
 }

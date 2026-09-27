@@ -1,6 +1,7 @@
 import './PlaceThumb.scss';
 
-// La vignette d'un lieu ou d'une ville : sa photo — Wikimedia ou collée.
+// La vignette d'un lieu ou d'une ville : sa photo — Wikimedia, ou collée pour
+// un lieu touristique ou une activité.
 //
 // En lecture, elle mène à la page de la photo (auteur et licence, condition de
 // la licence libre, sont au survol) ; sans photo, rien.
