@@ -1,3 +1,5 @@
+@use '../theme/mixins';
+
 // La vignette garde la même taille que l'image ait fini de charger ou non : la
 // ligne ne saute pas quand elle arrive.
 .place-thumb {
@@ -10,6 +12,26 @@
   border: 1px solid var(--border-strong);
   border-radius: 4px;
   background: var(--surface-tint);
+
+  // Bouton : aucune marque de navigateur, le curseur dit qu'on peut cliquer.
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+
+  // Vide : une place à remplir, en pointillés, pas une image cassée.
+  &[data-empty] {
+    display: grid;
+    place-items: center;
+    border-style: dashed;
+    background: none;
+    color: var(--muted);
+    font-size: 16px;
+    line-height: 1;
+
+    &:hover { border-color: var(--accent); color: var(--accent); }
+  }
+
+  &:focus-visible { @include mixins.focus-ring; }
 
   img {
     display: block;

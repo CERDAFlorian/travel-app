@@ -237,6 +237,7 @@ export async function duplicateItemOnDay(step, item, dayOffset, slot = null) {
       photo_license: item.photo_license ?? null,
       photo_page: item.photo_page ?? null,
       photo_checked_at: item.photo_checked_at ?? null,
+      photo_source: item.photo_source ?? null,
       position,
       day_offset: dayOffset,
       day_slot: slot,
@@ -262,26 +263,47 @@ export async function duplicateItemOnDay(step, item, dayOffset, slot = null) {
 // correction manuelle. `geocoded_at` était la trace de Nominatim : il n'est
 // plus jamais posé.
 //
-// Un lieu qui CHANGE perd sa photo : elle était celle de l'ancien, et sera
-// cherchée de nouveau pour le nouveau (usePhotoFill). Un simple
-// rafraîchissement des 30 jours (`keepPhoto`) garde la sienne : c'est le même
-// lieu.
-const NO_PHOTO = { photo_url: null, photo_credit: null, photo_license: null, photo_page: null, photo_checked_at: null };
+// Un lieu qui CHANGE perd sa photo Wikimedia : elle était celle de l'ancien,
+// et sera cherchée de nouveau pour le nouveau (usePhotoFill). Une photo COLLÉE
+// reste : c'est l'utilisateur qui l'a choisie. Un simple rafraîchissement des
+// 30 jours (`keepPhoto`) ne touche à rien : c'est le même lieu.
+const NO_PHOTO = {
+  photo_url: null,
+  photo_credit: null,
+  photo_license: null,
+  photo_page: null,
+  photo_checked_at: null,
+  photo_source: null,
+};
 
-function placeColumns({ lat, lng, placeId }, { keepPhoto = false } = {}) {
+function placeColumns({ lat, lng, placeId }) {
   return {
     lat,
     lng,
     place_id: placeId ?? null,
     place_synced_at: placeId ? new Date().toISOString() : null,
     geocoded_at: null,
-    ...(keepPhoto ? {} : NO_PHOTO),
   };
 }
 
-export async function setCoordinates(id, point, options) {
-  const { error } = await supabase.from('items').update(placeColumns(point, options)).eq('id', id);
+// `table` : 'items' ou 'steps'. Deux écritures : la position, puis — sauf
+// rafraîchissement — l'oubli de la photo, seulement si elle n'est pas collée.
+async function relocate(table, id, point, { keepPhoto = false } = {}) {
+  const columns = placeColumns(point);
+  if (table === 'steps') delete columns.geocoded_at;
+  const { error } = await supabase.from(table).update(columns).eq('id', id);
   if (error) fail(error, 'Enregistrement des coordonnées');
+  if (keepPhoto) return;
+  const { error: photoError } = await supabase
+    .from(table)
+    .update(NO_PHOTO)
+    .eq('id', id)
+    .or('photo_source.is.null,photo_source.neq.user');
+  if (photoError) fail(photoError, 'Enregistrement des coordonnées');
+}
+
+export async function setCoordinates(id, point, options) {
+  await relocate('items', id, point, options);
 }
 
 export async function clearCoordinates(id) {
@@ -292,25 +314,28 @@ export async function clearCoordinates(id) {
   if (error) fail(error, 'Effacement des coordonnées');
 }
 
-// La photo Wikimedia d'un lieu (0012_photos.sql). `photo` à null : rien de
-// trouvé — on le note quand même, pour ne pas chercher à chaque ouverture.
-function photoColumns(photo) {
+// La photo d'un lieu (0012_photos.sql, 0013_photos_collees.sql).
+// `source` : 'wikimedia' (trouvée seule) ou 'user' (collée). `photo` à null :
+// rien de trouvé, ou photo retirée — on le note quand même, pour que Wikimedia
+// ne revienne pas la chercher à chaque ouverture.
+function photoColumns(photo, source) {
   return {
     photo_url: photo?.url ?? null,
     photo_credit: photo?.credit ?? null,
     photo_license: photo?.license ?? null,
     photo_page: photo?.page ?? null,
+    photo_source: photo ? source : null,
     photo_checked_at: new Date().toISOString(),
   };
 }
 
-export async function setItemPhoto(id, photo) {
-  const { error } = await supabase.from('items').update(photoColumns(photo)).eq('id', id);
+export async function setItemPhoto(id, photo, source = 'wikimedia') {
+  const { error } = await supabase.from('items').update(photoColumns(photo, source)).eq('id', id);
   if (error) fail(error, 'Enregistrement de la photo');
 }
 
-export async function setStepPhoto(stepId, photo) {
-  const { error } = await supabase.from('steps').update(photoColumns(photo)).eq('id', stepId);
+export async function setStepPhoto(stepId, photo, source = 'wikimedia') {
+  const { error } = await supabase.from('steps').update(photoColumns(photo, source)).eq('id', stepId);
   if (error) fail(error, 'Enregistrement de la photo');
 }
 
@@ -452,9 +477,7 @@ export async function setStepNights(trip, stepId, nights) {
 // Coordonnées d'une étape : mêmes règles que pour un lieu (voir
 // placeColumns), sans `geocoded_at`, que les étapes n'ont jamais eu.
 export async function setStepCoordinates(stepId, point, options) {
-  const { geocoded_at: _nominatim, ...columns } = placeColumns(point, options);
-  const { error } = await supabase.from('steps').update(columns).eq('id', stepId);
-  if (error) fail(error, 'Enregistrement des coordonnées');
+  await relocate('steps', stepId, point, options);
 }
 
 // Déplace une étape d'un cran.

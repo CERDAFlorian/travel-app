@@ -51,6 +51,18 @@ export default defineConfig({
               cacheableResponse: { statuses: [0, 200] },
             },
           },
+          {
+            // Les photos collées (0013_photos_collees.sql). Un nom de fichier
+            // n'est jamais réutilisé — remplacer une photo en dépose une
+            // nouvelle —, d'où CacheFirst sans risque de garder une vieille image.
+            urlPattern: /\/storage\/v1\/object\/public\/photos\//,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'photos-collees',
+              expiration: { maxEntries: 400, maxAgeSeconds: 60 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
         ],
         cleanupOutdatedCaches: true,
       },

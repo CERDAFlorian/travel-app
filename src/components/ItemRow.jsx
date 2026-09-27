@@ -12,8 +12,11 @@ import {
 } from '@/lib/mutations.js';
 import { isChosenHotel, otherHotels } from '@/lib/lodging.js';
 import { mapsUrl } from '@/lib/places.js';
+import { categoryOf } from '@/lib/categories.js';
+import { removeStoredPhoto } from '@/lib/userPhoto.js';
 import PlaceSearch from './PlaceSearch.jsx';
 import PlaceThumb from './PlaceThumb.jsx';
+import PhotoPaste from './PhotoPaste.jsx';
 import ConfirmDialog from './ConfirmDialog.jsx';
 import TrashIcon from './TrashIcon.jsx';
 import './ItemRow.scss';
@@ -39,6 +42,7 @@ export default function ItemRow({ item, step, readOnly, autoLocate, onChanged })
   // `autoLocate` n'est vrai qu'au montage de la ligne créée à l'instant : la
   // recherche part sans qu'on ait à cliquer « Localiser ».
   const [locating, setLocating] = useState(Boolean(autoLocate));
+  const [photoOpen, setPhotoOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [asking, setAsking] = useState(false);
   const [sealing, setSealing] = useState(false);
@@ -95,7 +99,10 @@ export default function ItemRow({ item, step, readOnly, autoLocate, onChanged })
   return (
     <li className="item">
       <div className="item__line">
-        <PlaceThumb place={item} />
+        {/* Une photo pour ce qui a un lieu ; pas pour une note perso. */}
+        {categoryOf(item.category)?.onMap && (
+          <PlaceThumb place={item} onEdit={readOnly ? undefined : () => setPhotoOpen((open) => !open)} />
+        )}
         <span className="item__dot" data-cat={item.category} aria-hidden="true" />
 
         {/* Le design ne propose pas de bouton « modifier » : on clique le nom.
@@ -307,6 +314,16 @@ export default function ItemRow({ item, step, readOnly, autoLocate, onChanged })
         </span>
       </div>
 
+      {photoOpen && (
+        <PhotoPaste
+          kind="item"
+          place={item}
+          searchQuery={`${item.title} ${step.name}`}
+          onChanged={onChanged}
+          onClose={() => setPhotoOpen(false)}
+        />
+      )}
+
       {locating && (
         <PlaceSearch
           title={item.title}
@@ -327,7 +344,11 @@ export default function ItemRow({ item, step, readOnly, autoLocate, onChanged })
         busy={busy}
         onCancel={() => setAsking(false)}
         onConfirm={async () => {
-          await run(() => deleteItem(item.id));
+          await run(async () => {
+            await deleteItem(item.id);
+            // Sa photo collée quitte le stockage avec lui (si nulle copie ne la montre).
+            if (item.photo_source === 'user') await removeStoredPhoto(item.photo_url, { kind: 'item', id: item.id });
+          });
           setAsking(false);
         }}
       >

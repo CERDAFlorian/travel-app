@@ -1824,6 +1824,38 @@ les hôtels) viendra plus tard.
 photos » (F4, Google au geste) est retiré, et avec lui tout appel aux photos de
 Places. Les photos viennent de Wikimedia, ou de l'utilisateur par copier-coller.
 
+**La photo collée.** Quand Wikimedia ne trouve rien — un hôtel, un restaurant,
+un titre vague —, l'utilisateur met la sienne. Qui peut modifier le voyage voit
+un emplacement en pointillés « + » à gauche de chaque lieu (toutes les
+catégories de la carte, pas les notes), sur le médaillon de la ville, et
+« Une photo ? » sur les tuiles vides du bandeau. Le clic ouvre le panneau
+« Photo » (`PhotoPaste`) : **Cmd+V** n'importe où colle l'image ; « Coller la
+photo » lit le presse-papier sur clic (avec un message clair si le navigateur
+refuse ou s'il n'y a pas d'image) ; « Choisir une image » prend un fichier ;
+« Chercher une image ↗ » ouvre Google Images pré-rempli ; « Retirer la photo ».
+Une photo Wikimedia y garde son crédit. En lecture seule et en partage, rien de
+tout cela : la photo seule.
+
+`lib/userPhoto.js` (testé) réduit l'image dans le navigateur — 1 200 px au plus,
+JPEG 0,82, quelques centaines de Ko — puis l'envoie dans l'espace `photos` de
+Supabase, sous `items/<id>/…` ou `steps/<id>/…` avec un nom aléatoire.
+`0013_photos_collees.sql` ajoute `photo_source` (`'wikimedia'` ou `'user'`),
+crée l'espace — public en lecture pour la vue partagée, 1 Mo par fichier — et
+ne laisse déposer ou retirer une photo qu'aux membres qui peuvent modifier le
+voyage (`can_edit_photo_path`, testé sous PGlite). Remplacer ou retirer une
+photo collée, ou supprimer son lieu, supprime l'ancien fichier — sauf si une
+copie « dupliquée sur un autre jour » le montre encore. Supprimer une étape ou
+un voyage laisse ses fichiers dans le stockage (quelques centaines de Ko
+chacun) : Supabase interdit de les effacer depuis SQL, un nettoyage viendra si
+le volume le demande. Une photo collée **survit** à un
+changement de position du lieu, là où une photo Wikimedia est cherchée de
+nouveau. Le service worker garde aussi les photos collées (`photos-collees`) :
+un nom n'est jamais réutilisé, CacheFirst ne sert donc jamais une vieille image.
+
+À savoir : une image copiée sur le web appartient à son auteur. Elle reste dans
+le voyage, mais le lien de partage la montre à qui l'a reçu — un usage privé
+tant que le lien circule entre proches.
+
 **L'ordre est imposé.** R d'abord : il ne dépend de rien et donne au test ses
 vrais titres. F1 avant F2 : une position Google n'a pas le droit d'apparaître
 sur la carte SVG. F3 en prod moins de 30 jours après F2. M après F3, pour la même

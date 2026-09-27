@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { featured } from '@/lib/photos.js';
+import PhotoPaste from './PhotoPaste.jsx';
 import './PhotoStrip.scss';
 
 // Bandeau de 3 photos d'une étape.
@@ -10,8 +12,8 @@ import './PhotoStrip.scss';
 // est celle qu'on a enregistrée pour le lieu (0012_photos.sql) : Wikimedia,
 // trouvée toute seule, ou celle que l'utilisateur a collée. Elle s'affiche
 // d'elle-même, tout le temps, hors ligne compris. Un lieu sans photo garde son
-// emplacement : le nom, puis « Une photo ? », qui ouvre une recherche d'images
-// pré-remplie.
+// emplacement : le nom, puis « Une photo ? », qui ouvre sous le bandeau le
+// panneau où coller une image (PhotoPaste). En lecture seule, le nom seul.
 //
 // Le libellé reste court par contrainte : une tuile fait un tiers de la carte,
 // soit ~110px sur mobile, ce qui laisse une dizaine de caractères.
@@ -24,8 +26,10 @@ import './PhotoStrip.scss';
 // Trois cases de la même taille que les vraies tuiles, et une ligne qui nomme
 // l'étoile — c'est elle qui décide de ce qui monte dans le bandeau, et le seul
 // moyen d'y faire entrer un restaurant ou une boutique.
-export default function PhotoStrip({ items, stepName }) {
+export default function PhotoStrip({ items, stepName, readOnly, onChanged }) {
   const tiles = featured(items);
+  const [editingId, setEditingId] = useState(null);
+  const editing = tiles.find((tile) => tile.id === editingId) ?? null;
 
   if (tiles.length === 0) {
     return (
@@ -80,16 +84,20 @@ export default function PhotoStrip({ items, stepName }) {
               ) : (
                 <div className="photo-strip__slot">
                   <span className="photo-strip__slot-name">{tile.title}</span>
-                  <a
-                    className="photo-strip__add"
-                    href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(`${tile.title} ${stepName}`)}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={(event) => event.stopPropagation()}
-                    title={`Trouver une photo de ${tile.title}`}
-                  >
-                    Une photo ?
-                  </a>
+                  {!readOnly && (
+                    <button
+                      type="button"
+                      className="photo-strip__add"
+                      aria-expanded={editingId === tile.id}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setEditingId((id) => (id === tile.id ? null : tile.id));
+                      }}
+                      title={`Ajouter une photo de ${tile.title}`}
+                    >
+                      Une photo ?
+                    </button>
+                  )}
                 </div>
               )}
               <span className="photo-strip__caption">{tile.title}</span>
@@ -97,6 +105,16 @@ export default function PhotoStrip({ items, stepName }) {
           );
         })}
       </ul>
+
+      {editing && (
+        <PhotoPaste
+          kind="item"
+          place={editing}
+          searchQuery={`${editing.title} ${stepName}`}
+          onChanged={onChanged}
+          onClose={() => setEditingId(null)}
+        />
+      )}
     </div>
   );
 }
