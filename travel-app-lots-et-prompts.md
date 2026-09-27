@@ -1793,6 +1793,33 @@ lieux non reliés ou sans photo, et ne suppose plus que le voyage est au Japon.
 Vérifié avec le vrai Google : Fushimi Inari, le Pavillon d'or et Arashiyama à
 Kyoto, trois photos facturées pour un clic.
 
+**Les photos passent d'abord par Wikimedia, le 27 septembre 2026.** Les photos
+Google au geste ne suffisaient pas : on les veut partout, tout le temps. Analyse
+de trip-planner.io : leurs photos viennent de leur propre photothèque et de
+partenaires d'affiliation (Booking, GetYourGuide), Google seulement pour les
+restaurants ; leur carte est OpenFreeMap. On garde Google pour la carte et la
+recherche — OpenFreeMap interdirait d'y afficher les résultats de Google, et une
+recherche OpenStreetMap ramènerait au problème de départ.
+
+Wikimedia Commons est sous licence libre : on garde la photo. `0012_photos.sql`
+ajoute aux items et aux étapes la photo, son auteur, sa licence, sa page et la
+date de recherche. `lib/wikimedia.js` (testé) cherche dans Wikidata autour de la
+vraie position — 3 km pour un lieu, 30 km pour une ville —, écarte gares et
+événements, exige un nom concordant, et ne donne jamais à un hôtel la photo de
+son quartier. `usePhotoFill` cherche à l'ouverture ce qui manque, une fois ; un
+lieu qui change de position perd sa photo et en retrouve une. Périmètre décidé :
+villes, lieux touristiques, hôtels ; activités et restaurants plus tard.
+
+Affichage : médaillon de la ville en tête d'étape, vignette à gauche des lieux
+dans la liste et dans les deux vues jour par jour, bandeau. Auteur et licence au
+survol, lien vers la page Commons. Google « Voir les photos » ne reste qu'aux
+lieux reliés sans photo libre. Le service worker garde les photos Wikimedia
+(400 au plus, deux mois) : elles se voient hors ligne.
+
+Sur le vrai voyage : villes 9/9, lieux touristiques 13/15 (les deux manqués ont
+une faute de frappe dans leur titre), hôtels 0/1. L'affiliation (Booking pour
+les hôtels) viendra plus tard.
+
 **L'ordre est imposé.** R d'abord : il ne dépend de rien et donne au test ses
 vrais titres. F1 avant F2 : une position Google n'a pas le droit d'apparaître
 sur la carte SVG. F3 en prod moins de 30 jours après F2. M après F3, pour la même

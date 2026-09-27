@@ -4,6 +4,7 @@ import { formatDayFull, todayIso } from '@/lib/dates.js';
 import { formatClock, formatDuration, modeLabel } from '@/lib/transport.js';
 import { haversine, formatDistance } from '@/lib/geo.js';
 import './TripProgram.scss';
+import PlaceThumb from './PlaceThumb.jsx';
 
 // Le voyage jour par jour — la colonne de gauche, à la place des étapes.
 //
@@ -173,6 +174,7 @@ function ProgramRow({ item, previous }) {
 
       <span className="prow__line">
         {clock && <span className="prow__time">{clock}</span>}
+        <PlaceThumb place={item} size="xs" />
         <span className="prow__dot" data-cat={item.category} aria-hidden="true" />
         <span className="prow__name">{item.title}</span>
         {item.booked && <span className="prow__booked">réservé</span>}

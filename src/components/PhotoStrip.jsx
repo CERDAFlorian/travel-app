@@ -10,12 +10,15 @@ import './PhotoStrip.scss';
 // Les tuiles ne sont pas portées par l'étape : ce sont ses items mis en avant
 // (voir lib/photos.js).
 //
-// LES PHOTOS VIENNENT DE GOOGLE, ET AU GESTE (L10, F4). Chaque image affichée
-// est facturée, et Google interdit de la stocker : on ne la demande donc que
-// sur « Voir les photos », pour les lieux reliés. Elle reste en mémoire le temps
-// de la visite (lib/places.js) : un bandeau déjà vu réapparaît sans nouveau
-// clic. Un lieu sans photo, ou pas relié à Google, garde son emplacement : le
-// nom, puis « Une photo ? », qui ouvre une recherche d'images pré-remplie.
+// D'ABORD WIKIMEDIA, GRATUIT ET ENREGISTRÉ (0012_photos.sql) : la photo
+// s'affiche d'elle-même, tout le temps, hors ligne compris.
+//
+// PUIS GOOGLE, AU GESTE (L10, F4), seulement pour les lieux reliés qui n'ont
+// pas de photo libre. Chaque image Google affichée est facturée et ne peut pas
+// être stockée : on ne la demande que sur « Voir les photos ». Elle reste en
+// mémoire le temps de la visite (lib/places.js). Un lieu sans aucune photo
+// garde son emplacement : le nom, puis « Une photo ? », qui ouvre une
+// recherche d'images pré-remplie.
 //
 // Le libellé reste court par contrainte : une tuile fait un tiers de la carte,
 // soit ~110px sur mobile, ce qui laisse une dizaine de caractères.
@@ -44,7 +47,8 @@ export default function PhotoStrip({ items, stepName }) {
   );
   const [loading, setLoading] = useState(false);
 
-  const linked = tiles.filter((tile) => tile.place_id);
+  // Google n'est proposé qu'à qui n'a pas déjà sa photo libre.
+  const linked = tiles.filter((tile) => tile.place_id && !tile.photo_url);
   const missing = linked.filter((tile) => !photos.has(tile.id));
   const canShow = hasGoogleMaps() && online && missing.length > 0;
 
@@ -87,7 +91,13 @@ export default function PhotoStrip({ items, stepName }) {
     <div className="photo-strip__wrap">
       <ul className="photo-strip">
         {tiles.map((tile) => {
-          const photo = photos.get(tile.id);
+          // La photo libre enregistrée d'abord, la photo Google du geste ensuite.
+          const photo = tile.photo_url
+            ? {
+                src: tile.photo_url,
+                authors: [{ name: [tile.photo_credit, tile.photo_license].filter(Boolean).join(' · ') || 'Wikimedia Commons', uri: tile.photo_page }],
+              }
+            : photos.get(tile.id);
           return (
             <li key={tile.id} className="photo-strip__tile">
               {photo ? (
@@ -117,7 +127,7 @@ export default function PhotoStrip({ items, stepName }) {
                   {/* Un lieu relié attend « Voir les photos » : lui proposer
                       aussi une recherche d'images ferait doublon. Le lien reste
                       pour un lieu non relié, ou sans photo chez Google. */}
-                  {(!tile.place_id || photo === null) && (
+                  {(!tile.place_id || tile.photo_url || photo === null) && (
                     <a
                       className="photo-strip__add"
                       href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(`${tile.title} ${stepName}`)}`}

@@ -31,10 +31,27 @@ export default defineConfig({
         // Toute navigation retombe sur index.html : le routeur prend ensuite
         // la main, y compris sur /voyage/:slug et /partage/:token.
         navigateFallback: '/index.html',
-        // Aucun cache d'exécution n'est déclaré, et c'est voulu : les appels
-        // Supabase doivent toucher le réseau ou échouer franchement — c'est
-        // IndexedDB qui porte la donnée hors ligne, pas le service worker.
-        // Nominatim non plus : géocoder hors ligne n'a aucun sens.
+        // UN SEUL cache d'exécution, et c'est voulu : les appels Supabase
+        // doivent toucher le réseau ou échouer franchement — c'est IndexedDB
+        // qui porte la donnée hors ligne, pas le service worker. Google non
+        // plus : ses conditions interdisent de garder ses tuiles et ses photos.
+        //
+        // L'exception, ce sont les photos Wikimedia (L10) : sous licence
+        // libre, on a le droit de les garder. Une photo vue une fois se revoit
+        // dans le train sans réseau. Au plus 400 photos, deux mois.
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/upload\.wikimedia\.org\//,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'photos-wikimedia',
+              expiration: { maxEntries: 400, maxAgeSeconds: 60 * 24 * 60 * 60 },
+              // Une image d'un autre domaine arrive « opaque » (statut 0) :
+              // sans cette ligne, Workbox refuserait de la garder.
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
         cleanupOutdatedCaches: true,
       },
 

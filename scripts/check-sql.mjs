@@ -114,6 +114,7 @@ const files = {
   loveNotes: 'supabase/migrations/0009_mots_doux.sql',
   google: 'supabase/migrations/0010_google.sql',
   purgeGoogle: 'supabase/migrations/0011_purge_google.sql',
+  photos: 'supabase/migrations/0012_photos.sql',
   seed: 'supabase/seed.sql',
 };
 

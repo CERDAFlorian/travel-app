@@ -28,6 +28,11 @@ export function tokens(text) {
 
 const significant = (list) => list.filter((token) => !GENERIC.has(token));
 
+// Les mots qui nomment vraiment le lieu : « JARDIN KENROKUEN » → ['kenrokuen'].
+export function significantTokens(text) {
+  return significant(tokens(text));
+}
+
 function levenshtein(a, b) {
   const row = Array.from({ length: b.length + 1 }, (_, i) => i);
   for (let i = 1; i <= a.length; i += 1) {

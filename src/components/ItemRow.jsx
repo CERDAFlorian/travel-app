@@ -13,6 +13,7 @@ import {
 import { isChosenHotel, otherHotels } from '@/lib/lodging.js';
 import { mapsUrl } from '@/lib/places.js';
 import PlaceSearch from './PlaceSearch.jsx';
+import PlaceThumb from './PlaceThumb.jsx';
 import ConfirmDialog from './ConfirmDialog.jsx';
 import TrashIcon from './TrashIcon.jsx';
 import './ItemRow.scss';
@@ -31,7 +32,7 @@ function parsePrice(raw) {
   return Number.isFinite(value) && value >= 0 ? { value } : { error: true };
 }
 
-// Une ligne d'item, sur UNE ligne comme dans le design : pastille,
+// Une ligne d'item, sur UNE ligne comme dans le design : vignette, pastille,
 // nom, note, pilule Plan, puis à droite l'étoile, LOCALISER, le prix et la
 // corbeille.
 export default function ItemRow({ item, step, readOnly, autoLocate, onChanged }) {
@@ -94,6 +95,7 @@ export default function ItemRow({ item, step, readOnly, autoLocate, onChanged })
   return (
     <li className="item">
       <div className="item__line">
+        <PlaceThumb place={item} />
         <span className="item__dot" data-cat={item.category} aria-hidden="true" />
 
         {/* Le design ne propose pas de bouton « modifier » : on clique le nom.

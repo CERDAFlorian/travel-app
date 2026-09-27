@@ -19,8 +19,9 @@ export async function refreshPlaces(trip, { now = Date.now(), olderThanDays } = 
   for (const target of targets) {
     try {
       const point = await locationOf(target.placeId);
-      if (target.kind === 'step') await setStepCoordinates(target.id, point);
-      else await setCoordinates(target.id, point);
+      // Même lieu, positions rafraîchies : la photo reste.
+      if (target.kind === 'step') await setStepCoordinates(target.id, point, { keepPhoto: true });
+      else await setCoordinates(target.id, point, { keepPhoto: true });
       refreshed += 1;
     } catch {
       // Retenté à la prochaine ouverture du voyage.
