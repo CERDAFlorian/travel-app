@@ -5,7 +5,6 @@ import { unplacedOf } from '@/lib/days.js';
 import { formatStepDates } from '@/lib/dates.js';
 import { setStepCoordinates } from '@/lib/mutations.js';
 import PlaceSearch from './PlaceSearch.jsx';
-import PlaceThumb from './PlaceThumb.jsx';
 import ConfirmDialog from './ConfirmDialog.jsx';
 import TrashIcon from './TrashIcon.jsx';
 import PhotoStrip from './PhotoStrip.jsx';
@@ -131,7 +130,6 @@ export default function StepCard({
 
       <div className="step__body">
         <div className="step__head">
-          <PlaceThumb place={step} size="city" />
           <h2 className="step__name">{step.name}</h2>
           <span className="step__dates">{formatStepDates(step.date_start, step.date_end)}</span>
           {/* Les nuits pilotent tout l'enchaînement : changer une nuit ici

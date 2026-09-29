@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { photosToFind } from '@/lib/placePhotos.js';
 import { findPhoto } from '@/lib/wikimedia.js';
-import { setItemPhoto, setStepPhoto } from '@/lib/mutations.js';
+import { setItemPhoto } from '@/lib/mutations.js';
 
 // Chercher les photos Wikimedia qui manquent, à l'ouverture d'un voyage (L10).
 // Seulement pour qui peut écrire le voyage, et en ligne : la photo trouvée
@@ -26,8 +26,7 @@ export function usePhotoFill(trip, { enabled, onChanged }) {
         attempted.current.add(`${target.id}:${target.lat},${target.lng}`);
         try {
           const photo = await findPhoto({ title: target.title, lat: target.lat, lng: target.lng, kind: target.photoKind });
-          if (target.kind === 'step') await setStepPhoto(target.id, photo);
-          else await setItemPhoto(target.id, photo);
+          await setItemPhoto(target.id, photo);
           saved += 1;
         } catch {
           // Wikimedia injoignable, ou voyage en lecture seule : on réessaiera à

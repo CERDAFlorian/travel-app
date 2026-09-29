@@ -1,8 +1,8 @@
 import { SHOW_PHOTO_CREDITS } from '@/lib/placePhotos.js';
 import './PlaceThumb.scss';
 
-// La vignette d'un lieu ou d'une ville : sa photo — Wikimedia, ou collée pour
-// un lieu touristique, une activité ou un logement.
+// La vignette d'un lieu : sa photo — Wikimedia, ou collée pour un lieu
+// touristique, une activité ou un logement.
 //
 // En lecture, elle mène à la page de la photo, qui porte l'auteur et la
 // licence (au survol aussi si SHOW_PHOTO_CREDITS) ; sans photo, rien.

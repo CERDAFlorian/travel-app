@@ -334,11 +334,6 @@ export async function setItemPhoto(id, photo, source = 'wikimedia') {
   if (error) fail(error, 'Enregistrement de la photo');
 }
 
-export async function setStepPhoto(stepId, photo, source = 'wikimedia') {
-  const { error } = await supabase.from('steps').update(photoColumns(photo, source)).eq('id', stepId);
-  if (error) fail(error, 'Enregistrement de la photo');
-}
-
 // Lien de partage.
 //
 // Un UUID tiré par le navigateur : 122 bits, on ne tombe pas dessus par

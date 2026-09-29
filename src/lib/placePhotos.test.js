@@ -18,8 +18,9 @@ const trip = {
 };
 
 describe('photosToFind', () => {
-  it('cherche la ville, les lieux touristiques et les hôtels situés, pas encore cherchés', () => {
-    expect(photosToFind(trip).map((t) => t.id)).toEqual(['kyoto', 'kinkaku', 'ryokan']);
+  // Plus les villes : leur médaillon est retiré (29 septembre 2026).
+  it('cherche les lieux touristiques et les logements situés, pas encore cherchés', () => {
+    expect(photosToFind(trip).map((t) => t.id)).toEqual(['kinkaku', 'ryokan']);
   });
 
   // Pour l'instant, pas les activités ni les restaurants (27 septembre 2026).
@@ -28,7 +29,7 @@ describe('photosToFind', () => {
   });
 
   it('dit quel genre de photo chercher', () => {
-    expect(Object.fromEntries(photosToFind(trip).map((t) => [t.id, t.photoKind]))).toEqual({ kyoto: 'city', kinkaku: 'place', ryokan: 'hotel' });
+    expect(Object.fromEntries(photosToFind(trip).map((t) => [t.id, t.photoKind]))).toEqual({ kinkaku: 'place', ryokan: 'hotel' });
   });
 
   it('tolère un voyage absent', () => {

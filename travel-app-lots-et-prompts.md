@@ -1884,7 +1884,11 @@ photo — vignette comme tuile du bandeau — reste un lien vers sa page Commons
 qui les porte : la forme légère d'attribution qu'admettent les licences
 Creative Commons 4.0 ; pour les plus anciennes (2.5, 3.0), le crédit visible
 est la règle. Le remettre : passer la constante à `true`. Les miniatures
-grandissent en même temps (liste 56×40, jour par jour 44×31, ville 52).
+grandissent en même temps (liste 56×40, jour par jour 44×31).
+
+**Plus de photo de ville, le 29 septembre 2026.** Le médaillon en tête d'étape
+est retiré, et `photosToFind` ne cherche plus de photo pour les villes : elle ne
+se verrait nulle part. Les colonnes photo des étapes restent en base, inutilisées.
 
 À savoir : une image copiée sur le web appartient à son auteur. Elle reste dans
 le voyage, mais le lien de partage la montre à qui l'a reçu — un usage privé
