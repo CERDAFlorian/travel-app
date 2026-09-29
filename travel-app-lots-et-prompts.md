@@ -1894,6 +1894,47 @@ vrais titres. F1 avant F2 : une position Google n'a pas le droit d'apparaître
 sur la carte SVG. F3 en prod moins de 30 jours après F2. M après F3, pour la même
 raison, et avant F4, qui a besoin des `place_id`.
 
+### Mise en prod de L10 — pas à pas (écrit le 29 septembre 2026)
+
+**Fenêtre : avant le 17 octobre 2026**, sinon après le 29 novembre (voir « À
+trancher ») — la carte Google ne marche pas hors ligne, on ne la change pas en
+plein voyage. Viser début octobre, pour garder de quoi corriger.
+
+Les migrations 0010 à 0013 ne font qu'**ajouter** : l'app actuelle continue de
+marcher sur une base migrée. On migre donc la prod d'abord, on déploie ensuite,
+et le retour arrière reste possible par l'image précédente.
+
+1. **Dev, en vrai.** Passer 0012 (si besoin) puis 0013 — la rejouer si elle y
+   est déjà : elle a changé le 29 septembre. `npm run dev` : coller une photo
+   sur un lieu, une activité, un logement ; la retirer ; ouvrir le lien de
+   partage en navigation privée. `select jobname, schedule, active from
+   cron.job;` rend le job de purge.
+2. **Pousser `dev`**, CI verte.
+3. **Google Cloud.** La clé navigateur autorise le domaine de prod (référents
+   HTTP `https://<domaine>/*`) et seulement Maps JavaScript API et Places API
+   (New). Une alerte de budget et un plafond journalier sur Places. Les secrets
+   GitHub `VITE_GOOGLE_MAPS_KEY` et `VITE_GOOGLE_MAP_ID` existent.
+4. **Sauvegarde de la prod.** `export-voyage.sql` pour chaque voyage, JSON rangé
+   hors du dépôt.
+5. **Base de prod**, SQL Editor, dans l'ordre : 0010, 0011 (si pg_cron est
+   refusé : Integrations → Cron, puis rejouer), 0012, 0013. Vérifier le job de
+   purge, les comptages (supabase/README, « 5. Vérifier ») et que l'app
+   actuelle charge toujours les voyages.
+6. **Déployer.** Fusionner `dev` dans `main` et pousser : `deploy.yml` construit
+   l'image. Dans Coolify, « Redeploy » (aucun webhook ne le fait).
+7. **Vérifier en prod** : la carte Google, une recherche de lieu, les photos
+   Wikimedia qui arrivent, une photo collée, le lien de partage, puis hors
+   ligne (mode avion) : l'itinéraire reste lisible, la carte affiche son
+   message.
+8. **M, relier l'existant** — seulement maintenant : export de prod →
+   `scripts/relier-google.mjs` → essai sur dev → même SQL sur prod ; le reste à
+   la main (« À relier »).
+9. **Prévenir** les deux autres comptes : la carte demande le réseau ; avant de
+   partir, « Préparer le voyage hors ligne ».
+
+Retour arrière : dans Coolify, l'image du SHA précédent. La base n'a rien à
+défaire.
+
 ### R — Rapatrier le voyage de prod sur dev
 
 Fidèle à L8 : **rien n'est automatique, aucun identifiant de prod ne sort des
