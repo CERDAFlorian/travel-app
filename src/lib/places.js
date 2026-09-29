@@ -66,6 +66,14 @@ export function toSuggestion(prediction) {
   };
 }
 
+// Ce que la recherche enregistre pour le lieu choisi. Avec `adoptName` (un
+// item), le nom Google devient le titre ; sans nom — des coordonnées collées à
+// la main —, le titre ne bouge pas.
+export function placeToSave({ lat, lng, placeId, name }, { adoptName = false } = {}) {
+  const title = adoptName ? String(name ?? '').trim() : '';
+  return title ? { lat, lng, placeId, title } : { lat, lng, placeId };
+}
+
 export async function suggest(input, options) {
   const { AutocompleteSuggestion } = await places();
   const { suggestions } = await AutocompleteSuggestion.fetchAutocompleteSuggestions(

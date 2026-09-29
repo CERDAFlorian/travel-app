@@ -1731,6 +1731,15 @@ sont proposés et s'enregistrent.
 voyage. Sur la prod, dans cet ordre : la migration, puis le déploiement — et F3
 dans les 30 jours qui suivent.
 
+**Correctif F2 du 29 septembre 2026 : le lieu choisi donne son nom à l'item.**
+Choisir un autre lieu déplaçait l'épingle mais gardait l'ancien titre. Désormais
+le nom Google s'impose, sans question (`placeToSave`, `adoptName`) : un nom que
+Google connaît se retrouve tel quel dans Maps, et une question laissait trop de
+liberté. « JARDIN KENROKUEN » devient « Kenroku-en ». Des coordonnées collées à
+la main ne renomment rien ; une étape garde son nom, fil du voyage. Réserve : ce
+nom vient de Google, dont les conditions ne laissent garder que le place_id et,
+30 jours, la position — risque accepté le 29 septembre 2026.
+
 **Correctif F2 du 26 septembre 2026 : une étape se cherche sans filtre.** Le
 filtre « villes » écartait Miyajima, Kōyasan et Kamikōchi — pour Google, ce ne
 sont pas des villes. La recherche d'une étape s'oriente désormais autour de

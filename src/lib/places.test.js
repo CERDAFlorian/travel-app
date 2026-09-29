@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BIAS_RADIUS_M, mapsUrl, suggestionRequest, toSuggestion } from './places.js';
+import { BIAS_RADIUS_M, mapsUrl, placeToSave, suggestionRequest, toSuggestion } from './places.js';
 
 describe('suggestionRequest', () => {
   it('porte le jeton de session et la langue', () => {
@@ -49,5 +49,23 @@ describe('mapsUrl', () => {
 
   it('ne rend rien sans lieu ni coordonnées', () => {
     expect(mapsUrl({ title: 'x', place_id: null, lat: null, lng: null })).toBeNull();
+  });
+});
+
+describe('placeToSave', () => {
+  const chosen = { lat: 35.0394, lng: 135.7292, placeId: 'ChIJ-kinkaku', name: ' Kinkaku-ji ' };
+
+  // Le nom Google s'impose à l'item (29 septembre 2026) : on le retrouve tel
+  // quel dans Maps.
+  it('donne le nom Google à un item', () => {
+    expect(placeToSave(chosen, { adoptName: true })).toEqual({ lat: 35.0394, lng: 135.7292, placeId: 'ChIJ-kinkaku', title: 'Kinkaku-ji' });
+  });
+
+  it('laisse le nom d’une étape', () => {
+    expect(placeToSave(chosen)).toEqual({ lat: 35.0394, lng: 135.7292, placeId: 'ChIJ-kinkaku' });
+  });
+
+  it('ne renomme rien pour des coordonnées collées à la main', () => {
+    expect(placeToSave({ lat: 35, lng: 135, placeId: null }, { adoptName: true })).toEqual({ lat: 35, lng: 135, placeId: null });
   });
 });
