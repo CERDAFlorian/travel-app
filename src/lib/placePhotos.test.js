@@ -37,13 +37,14 @@ describe('photosToFind', () => {
 });
 
 describe('canPastePhoto', () => {
-  it('ouvre le collage aux lieux touristiques et aux activités', () => {
+  it('ouvre le collage aux lieux touristiques, activités et logements', () => {
     expect(canPastePhoto({ category: 'lieu' })).toBe(true);
     expect(canPastePhoto({ category: 'activite' })).toBe(true);
+    expect(canPastePhoto({ category: 'hotel' })).toBe(true);
   });
 
-  it('le ferme aux hôtels, restaurants, boutiques et notes', () => {
-    for (const category of ['hotel', 'restaurant', 'shopping', 'note']) {
+  it('le ferme aux restaurants, boutiques et notes', () => {
+    for (const category of ['restaurant', 'shopping', 'note']) {
       expect(canPastePhoto({ category })).toBe(false);
     }
   });

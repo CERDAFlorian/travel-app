@@ -20,6 +20,12 @@
     height: clamp(70px, 8vw, 108px);
   }
 
+  // Le lien vers la page Commons occupe toute l'image.
+  &__source {
+    display: block;
+    height: 100%;
+  }
+
   &__img {
     display: block;
     width: 100%;

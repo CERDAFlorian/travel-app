@@ -40,13 +40,13 @@
     object-fit: cover;
   }
 
-  &[data-size='sm'] { width: 44px; height: 31px; }
-  &[data-size='xs'] { width: 34px; height: 24px; }
+  &[data-size='sm'] { width: 56px; height: 40px; }
+  &[data-size='xs'] { width: 44px; height: 31px; }
 
   // La ville, en tête d'étape : un médaillon.
   &[data-size='city'] {
-    width: 44px;
-    height: 44px;
+    width: 52px;
+    height: 52px;
     border-radius: 50%;
   }
 }

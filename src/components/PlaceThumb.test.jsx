@@ -16,10 +16,12 @@ const wikimedia = {
 const sansPhoto = { id: 'b', title: 'Hôtel Mystays', category: 'hotel', photo_url: null };
 
 describe('PlaceThumb', () => {
-  it('en lecture, mène à la page de la photo et crédite l’auteur', () => {
+  // Crédits masqués pour le moment (SHOW_PHOTO_CREDITS) : le lien vers la page
+  // Commons, qui porte l'auteur et la licence, reste.
+  it('en lecture, mène à la page de la photo sans afficher le crédit', () => {
     const html = renderToString(<PlaceThumb place={wikimedia} />);
     expect(html).toContain('href="https://commons.wikimedia.org/wiki/File:a.jpg"');
-    expect(html).toContain('663highland · CC BY 2.5');
+    expect(html).not.toContain('663highland');
   });
 
   it('en lecture, sans photo, ne montre rien', () => {

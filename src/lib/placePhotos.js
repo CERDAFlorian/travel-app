@@ -8,12 +8,20 @@
 
 export const PHOTO_CATEGORIES = new Set(['lieu', 'hotel']);
 
-// Où l'utilisateur peut coller sa propre photo : les lieux touristiques et les
-// activités, là où une image aide à choisir (décidé le 27 septembre 2026).
-// Pas les villes, pas les hôtels, restaurants ni boutiques.
-export const PASTE_CATEGORIES = new Set(['lieu', 'activite']);
+// Où l'utilisateur peut coller sa propre photo : les lieux touristiques, les
+// activités et les logements, là où une image aide à choisir (décidé les 27 et
+// 29 septembre 2026). Aucune plateforme ne fournit de photos de logements
+// (Booking, Expedia, Airbnb fermés ; voir L10) : on colle celle de l'annonce.
+// Pas les villes, restaurants ni boutiques.
+export const PASTE_CATEGORIES = new Set(['lieu', 'activite', 'hotel']);
 
 export const canPastePhoto = (item) => PASTE_CATEGORIES.has(item?.category);
+
+// L'auteur et la licence des photos Wikimedia, affichés ou non. Masqués pour le
+// moment (29 septembre 2026) : ils chargeaient le bandeau. On les garde en base,
+// et chaque photo reste un lien vers sa page Commons, qui les porte — la forme
+// légère d'attribution qu'admettent les licences Creative Commons 4.0.
+export const SHOW_PHOTO_CREDITS = false;
 
 const pending = (point) => point.lat != null && point.lng != null && !point.photo_checked_at;
 

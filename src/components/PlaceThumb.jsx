@@ -1,17 +1,19 @@
+import { SHOW_PHOTO_CREDITS } from '@/lib/placePhotos.js';
 import './PlaceThumb.scss';
 
 // La vignette d'un lieu ou d'une ville : sa photo — Wikimedia, ou collée pour
-// un lieu touristique ou une activité.
+// un lieu touristique, une activité ou un logement.
 //
-// En lecture, elle mène à la page de la photo (auteur et licence, condition de
-// la licence libre, sont au survol) ; sans photo, rien.
+// En lecture, elle mène à la page de la photo, qui porte l'auteur et la
+// licence (au survol aussi si SHOW_PHOTO_CREDITS) ; sans photo, rien.
 //
 // Avec `onEdit` (qui peut écrire le voyage), c'est un bouton : vide, un « + »
 // en pointillés pour ajouter une photo ; pleine, pour la changer ou la retirer.
 // L'emplacement vide garde aussi l'alignement de la liste.
 export default function PlaceThumb({ place, size = 'sm', onEdit }) {
   const photo = place?.photo_url ?? null;
-  const credit = [place?.photo_credit, place?.photo_license].filter(Boolean).join(' · ');
+  const credit = SHOW_PHOTO_CREDITS ? [place?.photo_credit, place?.photo_license].filter(Boolean).join(' · ') : '';
+  const wikimedia = place?.photo_source !== 'user';
 
   if (onEdit) {
     const label = photo ? 'Changer la photo' : 'Ajouter une photo';
@@ -41,7 +43,8 @@ export default function PlaceThumb({ place, size = 'sm', onEdit }) {
       href={place.photo_page ?? photo}
       target="_blank"
       rel="noreferrer"
-      title={place.photo_source === 'user' ? 'Photo ajoutée' : `Photo${credit ? ` : ${credit}` : ''} — Wikimedia Commons`}
+      title={credit ? `Photo : ${credit} — Wikimedia Commons` : undefined}
+      aria-label={wikimedia ? 'Voir la photo sur Wikimedia Commons' : 'Voir la photo'}
       onClick={(event) => event.stopPropagation()}
     >
       <img src={photo} alt="" loading="lazy" decoding="async" />

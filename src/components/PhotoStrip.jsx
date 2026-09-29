@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { featured } from '@/lib/photos.js';
-import { canPastePhoto } from '@/lib/placePhotos.js';
+import { SHOW_PHOTO_CREDITS, canPastePhoto } from '@/lib/placePhotos.js';
 import PhotoPaste from './PhotoPaste.jsx';
 import './PhotoStrip.scss';
 
@@ -13,9 +13,9 @@ import './PhotoStrip.scss';
 // est celle qu'on a enregistrée pour le lieu (0012_photos.sql) : Wikimedia,
 // trouvée toute seule, ou celle que l'utilisateur a collée. Elle s'affiche
 // d'elle-même, tout le temps, hors ligne compris. Un lieu sans photo garde son
-// emplacement : le nom, puis — pour un lieu touristique ou une activité —
-// « Une photo ? », qui ouvre sous le bandeau le panneau où coller une image
-// (PhotoPaste). En lecture seule, le nom seul.
+// emplacement : le nom, puis — pour un lieu touristique, une activité ou un
+// logement — « Une photo ? », qui ouvre sous le bandeau le panneau où coller
+// une image (PhotoPaste). En lecture seule, le nom seul.
 //
 // Le libellé reste court par contrainte : une tuile fait un tiers de la carte,
 // soit ~110px sur mobile, ce qui laisse une dizaine de caractères.
@@ -63,13 +63,31 @@ export default function PhotoStrip({ items, stepName, readOnly, onChanged }) {
       <ul className="photo-strip">
         {tiles.map((tile) => {
           const photo = tile.photo_url
-            ? { src: tile.photo_url, credit: [tile.photo_credit, tile.photo_license].filter(Boolean).join(' · '), page: tile.photo_page }
+            ? {
+                src: tile.photo_url,
+                credit: SHOW_PHOTO_CREDITS ? [tile.photo_credit, tile.photo_license].filter(Boolean).join(' · ') : '',
+                page: tile.photo_page,
+              }
             : null;
           return (
             <li key={tile.id} className="photo-strip__tile">
               {photo ? (
                 <div className="photo-strip__photo">
-                  <img className="photo-strip__img" src={photo.src} alt={tile.title} loading="lazy" />
+                  {/* Sans crédit affiché, l'image mène à sa page Commons, qui
+                      porte l'auteur et la licence. */}
+                  {photo.page && !photo.credit ? (
+                    <a
+                      className="photo-strip__source"
+                      href={photo.page}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      <img className="photo-strip__img" src={photo.src} alt={tile.title} loading="lazy" />
+                    </a>
+                  ) : (
+                    <img className="photo-strip__img" src={photo.src} alt={tile.title} loading="lazy" />
+                  )}
                   {/* L'auteur et la licence : la condition d'une licence libre. */}
                   {photo.credit && (
                     <a

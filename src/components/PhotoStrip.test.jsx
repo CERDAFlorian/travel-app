@@ -22,9 +22,12 @@ describe('PhotoStrip', () => {
     expect(html).toContain('Temple inconnu');
   });
 
-  it('affiche la photo enregistrée, avec son auteur et sa licence', () => {
+  // Crédits masqués pour le moment (SHOW_PHOTO_CREDITS) : l'image mène à sa
+  // page Commons, qui porte l'auteur et la licence.
+  it('affiche la photo enregistrée, reliée à sa page, sans crédit affiché', () => {
     expect(html).toContain('src="https://upload.wikimedia.org/k.jpg"');
-    expect(html).toContain('Jaycangel · CC BY-SA 3.0');
+    expect(html).toContain('href="https://commons.wikimedia.org/wiki/File:k.jpg"');
+    expect(html).not.toContain('Jaycangel');
   });
 
   // Sans photo, relié à Google ou non : la recherche d'images reste l'invite.

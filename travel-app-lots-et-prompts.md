@@ -1825,9 +1825,9 @@ photos » (F4, Google au geste) est retiré, et avec lui tout appel aux photos d
 Places. Les photos viennent de Wikimedia, ou de l'utilisateur par copier-coller.
 
 **La photo collée.** Quand Wikimedia ne trouve rien, l'utilisateur met la
-sienne — **pour les lieux touristiques et les activités seulement** (décidé le
-27 septembre 2026 : pas les villes, pas les hôtels, restaurants ni boutiques ;
-`PASTE_CATEGORIES` dans `placePhotos.js`). Qui peut modifier le voyage voit un
+sienne — **pour les lieux touristiques, les activités et les logements**
+(décidé les 27 et 29 septembre 2026 : pas les villes, restaurants ni
+boutiques ; `PASTE_CATEGORIES` dans `placePhotos.js`). Qui peut modifier le voyage voit un
 emplacement en pointillés « + » à gauche de ces lignes, et « Une photo ? » sur
 leurs tuiles vides du bandeau. Le clic ouvre le panneau
 « Photo » (`PhotoPaste`) : **Cmd+V** n'importe où colle l'image ; « Coller la
@@ -1873,7 +1873,17 @@ hôtel ; la clé reste `hotel`. Pour leurs photos :
   de Paris.
 
 Donc : copier-coller par l'utilisateur, qui a l'annonce sous les yeux quand il
-réserve. L'affiliation Booking se reposera quand l'app aura du trafic.
+réserve — ouvert aux logements le 29 septembre 2026. L'affiliation Booking se
+reposera quand l'app aura du trafic.
+
+**Crédits masqués, le 29 septembre 2026.** L'auteur et la licence des photos
+Wikimedia ne s'affichent plus (`SHOW_PHOTO_CREDITS = false` dans
+`placePhotos.js`) : ils chargeaient le bandeau. Ils restent en base, et chaque
+photo — vignette comme tuile du bandeau — reste un lien vers sa page Commons,
+qui les porte : la forme légère d'attribution qu'admettent les licences
+Creative Commons 4.0 ; pour les plus anciennes (2.5, 3.0), le crédit visible
+est la règle. Le remettre : passer la constante à `true`. Les miniatures
+grandissent en même temps (liste 56×40, jour par jour 44×31, ville 52).
 
 À savoir : une image copiée sur le web appartient à son auteur. Elle reste dans
 le voyage, mais le lien de partage la montre à qui l'a reçu — un usage privé

@@ -99,7 +99,7 @@ export default function ItemRow({ item, step, readOnly, autoLocate, onChanged })
   return (
     <li className="item">
       <div className="item__line">
-        {/* Coller une photo : lieux touristiques et activités seulement. */}
+        {/* Coller une photo : lieux touristiques, activités et logements (placePhotos.js). */}
         <PlaceThumb
           place={item}
           onEdit={!readOnly && canPastePhoto(item) ? () => setPhotoOpen((open) => !open) : undefined}

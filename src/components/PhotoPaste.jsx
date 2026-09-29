@@ -2,9 +2,10 @@ import { useEffect, useRef } from 'react';
 import { usePhotoPaste } from '@/hooks/usePhotoPaste.js';
 import { imageFromPaste } from '@/lib/userPhoto.js';
 import { useOnline } from '@/hooks/useOnline.js';
+import { SHOW_PHOTO_CREDITS } from '@/lib/placePhotos.js';
 import './PhotoPaste.scss';
 
-// Le panneau « Photo » d'un lieu touristique ou d'une activité (L10).
+// Le panneau « Photo » d'un lieu touristique, d'une activité ou d'un logement (L10).
 //
 // Plus aucune photo de Google : quand Wikimedia ne trouve rien, l'utilisateur
 // colle la sienne. Le chemin le plus court est un copier-coller — on copie une
@@ -34,7 +35,7 @@ export default function PhotoPaste({ item, searchQuery, onChanged, onClose }) {
 
   return (
     <div className="photo-paste" onClick={(event) => event.stopPropagation()}>
-      {item.photo_url && item.photo_source === 'wikimedia' && (
+      {SHOW_PHOTO_CREDITS && item.photo_url && item.photo_source === 'wikimedia' && (
         <p className="photo-paste__credit">
           Photo {credit && <>: {credit} </>}·{' '}
           <a href={item.photo_page ?? item.photo_url} target="_blank" rel="noreferrer">
