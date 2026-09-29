@@ -1828,8 +1828,9 @@ Places. Les photos viennent de Wikimedia, ou de l'utilisateur par copier-coller.
 sienne — **pour les lieux touristiques, les activités et les logements**
 (décidé les 27 et 29 septembre 2026 : pas les villes, restaurants ni
 boutiques ; `PASTE_CATEGORIES` dans `placePhotos.js`). Qui peut modifier le voyage voit un
-emplacement en pointillés « + » à gauche de ces lignes, et « Une photo ? » sur
-leurs tuiles vides du bandeau. Le clic ouvre le panneau
+emplacement en pointillés « + » à gauche de ces lignes. « Une photo ? » sur les
+tuiles vides du bandeau a été retiré le 29 septembre 2026 : une tuile sans
+photo garde seulement son nom. Le clic ouvre le panneau
 « Photo » (`PhotoPaste`) : **Cmd+V** n'importe où colle l'image ; « Coller la
 photo » lit le presse-papier sur clic (avec un message clair si le navigateur
 refuse ou s'il n'y a pas d'image) ; « Choisir une image » prend un fichier ;

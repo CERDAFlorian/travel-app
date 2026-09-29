@@ -242,7 +242,7 @@ export default function StepCard({
           </div>
         )}
 
-        <PhotoStrip items={step.items} stepName={step.name.split(' ')[0]} readOnly={readOnly} onChanged={onChanged} />
+        <PhotoStrip items={step.items} />
 
         {/* Deux lectures des mêmes items : les catégories sont le garde-manger,
             les jours sont le menu. On saisit dans l'une, on organise dans

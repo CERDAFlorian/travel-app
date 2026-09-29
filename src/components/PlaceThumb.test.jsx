@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { renderToString } from 'react-dom/server';
 import PlaceThumb from './PlaceThumb.jsx';
-import PhotoStrip from './PhotoStrip.jsx';
 
 const wikimedia = {
   id: 'a',
@@ -40,29 +39,5 @@ describe('PlaceThumb', () => {
     const html = renderToString(<PlaceThumb place={wikimedia} onEdit={() => {}} />);
     expect(html).toContain('Changer la photo');
     expect(html).not.toContain('data-empty');
-  });
-});
-
-describe('PhotoStrip', () => {
-  const items = [{ ...sansPhoto, category: 'lieu' }];
-
-  it('propose d’ajouter une photo à une tuile vide', () => {
-    expect(renderToString(<PhotoStrip items={items} stepName="Kanazawa" />)).toContain('Une photo ?');
-  });
-
-  // Coller une photo : lieux touristiques et activités seulement.
-  it('ne propose rien pour un restaurant ou une boutique mis en avant', () => {
-    for (const category of ['restaurant', 'shopping']) {
-      const html = renderToString(<PhotoStrip items={[{ ...sansPhoto, category, favorite: true }]} stepName="Kanazawa" />);
-      expect(html).toContain('Hôtel Mystays');
-      expect(html).not.toContain('Une photo ?');
-    }
-  });
-
-  // La vue partagée ne modifie rien.
-  it('en lecture seule, garde le nom sans bouton', () => {
-    const html = renderToString(<PhotoStrip items={items} stepName="Kanazawa" readOnly />);
-    expect(html).toContain('Hôtel Mystays');
-    expect(html).not.toContain('Une photo ?');
   });
 });

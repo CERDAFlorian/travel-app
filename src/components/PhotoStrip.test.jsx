@@ -10,7 +10,7 @@ describe('PhotoStrip', () => {
     { id: 'b', title: 'Temple inconnu', category: 'lieu', place_id: null },
     { id: 'c', title: 'Pavillon d’or', category: 'lieu', place_id: 'ChIJ-kinkaku', photo_url: 'https://upload.wikimedia.org/k.jpg', photo_credit: 'Jaycangel', photo_license: 'CC BY-SA 3.0', photo_page: 'https://commons.wikimedia.org/wiki/File:k.jpg' },
   ];
-  const html = renderToString(<PhotoStrip items={items} stepName="Kyoto" />);
+  const html = renderToString(<PhotoStrip items={items} />);
 
   it('ne propose jamais de photo Google', () => {
     expect(html).not.toContain('Voir les photos');
@@ -30,13 +30,10 @@ describe('PhotoStrip', () => {
     expect(html).not.toContain('Jaycangel');
   });
 
-  // Sans photo, relié à Google ou non : la recherche d'images reste l'invite.
-  it('propose la recherche d’images à chaque lieu sans photo', () => {
-    expect(html.match(/Une photo \?/g)).toHaveLength(2);
-  });
-
-  // La recherche d'images ne suppose plus que le voyage est au Japon.
-  it('ne met plus « Japon » en dur dans la recherche d’images', () => {
-    expect(html).not.toContain('Japon');
+  // Ajouter une photo se fait au « + » de la liste, plus dans le bandeau
+  // (29 septembre 2026) : une tuile sans photo garde seulement son nom.
+  it('ne propose pas d’ajouter une photo dans le bandeau', () => {
+    expect(html).not.toContain('Une photo ?');
+    expect(html).not.toContain('<button');
   });
 });
