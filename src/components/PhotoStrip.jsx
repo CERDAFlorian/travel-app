@@ -1,15 +1,18 @@
-import { photoStripFor } from '@/lib/photos.js';
+import { featured } from '@/lib/photos.js';
+import { SHOW_PHOTO_CREDITS } from '@/lib/placePhotos.js';
 import './PhotoStrip.scss';
 
 // Bandeau de 3 photos d'une étape.
 //
-// Les photos ne sont pas portées par l'étape : elles viennent de ses items, par
-// appariement de mots-clés (voir lib/photos.js).
+// Les tuiles ne sont pas portées par l'étape : ce sont ses items mis en avant
+// (voir lib/photos.js).
 //
-// Une tuile sans image garde sa place : le nom du lieu, puis « Une photo ? »
-// centré. La question invite au lieu d'ordonner, et surtout elle ne promet pas
-// un import de fichier : le clic ouvre une recherche d'images pré-remplie, et
-// l'image posée ensuite dans design/img/ apparaîtra sans toucher au code.
+// AUCUNE PHOTO DE GOOGLE (décidé le 27 septembre 2026). La photo d'une tuile
+// est celle qu'on a enregistrée pour le lieu (0012_photos.sql) : Wikimedia,
+// trouvée toute seule, ou celle que l'utilisateur a collée. Elle s'affiche
+// d'elle-même, tout le temps, hors ligne compris. Un lieu sans photo garde son
+// emplacement, hachuré, avec son nom. Le bandeau ne propose pas d'en ajouter
+// (retiré le 29 septembre 2026) : ça se fait au « + » de la liste.
 //
 // Le libellé reste court par contrainte : une tuile fait un tiers de la carte,
 // soit ~110px sur mobile, ce qui laisse une dizaine de caractères.
@@ -22,8 +25,8 @@ import './PhotoStrip.scss';
 // Trois cases de la même taille que les vraies tuiles, et une ligne qui nomme
 // l'étoile — c'est elle qui décide de ce qui monte dans le bandeau, et le seul
 // moyen d'y faire entrer un restaurant ou une boutique.
-export default function PhotoStrip({ items, stepName }) {
-  const tiles = photoStripFor(items);
+export default function PhotoStrip({ items }) {
+  const tiles = featured(items);
 
   if (tiles.length === 0) {
     return (
@@ -51,34 +54,58 @@ export default function PhotoStrip({ items, stepName }) {
   }
 
   return (
-    <ul className="photo-strip">
-      {tiles.map((tile) => (
-        <li key={tile.id} className="photo-strip__tile">
-          {tile.src ? (
-            <div
-              className="photo-strip__img"
-              role="img"
-              aria-label={tile.title}
-              style={{ backgroundImage: `url(${tile.src})` }}
-            />
-          ) : (
-            <div className="photo-strip__slot">
-              <span className="photo-strip__slot-name">{tile.title}</span>
-              <a
-                className="photo-strip__add"
-                href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(`${tile.title} ${stepName} Japon`)}`}
-                target="_blank"
-                rel="noreferrer"
-                onClick={(event) => event.stopPropagation()}
-                title={`Trouver une photo de ${tile.title}`}
-              >
-                Une photo ?
-              </a>
-            </div>
-          )}
-          <span className="photo-strip__caption">{tile.title}</span>
-        </li>
-      ))}
-    </ul>
+    <div className="photo-strip__wrap">
+      <ul className="photo-strip">
+        {tiles.map((tile) => {
+          const photo = tile.photo_url
+            ? {
+                src: tile.photo_url,
+                credit: SHOW_PHOTO_CREDITS ? [tile.photo_credit, tile.photo_license].filter(Boolean).join(' · ') : '',
+                page: tile.photo_page,
+              }
+            : null;
+          return (
+            <li key={tile.id} className="photo-strip__tile">
+              {photo ? (
+                <div className="photo-strip__photo">
+                  {/* Sans crédit affiché, l'image mène à sa page Commons, qui
+                      porte l'auteur et la licence. */}
+                  {photo.page && !photo.credit ? (
+                    <a
+                      className="photo-strip__source"
+                      href={photo.page}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      <img className="photo-strip__img" src={photo.src} alt={tile.title} loading="lazy" />
+                    </a>
+                  ) : (
+                    <img className="photo-strip__img" src={photo.src} alt={tile.title} loading="lazy" />
+                  )}
+                  {/* L'auteur et la licence : la condition d'une licence libre. */}
+                  {photo.credit && (
+                    <a
+                      className="photo-strip__credit"
+                      href={photo.page ?? photo.src}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      {photo.credit}
+                    </a>
+                  )}
+                </div>
+              ) : (
+                <div className="photo-strip__slot">
+                  <span className="photo-strip__slot-name">{tile.title}</span>
+                </div>
+              )}
+              <span className="photo-strip__caption">{tile.title}</span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }

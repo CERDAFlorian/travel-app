@@ -15,12 +15,16 @@
 // `placeholder` est repris mot pour mot du design — il oriente la saisie mieux
 // qu'un « Ajouter » générique.
 //
-// `planifiable` dit si la catégorie se pose sur un jour du programme. Un hôtel
+// « Logement », pas « Hôtel » (27 septembre 2026) : on dort aussi dans un
+// Airbnb, une chambre d'hôtes, chez l'habitant. Seul le libellé change : la
+// clé reste `hotel`, celle de la base, des couleurs et de lib/lodging.js.
+//
+// `planifiable` dit si la catégorie se pose sur un jour du programme. Un logement
 // est le décor de toute l'étape, pas une case d'emploi du temps ; une note
 // perso n'a pas d'heure. Les quatre autres sont précisément ce qu'on organise
 // jour par jour.
 export const CATEGORIES = [
-  { key: 'hotel', label: 'Hôtel', onMap: true, budget: true, planifiable: false, placeholder: "Nom de l'hôtel…" },
+  { key: 'hotel', label: 'Logement', onMap: true, budget: true, planifiable: false, placeholder: 'Un hôtel, un Airbnb…' },
   { key: 'activite', label: 'Activités', onMap: true, budget: true, planifiable: true, placeholder: 'Une activité…' },
   { key: 'restaurant', label: 'Restaurants', onMap: true, budget: false, planifiable: true, placeholder: 'Un restaurant…' },
   { key: 'shopping', label: 'Shopping', onMap: true, budget: false, planifiable: true, placeholder: 'Une boutique, un quartier…' },

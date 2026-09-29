@@ -4,7 +4,7 @@ import { chosenHotel, hotelsOf } from '@/lib/lodging.js';
 import { unplacedOf } from '@/lib/days.js';
 import { formatStepDates } from '@/lib/dates.js';
 import { setStepCoordinates } from '@/lib/mutations.js';
-import GeocodePicker from './GeocodePicker.jsx';
+import PlaceSearch from './PlaceSearch.jsx';
 import ConfirmDialog from './ConfirmDialog.jsx';
 import TrashIcon from './TrashIcon.jsx';
 import PhotoStrip from './PhotoStrip.jsx';
@@ -20,7 +20,6 @@ import './StepCard.scss';
 // comme une liste de cartes indépendantes.
 export default function StepCard({
   step,
-  tripTitle,
   readOnly,
   isLast,
   neighbours,
@@ -43,6 +42,11 @@ export default function StepCard({
   // Vrai au montage de l'étape qu'on vient d'ajouter : elle cherche sa
   // position toute seule.
   const [locating, setLocating] = useState(Boolean(autoLocate));
+  // Où orienter la recherche d'une étape : l'étape d'avant, sinon celle
+  // d'après. Un voyage avance de proche en proche — c'est ce qui départage
+  // les deux Shirakawa. Seulement si elle est elle-même située.
+  const situated = (other) => (other?.lat != null && other?.lng != null ? other : null);
+  const aroundStep = situated(neighbours?.previous) ?? situated(neighbours?.next);
 
   const itemsByCategory = new Map(CATEGORIES.map(({ key }) => [key, []]));
   for (const item of step.items) {
@@ -194,9 +198,12 @@ export default function StepCard({
         </p>
 
         {/* Une étape ajoutée depuis l'app n'a pas de coordonnées : elle
-            n'apparaît ni sur la carte, ni comme ancre de ses items. Le bouton
-            ne s'affiche donc que tant qu'elle n'est pas située. */}
-        {!readOnly && step.lat == null && (
+            n'apparaît ni sur la carte, ni comme ancre de ses items. Une étape
+            située avant Google (seed, Nominatim, saisie à la main) n'est pas
+            reliée : sa position peut être fausse — Shirakawa, géocodée dans
+            le Fukushima — et la relier la corrige. Le bouton disparaît une
+            fois l'étape reliée. */}
+        {!readOnly && (step.lat == null || !step.place_id) && (
           <div className="step__locate-row">
             <button
               type="button"
@@ -206,20 +213,23 @@ export default function StepCard({
                 setLocating((value) => !value);
               }}
             >
-              Situer sur la carte
+              {step.lat == null ? 'Situer sur la carte' : 'Relier à Google'}
             </button>
           </div>
         )}
 
         {locating && (
           <div onClick={(event) => event.stopPropagation()}>
-            <GeocodePicker
+            <PlaceSearch
               title={step.name}
-              stepName={null}
-              tripTitle={tripTitle}
-              // Aucune référence : une étape EST la référence, il n'y a rien
-              // à quoi comparer sa distance.
-              reference={null}
+              stepName={step.name}
+              // Aucune référence des 50 km : une étape EST la référence. La
+              // recherche s'oriente autour de l'étape voisine, qui met la
+              // bonne Shirakawa ou le bon Miyajima en tête.
+              near={null}
+              bias={aroundStep}
+              biasName={aroundStep?.name}
+              forStep
               onCancel={() => setLocating(false)}
               onSave={async (point) => {
                 await setStepCoordinates(step.id, point);
@@ -230,7 +240,7 @@ export default function StepCard({
           </div>
         )}
 
-        <PhotoStrip items={step.items} stepName={step.name.split(' ')[0]} />
+        <PhotoStrip items={step.items} />
 
         {/* Deux lectures des mêmes items : les catégories sont le garde-manger,
             les jours sont le menu. On saisit dans l'une, on organise dans
@@ -269,7 +279,6 @@ export default function StepCard({
                 category={category}
                 items={itemsByCategory.get(category.key)}
                 step={step}
-                tripTitle={tripTitle}
                 readOnly={readOnly}
                 onChanged={onChanged}
               />

@@ -1,4 +1,6 @@
+import { useMemo } from 'react';
 import { fetchTrip } from '@/lib/api.js';
+import { hideExpired } from '@/lib/placeFreshness.js';
 import { readTrip, writeTrip } from '@/lib/db.js';
 import { useCached } from './useCached.js';
 
@@ -14,5 +16,8 @@ const TRIP = {
 // Le slug vient de la route (`/voyage/:slug`), décidé en L1.5.
 export function useTrip(slug) {
   const { data, ...rest } = useCached(slug, TRIP);
-  return { trip: data, ...rest };
+  // Une coordonnée Google de plus de 30 jours ne s'affiche jamais, même tirée
+  // du cache hors ligne (L10, F3).
+  const trip = useMemo(() => hideExpired(data, Date.now()), [data]);
+  return { trip, ...rest };
 }

@@ -1,0 +1,70 @@
+@use '../theme/mixins';
+
+.photo-paste {
+  display: grid;
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0 var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+
+  &__hint,
+  &__credit,
+  &__error {
+    margin: 0;
+    font-size: var(--fs-sm);
+  }
+
+  &__hint { color: var(--muted); }
+  &__credit { color: var(--text); a { color: inherit; } }
+  &__error { color: var(--danger); }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    align-items: center;
+  }
+
+  &__primary,
+  &__secondary {
+    padding: var(--sp-2) var(--sp-3);
+    border: 0;
+    border-radius: var(--radius-sm);
+    font: inherit;
+    font-size: var(--fs-sm);
+    cursor: pointer;
+
+    &:focus-visible { @include mixins.focus-ring; }
+    &:disabled { opacity: 0.6; cursor: progress; }
+  }
+
+  &__primary {
+    background: var(--accent);
+    color: var(--accent-contrast);
+  }
+
+  &__secondary {
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  &__search,
+  &__remove,
+  &__close {
+    padding: 0 var(--sp-1);
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: var(--fs-sm);
+    text-decoration: underline;
+    cursor: pointer;
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  &__remove { color: var(--danger); }
+}

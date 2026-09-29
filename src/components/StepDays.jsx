@@ -13,6 +13,7 @@ import {
 } from '@/lib/mutations.js';
 import DayPicker from './DayPicker.jsx';
 import './StepDays.scss';
+import PlaceThumb from './PlaceThumb.jsx';
 
 // Le programme d'une ville, jour par jour.
 //
@@ -292,6 +293,7 @@ function PlannedRow({ item, step, days, slotItems, previous, canMoveUp, canMoveD
           )
         )}
 
+        <PlaceThumb place={item} size="xs" />
         <span className="planned__dot" data-cat={item.category} aria-hidden="true" />
         <span className="planned__name">{item.title}</span>
         {item.notes && <span className="planned__meta">{item.notes}</span>}
@@ -387,6 +389,7 @@ function ReserveRow({ item, step, days, readOnly, onChanged }) {
   return (
     <li className="spare">
       <div className="spare__line">
+        <PlaceThumb place={item} size="xs" />
         <span className="planned__dot" data-cat={item.category} aria-hidden="true" />
         <span className="planned__name">{item.title}</span>
         {item.notes && <span className="planned__meta">{item.notes}</span>}

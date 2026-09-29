@@ -14,10 +14,15 @@ Offline en **lecture seule**. Carte SVG unique zoomable, ancres géographiques +
 ## État du projet — 18 septembre 2026
 
 Branche de travail : `dev`. `main` est en retard, la fusion se fera par PR.
-**L0 à L7 sont terminés.** L8 est arbitré et outillé le 23 septembre 2026 :
-deux projets Supabase, dev et prod. Il reste UN geste manuel, qui n'appartient
-qu'au propriétaire du compte — créer le projet de dev et y coller le schéma.
-La procédure est dans `supabase/README.md`, section « Deux bases ».
+**L0 à L9 sont terminés.** L8 compris : la base de dev existe depuis le
+25 septembre 2026, avec un compte et le voyage `japon-2026` du seed. `.env.local`
+la vise ; les secrets GitHub continuent de viser la prod. La procédure de
+promotion dev → prod est dans `supabase/README.md`, section « Deux bases ».
+
+**L10 spécifié le 26 septembre 2026**, pas commencé : passer à Google — carte,
+recherche, photos — en optimisant les coûts au maximum, après le premier gros
+retour des utilisateurs sur LOCALISER. Deux arbitrages restent ouverts ; tout est
+dans la section L10, tout en bas du fichier.
 
 **L9 spécifié le 22 septembre 2026**, pas commencé : le programme jour par jour —
 organiser activités, restaurants et visites à l'intérieur d'une ville. Le modèle et
@@ -169,6 +174,22 @@ hors d'un voyage partagé on est chez soi. La coupure se fait sur `shared` et
 non sur `readOnly` — hors ligne dans un train japonais, l'app est en lecture
 seule et on est toujours à deux.
 
+**Une URL de recette pour la branche `dev`** — voulu le 25 septembre 2026,
+remis à plus tard. Une adresse où éprouver `dev` contre la base de dev, pour
+faire essayer une correction avant qu'elle ne touche le vrai voyage de
+quelqu'un. L'app a maintenant trois utilisateurs : tester en production a cessé
+d'être sans conséquence.
+
+Ce qu'il faut, une heure environ : un workflow qui construit et pousse une image
+taguée `dev` sur GHCR, une seconde application Coolify pointant cette image, un
+second domaine. Les identifiants existent déjà — `VITE_SUPABASE_URL_DEV` et
+`VITE_SUPABASE_ANON_KEY_DEV`, créés pour `check.yml`.
+
+Le piège à prévoir : **deux PWA sur deux domaines, deux service workers, deux
+caches**. Une recette installée sur l'écran d'accueil à côté de la vraie app est
+une confusion garantie le jour du départ. Donner au site de recette un nom et
+une couleur qui ne trompent pas — la charte `neutral` existe déjà pour ça.
+
 **Trois items n'auront jamais de photo** : Distillerie Hakushu, Balade dans le
 village, Mémorial de la Paix. Aucun mot-clé ne leur correspond dans le design.
 
@@ -247,6 +268,7 @@ Colle un prompt, laisse la boucle tourner, vérifie, commit, passe au suivant. N
 | ~~**L7**~~ | ~~PWA, précache, bouton sync, QA mobile~~ | ✅ fait | Prêt pour le voyage |
 | ~~**L8**~~ | ~~Séparer la base de dev de la base de prod~~ | ✅ outillé | On peut casser sans risque |
 | ~~**L9**~~ | ~~Le programme jour par jour — 4 features, voir la section dédiée~~ | ✅ fait | On sait quoi faire chaque jour |
+| **L10** | Full Google : carte, recherche, photos, règle des 30 jours, rapatriement de la prod et migration de l'existant | à estimer après F0 | On trouve n'importe quel lieu |
 
 **Cible réaliste jour 1 : L0 → L3.**
 
@@ -1103,9 +1125,22 @@ la console — se tromper de base est précisément l'accident que ce lot évite
 La procédure de promotion dev → prod et le reset de dev sont écrits dans
 `supabase/README.md`.
 
-**Ce qui reste, et qui n'appartient qu'à toi** : créer le projet de dev, y
-coller le schéma, y créer un compte, y jouer le seed, puis recopier URL et clé
-dans `.env.local`. Six étapes, détaillées dans le README.
+**Fait le 25 septembre 2026.** Projet de dev créé, schéma posé depuis le
+bundle, un compte, le voyage `japon-2026` du seed — un seul suffit, c'est celui
+qui a du contenu. `anon` y a été vérifié sans aucun droit de table, ce qui
+confirme que `0001` est bien passé.
+
+Deux choses apprises en le montant, notées pour la prochaine base :
+
+· **le seed avant le compte ne sert à rien.** `auth.users` est vide sur un
+  projet neuf, donc `trip_members` reste vide et RLS rend tout invisible — sans
+  la moindre erreur à l'écran. Le `WARNING` du seed n'est pas affiché par le SQL
+  Editor. Créer le compte D'ABORD.
+
+· **le cache du navigateur ne suit pas le changement de base.** IndexedDB est
+  indexé par origine, pas par projet : après avoir changé `.env.local`, l'app
+  rend encore les voyages de la prod avant que le réseau ne réponde. Vider les
+  données du site, ou passer par une fenêtre privée.
 
 - À faire avant que la prépa réelle ne soit saisie — après, une erreur coûte
   de la donnée qu'aucun seed ne peut reconstituer.
@@ -1496,6 +1531,464 @@ STOP
 - Ne duplique pas la logique de days.js : si une fonction manque, ajoute-la là
   avec ses tests, jamais dans le composant.
 ```
+
+---
+
+## L10 — Full Google
+
+**Spécifié le 26 septembre 2026**, pas commencé. Premier gros retour des
+utilisateurs : LOCALISER ne trouve presque jamais les hôtels, restaurants et
+activités, propose le même lieu trois fois, et des photos de démo s'affichaient
+sur des lieux non localisés. Diagnostic mesuré le 25 septembre sur de vraies
+requêtes : Nominatim exige que chaque mot du titre figure dans OpenStreetMap
+(« Jardin Kenrokuen » → 0, « Kenrokuen » → 1), et interprète « Hôtel à Asakusa »
+comme « n'importe quel hôtel d'Asakusa ». Décision le 26 : **tout passer à
+Google, en optimisant les coûts au maximum.**
+
+Déjà fait avant le lot : le bouton « Localiser les N lieux » est retiré (en
+suspens, il demanderait une page dédiée), la bibliothèque de photos de démo
+aussi (27 images).
+
+### Pourquoi c'est un lot, pas un changement de fournisseur
+
+Les conditions de Google Maps Platform (section 14, version du 10 juin 2026)
+imposent trois choses que l'architecture actuelle contredit :
+
+- **aucun contenu Places sur une carte non-Google** → la carte SVG part en même
+  temps que Nominatim ;
+- **les coordonnées Google se gardent 30 jours au plus**, puis s'effacent ou se
+  redemandent. Seul le `place_id` se garde indéfiniment ;
+- **les photos Google ne se stockent pas** : chaque affichage est un appel
+  facturé.
+
+### Les arbitrages
+
+Décidés le 26 septembre 2026.
+
+**1. Tout passe par Google.** Carte (Maps JavaScript API), recherche (Places API
+New), photos (Place Photos). Nominatim et la carte SVG sortent en fin de lot.
+
+**2. Une clé navigateur, pas de serveur.** Restreinte à nos domaines (prod, dev,
+localhost) et aux deux API, plafonnée par des quotas journaliers dans Google
+Cloud, doublée d'une alerte de budget. Un abus épuise le quota du jour, il ne
+coûte rien de plus. Une fonction Supabase ne s'impose que si un abus apparaît.
+
+**3. Des suggestions pendant qu'on tape, jamais un bouton « Chercher ».**
+Autocomplete avec jeton de session — gratuit quand la session se termine par un
+choix — puis une fiche Place Details Essentials : position, et références de
+photos sans supplément. La recherche texte (Text Search Pro, 32 $ les 1 000)
+n'est utilisée que par la migration de l'existant.
+
+**4. La carte se charge quand on l'affiche**, une seule instance par visite.
+Hors ligne : « carte indisponible », tout le reste de l'itinéraire fonctionne.
+
+**5. Le titre reste celui de l'utilisateur.** Nom, adresse et note Google
+s'affichent en direct et ne s'enregistrent pas.
+
+**6. Les coordonnées qui ne viennent pas de Google restent.** Seed, saisie
+manuelle, Nominatim : elles sont à nous, hors règle des 30 jours. Elles sont
+remplacées le jour où l'item est relié à Google.
+
+**7. Le bouton Plan ouvre Google Maps** sur le `place_id` (les liens Maps sont
+gratuits), à la place d'Apple Plans.
+
+### À trancher
+
+- **Quand charger les photos (avant F4).** Recommandé : au geste — « Voir les
+  photos » sur une étape, ou l'ouverture d'un lieu : ≈ 35 $/mois à 300 actifs.
+  L'étape sélectionnée coûterait ≈ 370 $, le chargement au défilement ≈ 560 $.
+- **La fenêtre de mise en prod.** Des voyages sont en cours du 17 octobre au
+  29 novembre (3e compte du 17/10 au 05/11 ; le nôtre part le 07/11 et, d'après
+  le voyage de prod exporté le 26 septembre, rentre le 28/11 pour atterrir le
+  29/11). Mise en prod avant le 17 octobre si F0 à F3 sont solides, sinon après
+  le 29 novembre — jamais entre les deux : la carte cesserait de marcher hors
+  ligne en plein voyage.
+
+Budget estimé avec l'arbitrage recommandé : ≈ 0 € pour 3 comptes, ≈ 60 $/mois à
+300 actifs, ≈ 330 $/mois à 1 000.
+
+### Pièges repérés avant d'écrire
+
+**`trip_by_share_token` construit son JSON colonne par colonne.** `place_id` et
+`place_synced_at` doivent y entrer, sinon la vue partagée n'a ni photos ni
+bouton Plan.
+
+**Les jetons de session.** Sans eux, chaque lettre tapée est facturée. Attendre
+quelques lettres et une courte pause avant d'interroger Google.
+
+**Les références de photos expirent.** On ne les stocke pas : on les redemande
+au moment d'afficher, par une fiche « IDs Only », gratuite.
+
+**IndexedDB garde les coordonnées hors ligne.** C'est un cache temporaire
+autorisé, à condition que la purge serveur des 30 jours s'y propage au prochain
+passage en ligne.
+
+**La clé part dans le bundle** (`VITE_GOOGLE_MAPS_KEY`). Sa protection, ce sont
+les restrictions de domaine, pas le secret. La CI doit builder sans elle.
+
+**Le rapatriement ne rattache jamais « tous les comptes ».** C'est ce que fait
+`seed.sql`, et c'est ce qui l'a rendu dangereux.
+
+### Le découpage
+
+| Étape | Ce qu'on gagne | Google |
+|---|---|---|
+| **R · Rapatrier le voyage de prod sur dev** | Travailler et tester sur le vrai voyage, bien avancé, sans toucher la prod. L'export sert aussi de sauvegarde avant M | non |
+| **F0 · Le test** | Google contre Nominatim sur les vrais titres rapatriés, et une page d'essai de la carte. On y va ou pas | clé de test |
+| **F1 · La carte Google** | Même dessin : épingles numérotées, pastilles de catégorie, arcs en tirets entre les villes, pointillés vers les lieux. Marche avec les coordonnées actuelles | Maps JS |
+| **F2 · La recherche Google** | Suggestions pendant qu'on tape, `place_id` enregistré, Plan → Google Maps. Migration `0010_google.sql` | Places |
+| **F3 · Les 30 jours** | Rafraîchissement à l'ouverture du voyage, purge nocturne, « Préparer hors ligne » rafraîchit tout pour couvrir un voyage de 20 jours | Places |
+| **M · Migrer l'existant** | Tous les lieux déjà saisis reliés à Google : automatiquement quand c'est sûr, à la main sinon. Dev d'abord, prod ensuite | Places |
+| **F4 · Les photos Google** | Selon l'arbitrage, avec le crédit de l'auteur | Photos |
+| **F5 · Le ménage** | Nominatim, carte SVG, projection, étiquettes, `build-map`, et leurs tests | — |
+
+**R est outillé le 26 septembre 2026.** Les deux fichiers ont été éprouvés sur
+deux bases PostgreSQL (PGlite) montées avec les vraies migrations : 20
+vérifications, dont le refus sans garde-fou, le refus sans adresse connue, les
+caractères piégeux et la rejouabilité. Reste à le passer à la main, prod puis
+dev — procédure dans `supabase/README.md`, « Rapatrier un voyage de prod sur
+dev ».
+
+**F0 est fait le 26 septembre 2026 : on y va.** Sur les 29 lieux géographiques
+du vrai voyage rapatrié :
+
+| | Nominatim (aujourd'hui) | Google |
+|---|---|---|
+| Lieu trouvé | 15 | **27** |
+| Photo disponible | — | 27 |
+
+Google retrouve tout ce que Nominatim ratait — « JARDIN KENROKUEN », « QUARTIER
+HIGASHI CHAYA », le ryokan « Onyado Yuinosho », « Fushimi anari » (faute de
+frappe), « Torii flottante », « Disney sea ». Là où Nominatim trouvait, les deux
+concordent à moins de 1 km. Les deux échecs : « Ryan-j », que les suggestions
+rattrapent dès qu'on tape (Ryōan-ji), et « SHÔn RYÔri », qui n'est pas un lieu.
+Un titre générique (« OKONOMIYAKI », « ONSEN EN MONTAGNE ») rend un établissement
+parmi d'autres : Google propose, l'utilisateur choisit — la règle de L4 tient.
+
+La page d'essai de la carte (voyage réel, clé navigateur, Map ID vectoriel)
+affiche épingles numérotées, pastilles de catégorie, arcs en tirets et
+pointillés vers les lieux. Deux enseignements pour F1 : les étiquettes se
+chevauchent (Kyoto/Osaka/Kōyasan, Hiroshima/Miyajima) et doivent être gérées,
+et un centre d'étape faux se voit tout de suite — l'étape « Shirakawa » du vrai
+voyage est géocodée dans le Fukushima, à 310 km de Shirakawa-go.
+
+Coût du test : environ 90 appels, dans la franchise gratuite.
+
+**Le fond de carte et trois décisions pour F1, le 26 septembre 2026.** Le style
+cloud (`design/carte-google-style.json`, format récent de Google) reprend la carte
+SVG : mer crème, terre kaki, rien de Google — ni noms, ni routes, ni rails, ni
+lieux, ni frontières. L'ancien format JSON, importé d'abord, était mal converti :
+villes blanches, routes et Shinkansen restaient visibles de près. Puis :
+
+- **les arcs entre villes ne suivent que les trajets saisis**, comme aujourd'hui ;
+- **la couronne des lieux non localisés est gardée**, en pixels autour de la
+  ville, pour voir une étape se remplir avant d'avoir tout localisé ;
+- **un nom de ville qui en chevauche un autre est masqué**, l'épingle numérotée
+  restant toujours visible ; il revient en zoomant (gestion native de Google,
+  sur la carte vectorielle).
+
+**F1 est fait sur dev le 26 septembre 2026.** `TripMap` affiche une carte Google
+(Map ID vectoriel, style cloud) chargée seulement quand elle approche de
+l'écran, sans paquet npm (`lib/googleMaps.js`). Toute la géométrie est dans
+`lib/mapGeometry.js`, testée : épingles groupées (Tokyo 1·9), couronne en
+pixels, arcs des trajets saisis, sélection au clic, placement des noms — à
+droite, sinon à gauche, sinon masqué. Losange pour un lieu localisé, rond pour
+un lieu en couronne, noms des lieux à partir du zoom 11, filtres inchangés.
+Hors ligne, sans clé ou clé refusée : un message à la place de la carte, le reste
+de l'itinéraire intact. Vérifié à l'écran sur le vrai voyage rapatrié (page
+d'essai hors commit), tests et build au vert, clé « scripts » absente du build.
+
+Avant la mise en prod de F1, il reste :
+
+- vérifier que le style **publié** est bien la version récente : sur la page
+  d'essai, des zones urbaines blanches ou des routes grises de près trahissent
+  l'ancienne ;
+- créer les secrets GitHub `VITE_GOOGLE_MAPS_KEY` et `VITE_GOOGLE_MAP_ID`,
+  que `deploy.yml` passe au build Docker ;
+- trancher la fenêtre de mise en prod (voir « À trancher »).
+
+`projection.js`, `japan-geometry.js` et `build-map.mjs` ne servent plus : ils
+partent en F5, avec Nominatim.
+
+**F2 est fait sur dev le 26 septembre 2026.** `PlaceSearch` remplace le
+sélecteur Nominatim : le champ part du titre et reste modifiable, les
+suggestions Google arrivent pendant qu'on tape (jeton de session, 300 ms
+d'attente), biaisées autour de l'étape, et seules des villes pour situer une
+étape. Le lieu choisi coûte une fiche Essentials (`location` seul) ; on garde son
+place_id, ses coordonnées et leur date (`0010_google.sql`). Les coordonnées
+collées à la main restent possibles et rompent le lien Google. L'alerte des
+50 km bloque toujours, et dit que le centre de l'étape peut être le fautif.
+« Maps ↗ » ouvre Google Maps sur la fiche du lieu.
+
+Ce qui était prévu pour M en partie manuelle est fait ici : un lieu placé mais
+pas relié porte « À relier », une étape non reliée « Relier à Google » — c'est
+aussi ce qui corrige Shirakawa. Vérifié avec le vrai Google sur le voyage
+rapatrié : « JARDIN KENROKUEN », « Fushimi anari » et la ville de Shirakawa-gō
+sont proposés et s'enregistrent.
+
+**Avant de lancer l'app sur une base, `0010_google.sql` doit y être passée** :
+`api.js` lit les nouvelles colonnes, et une base sans elles ne charge plus aucun
+voyage. Sur la prod, dans cet ordre : la migration, puis le déploiement — et F3
+dans les 30 jours qui suivent.
+
+**Correctif F2 du 26 septembre 2026 : une étape se cherche sans filtre.** Le
+filtre « villes » écartait Miyajima, Kōyasan et Kamikōchi — pour Google, ce ne
+sont pas des villes. La recherche d'une étape s'oriente désormais autour de
+l'étape voisine (la précédente, sinon la suivante), sans alerte des 50 km.
+
+**F3 est fait sur dev le 26 septembre 2026.** La règle des 30 jours tient par
+trois mécanismes :
+
+- **à l'affichage** (`hideExpired`, dans `useTrip` et `useSharedTrip`) : une
+  coordonnée Google de plus de 30 jours ne s'affiche jamais, même tirée du
+  cache hors ligne ;
+- **à l'ouverture d'un voyage**, pour qui peut l'écrire (`useRefreshPlaces`) :
+  les lieux Google de plus de 25 jours sont redemandés à Google par leur
+  place_id — une fois par visite, un lieu en échec n'est pas retenté en boucle ;
+  « Préparer le voyage » rafraîchit tout ce qui a plus d'un jour, pour tenir
+  30 jours hors ligne ;
+- **en base, chaque nuit** (`0011_purge_google.sql`, pg_cron à 3 h 17 UTC) :
+  les coordonnées Google de plus de 30 jours sont effacées, le place_id gardé.
+  Les coordonnées à nous ne sont jamais touchées. Ni anon ni les comptes ne
+  peuvent lancer la purge.
+
+Éprouvé : la purge sur PGlite (hors pg_cron, absent de PGlite), la position
+redemandée par place_id avec le vrai Google.
+
+**`0011_purge_google.sql` active pg_cron** avec la commande de la documentation
+Supabase. Si l'activation est refusée : dashboard → Integrations → Cron, puis
+rejouer le fichier. À passer sur chaque base, après `0010`.
+
+**La vue partagée n'affiche la carte qu'à la demande** (26 septembre 2026) :
+chaque visiteur d'un lien coûterait un affichage facturé ; un bouton « Afficher
+la carte » ne fait payer que ceux qui la veulent. Aucune requête Google avant le
+clic.
+
+**M est outillé le 26 septembre 2026.** `scripts/relier-google.mjs` lit un export
+de R, interroge Google (recherche texte, une par lieu non relié) et écrit un SQL
+des seuls liens sûrs, à passer à la main. La règle (`src/lib/placeMatch.js`,
+testée sur les vrais cas) : même endroit à 300 m près, quel que soit le nom
+(« Pavillon d'or » / Kinkaku-ji) ; ou même nom — accents, tirets et une faute
+d'une lettre tolérés — à moins de 50 km de l'étape et à moins de 1 km de la
+position actuelle ; jamais un item vers une ville ; une étape ne bouge pas de
+plus de 25 km. Les étapes passent d'abord : leurs lieux sont jugés sur leur
+vrai centre.
+
+Sur le vrai voyage : 7 étapes sur 9 et 18 lieux sur 29 reliés, aucun faux. À la
+main : Shirakawa (310 km — l'homonyme du Fukushima) et ses trois lieux jugés
+sur ce faux centre, Miyajima (« Itsukushima » pour Google), et les titres vagues
+ou fautifs. Le SQL, éprouvé sur PGlite, se rejoue sans effet.
+
+Ordre sur la prod : `0010`, `0011`, déploiement de F1 à F3, **puis** le SQL de M
+— jamais avant la carte Google.
+
+**F4 est fait sur dev le 26 septembre 2026, au geste.** Le bandeau d'une étape
+garde ses trois tuiles ; « Voir les photos » demande à Google la photo des
+lieux reliés. La liste des photos d'une fiche est gratuite (palier IDs Only),
+seule l'image chargée est facturée — une par lieu et par clic, jamais avant.
+Rien n'est stocké : la photo reste en mémoire le temps de la visite, et un
+bandeau déjà vu réapparaît sans nouveau clic. L'auteur, exigé par Google,
+s'affiche sur la photo et renvoie à son profil. « Une photo ? » ne reste qu'aux
+lieux non reliés ou sans photo, et ne suppose plus que le voyage est au Japon.
+Vérifié avec le vrai Google : Fushimi Inari, le Pavillon d'or et Arashiyama à
+Kyoto, trois photos facturées pour un clic.
+
+**Les photos passent d'abord par Wikimedia, le 27 septembre 2026.** Les photos
+Google au geste ne suffisaient pas : on les veut partout, tout le temps. Analyse
+de trip-planner.io : leurs photos viennent de leur propre photothèque et de
+partenaires d'affiliation (Booking, GetYourGuide), Google seulement pour les
+restaurants ; leur carte est OpenFreeMap. On garde Google pour la carte et la
+recherche — OpenFreeMap interdirait d'y afficher les résultats de Google, et une
+recherche OpenStreetMap ramènerait au problème de départ.
+
+Wikimedia Commons est sous licence libre : on garde la photo. `0012_photos.sql`
+ajoute aux items et aux étapes la photo, son auteur, sa licence, sa page et la
+date de recherche. `lib/wikimedia.js` (testé) cherche dans Wikidata autour de la
+vraie position — 3 km pour un lieu, 30 km pour une ville —, écarte gares et
+événements, exige un nom concordant, et ne donne jamais à un hôtel la photo de
+son quartier. `usePhotoFill` cherche à l'ouverture ce qui manque, une fois ; un
+lieu qui change de position perd sa photo et en retrouve une. Périmètre décidé :
+villes, lieux touristiques, hôtels ; activités et restaurants plus tard.
+
+Affichage : médaillon de la ville en tête d'étape, vignette à gauche des lieux
+dans la liste et dans les deux vues jour par jour, bandeau. Auteur et licence au
+survol, lien vers la page Commons. Google « Voir les photos » ne reste qu'aux
+lieux reliés sans photo libre. Le service worker garde les photos Wikimedia
+(400 au plus, deux mois) : elles se voient hors ligne.
+
+Sur le vrai voyage : villes 9/9, lieux touristiques 13/15 (les deux manqués ont
+une faute de frappe dans leur titre), hôtels 0/1. L'affiliation (Booking pour
+les hôtels) viendra plus tard.
+
+**Plus aucune photo de Google, le 27 septembre 2026.** Le bouton « Voir les
+photos » (F4, Google au geste) est retiré, et avec lui tout appel aux photos de
+Places. Les photos viennent de Wikimedia, ou de l'utilisateur par copier-coller.
+
+**La photo collée.** Quand Wikimedia ne trouve rien, l'utilisateur met la
+sienne — **pour les lieux touristiques, les activités et les logements**
+(décidé les 27 et 29 septembre 2026 : pas les villes, restaurants ni
+boutiques ; `PASTE_CATEGORIES` dans `placePhotos.js`). Qui peut modifier le voyage voit un
+emplacement en pointillés « + » à gauche de ces lignes. « Une photo ? » sur les
+tuiles vides du bandeau a été retiré le 29 septembre 2026 : une tuile sans
+photo garde seulement son nom. Le clic ouvre le panneau
+« Photo » (`PhotoPaste`) : **Cmd+V** n'importe où colle l'image ; « Coller la
+photo » lit le presse-papier sur clic (avec un message clair si le navigateur
+refuse ou s'il n'y a pas d'image) ; « Choisir une image » prend un fichier ;
+« Chercher une image ↗ » ouvre Google Images pré-rempli ; « Retirer la photo ».
+Une photo Wikimedia y garde son crédit. En lecture seule et en partage, rien de
+tout cela : la photo seule.
+
+`lib/userPhoto.js` (testé) réduit l'image dans le navigateur — 1 200 px au plus,
+JPEG 0,82, quelques centaines de Ko — puis l'envoie dans l'espace `photos` de
+Supabase, sous `items/<id>/…` avec un nom aléatoire (la règle SQL accepte aussi
+`steps/<id>/…`, inutilisé depuis qu'on ne colle plus sur les villes).
+`0013_photos_collees.sql` ajoute `photo_source` (`'wikimedia'` ou `'user'`),
+crée l'espace — public en lecture pour la vue partagée, 1 Mo par fichier — et
+ne laisse déposer ou retirer une photo qu'aux membres qui peuvent modifier le
+voyage (`can_edit_photo_path`, testé sous PGlite). Remplacer ou retirer une
+photo collée, ou supprimer son lieu, supprime l'ancien fichier — sauf si une
+copie « dupliquée sur un autre jour » le montre encore. Supprimer une étape ou
+un voyage laisse ses fichiers dans le stockage (quelques centaines de Ko
+chacun) : Supabase interdit de les effacer depuis SQL, un nettoyage viendra si
+le volume le demande. Une photo collée **survit** à un
+changement de position du lieu, là où une photo Wikimedia est cherchée de
+nouveau. Le service worker garde aussi les photos collées (`photos-collees`) :
+un nom n'est jamais réutilisé, CacheFirst ne sert donc jamais une vieille image.
+
+**Les photos de logements : aucune source ouverte (vérifié le 27 septembre
+2026).** « Hôtel » devient « Logement » à l'écran — un Airbnb n'est pas un
+hôtel ; la clé reste `hotel`. Pour leurs photos :
+
+- **Booking** : la Demand API exige depuis juillet 2026 le statut de partenaire
+  affilié « géré », un contrat et un chargé de compte ; même alors, les images
+  s'affichent par leur adresse, sans les télécharger.
+- **Expedia / Hotels.com** (Rapid API) : partenaires sélectionnés sur leur
+  volume de réservations, des mois d'intégration.
+- **Airbnb** : aucune API publique, programme partenaires sur invitation.
+- **Tripadvisor** : clé en libre-service, mais rien ne se garde hormis
+  l'identifiant du lieu — chaque affichage est un appel, payant au-delà du
+  quota gratuit, avec logo et lien obligatoires : le modèle des photos Google
+  qu'on a écarté. L'ancienne Content API cède la place à « Terra ».
+- **L'aperçu d'un lien Booking** (`og:image`) : Booking renvoie une page
+  anti-robot à une requête ordinaire, et pour le Ritz son aperçu est… une photo
+  de Paris.
+
+Donc : copier-coller par l'utilisateur, qui a l'annonce sous les yeux quand il
+réserve — ouvert aux logements le 29 septembre 2026. L'affiliation Booking se
+reposera quand l'app aura du trafic.
+
+**Crédits masqués, le 29 septembre 2026.** L'auteur et la licence des photos
+Wikimedia ne s'affichent plus (`SHOW_PHOTO_CREDITS = false` dans
+`placePhotos.js`) : ils chargeaient le bandeau. Ils restent en base, et chaque
+photo — vignette comme tuile du bandeau — reste un lien vers sa page Commons,
+qui les porte : la forme légère d'attribution qu'admettent les licences
+Creative Commons 4.0 ; pour les plus anciennes (2.5, 3.0), le crédit visible
+est la règle. Le remettre : passer la constante à `true`. Les miniatures
+grandissent en même temps (liste 56×40, jour par jour 44×31).
+
+**Plus de photo de ville, le 29 septembre 2026.** Le médaillon en tête d'étape
+est retiré, et `photosToFind` ne cherche plus de photo pour les villes : elle ne
+se verrait nulle part. Les colonnes photo des étapes restent en base, inutilisées.
+
+À savoir : une image copiée sur le web appartient à son auteur. Elle reste dans
+le voyage, mais le lien de partage la montre à qui l'a reçu — un usage privé
+tant que le lien circule entre proches.
+
+**L'ordre est imposé.** R d'abord : il ne dépend de rien et donne au test ses
+vrais titres. F1 avant F2 : une position Google n'a pas le droit d'apparaître
+sur la carte SVG. F3 en prod moins de 30 jours après F2. M après F3, pour la même
+raison, et avant F4, qui a besoin des `place_id`.
+
+### Mise en prod de L10 — pas à pas (écrit le 29 septembre 2026)
+
+**Fenêtre : avant le 17 octobre 2026**, sinon après le 29 novembre (voir « À
+trancher ») — la carte Google ne marche pas hors ligne, on ne la change pas en
+plein voyage. Viser début octobre, pour garder de quoi corriger.
+
+Les migrations 0010 à 0013 ne font qu'**ajouter** : l'app actuelle continue de
+marcher sur une base migrée. On migre donc la prod d'abord, on déploie ensuite,
+et le retour arrière reste possible par l'image précédente.
+
+1. **Dev, en vrai.** Passer 0012 (si besoin) puis 0013 — la rejouer si elle y
+   est déjà : elle a changé le 29 septembre. `npm run dev` : coller une photo
+   sur un lieu, une activité, un logement ; la retirer ; ouvrir le lien de
+   partage en navigation privée. `select jobname, schedule, active from
+   cron.job;` rend le job de purge.
+2. **Pousser `dev`**, CI verte.
+3. **Google Cloud.** La clé navigateur autorise le domaine de prod (référents
+   HTTP `https://<domaine>/*`) et seulement Maps JavaScript API et Places API
+   (New). Une alerte de budget et un plafond journalier sur Places. Les secrets
+   GitHub `VITE_GOOGLE_MAPS_KEY` et `VITE_GOOGLE_MAP_ID` existent.
+4. **Sauvegarde de la prod.** `export-voyage.sql` pour chaque voyage, JSON rangé
+   hors du dépôt.
+5. **Base de prod**, SQL Editor, dans l'ordre : 0010, 0011 (si pg_cron est
+   refusé : Integrations → Cron, puis rejouer), 0012, 0013. Vérifier le job de
+   purge, les comptages (supabase/README, « 5. Vérifier ») et que l'app
+   actuelle charge toujours les voyages.
+6. **Déployer.** Fusionner `dev` dans `main` et pousser : `deploy.yml` construit
+   l'image. Dans Coolify, « Redeploy » (aucun webhook ne le fait).
+7. **Vérifier en prod** : la carte Google, une recherche de lieu, les photos
+   Wikimedia qui arrivent, une photo collée, le lien de partage, puis hors
+   ligne (mode avion) : l'itinéraire reste lisible, la carte affiche son
+   message.
+8. **M, relier l'existant** — seulement maintenant : export de prod →
+   `scripts/relier-google.mjs` → essai sur dev → même SQL sur prod ; le reste à
+   la main (« À relier »).
+9. **Prévenir** les deux autres comptes : la carte demande le réseau ; avant de
+   partir, « Préparer le voyage hors ligne ».
+
+Retour arrière : dans Coolify, l'image du SHA précédent. La base n'a rien à
+défaire.
+
+### R — Rapatrier le voyage de prod sur dev
+
+Fidèle à L8 : **rien n'est automatique, aucun identifiant de prod ne sort des
+secrets GitHub.** Deux fichiers SQL dans `supabase/outils/`, passés à la main
+dans le SQL Editor :
+
+- **`export-voyage.sql`, sur prod.** Un `select` en lecture seule qui rend une
+  seule valeur JSON : le voyage (sans `share_token`), ses étapes, items,
+  liaisons, vols et expériences, chaque ligne complète (`to_jsonb`). On copie la
+  cellule ou on télécharge le résultat. C'est aussi la sauvegarde de la prod
+  avant M.
+- **`import-voyage.sql`, sur dev.** On colle le JSON ; il supprime la copie de
+  dev du même slug (cascade), réinsère tout **avec les mêmes UUID**
+  (`jsonb_populate_recordset`), et rattache les comptes de dev **nommés par
+  adresse** en tête du fichier. Garde-fou identique à `seed.sql` : une ligne à
+  décommenter. Il se termine sur les comptages.
+
+Voyage visé : `japon-2026`, a priori celui qui est bien avancé. Celui du
+3e compte ne se copie que si on en a besoin — c'est la donnée de quelqu'un
+d'autre.
+
+Rejouable : on rapatrie de nouveau juste avant F0, puis juste avant M pour
+répéter la migration sur une copie fraîche.
+
+Piège : une colonne `not null` présente en dev et absente de la prod arrive à
+`null` par `jsonb_populate_recordset`. Rapatrier quand les deux schémas sont
+alignés, ou compléter la colonne dans l'import.
+
+### M — Migrer ce qui est déjà créé
+
+Pour tous les voyages existants, dev puis prod. **Rien n'est supprimé.**
+
+1. **Le schéma vient de F2** : les nouvelles colonnes naissent à `null`, qui
+   veut dire « pas encore relié ».
+2. **Le rattachement automatique** par un script lancé depuis le poste
+   (`scripts/relier-google.mjs`). Il lit l'export de R, cherche chaque item de
+   catégorie `onMap` sans `place_id` (Text Search, biais autour de l'étape) et
+   ne relie **que les cas sûrs** : nom retrouvé dans le titre, à moins de 50 km
+   de l'étape, et à moins de 1 km des coordonnées actuelles quand l'item en a.
+   Il produit un fichier SQL d'`update … where id = … and place_id is null`,
+   passé à la main comme toute migration, et la liste des cas douteux.
+3. **Le reste à la main, dans l'app.** Un item non relié porte un discret « À
+   relier » ; un clic ouvre la recherche de F2 pré-remplie avec son titre. Le
+   même geste qu'un ajout, pas une page de plus.
+4. **Les étapes gardent leurs coordonnées.** Un centre de ville issu du seed ou
+   saisi à la main est à nous, et suffit à ancrer la carte.
+
+Coût : quelques centaines de recherches, une seule fois, dans la franchise de
+5 000 par mois → 0 €.
 
 ---
 

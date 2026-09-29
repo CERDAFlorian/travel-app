@@ -10,17 +10,6 @@
     border-radius: 8px;
   }
 
-  &__thumb {
-    flex: none;
-    width: 44px;
-    height: 31px;
-    border: 1px solid var(--border-strong);
-    border-radius: 4px;
-    background-color: var(--surface-tint);
-    background-size: cover;
-    background-position: center;
-  }
-
   // Les 6 couleurs de catégorie sont invariantes : les mêmes pour tous les
   // voyages, hors contrat de thème.
   &__dot {
@@ -146,6 +135,13 @@
 
     &[data-on] {
       border-style: solid;
+      border-color: var(--ok);
+      color: var(--ok);
+    }
+
+    // Placé, mais pas relié à Google : la couleur du « placé », le tireté de
+    // l'action qui reste à faire.
+    &[data-relink] {
       border-color: var(--ok);
       color: var(--ok);
     }

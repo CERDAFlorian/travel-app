@@ -31,10 +31,39 @@ export default defineConfig({
         // Toute navigation retombe sur index.html : le routeur prend ensuite
         // la main, y compris sur /voyage/:slug et /partage/:token.
         navigateFallback: '/index.html',
-        // Aucun cache d'exécution n'est déclaré, et c'est voulu : les appels
-        // Supabase doivent toucher le réseau ou échouer franchement — c'est
-        // IndexedDB qui porte la donnée hors ligne, pas le service worker.
-        // Nominatim non plus : géocoder hors ligne n'a aucun sens.
+        // UN SEUL cache d'exécution, et c'est voulu : les appels Supabase
+        // doivent toucher le réseau ou échouer franchement — c'est IndexedDB
+        // qui porte la donnée hors ligne, pas le service worker. Google non
+        // plus : ses conditions interdisent de garder ses tuiles et ses photos.
+        //
+        // L'exception, ce sont les photos Wikimedia (L10) : sous licence
+        // libre, on a le droit de les garder. Une photo vue une fois se revoit
+        // dans le train sans réseau. Au plus 400 photos, deux mois.
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/upload\.wikimedia\.org\//,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'photos-wikimedia',
+              expiration: { maxEntries: 400, maxAgeSeconds: 60 * 24 * 60 * 60 },
+              // Une image d'un autre domaine arrive « opaque » (statut 0) :
+              // sans cette ligne, Workbox refuserait de la garder.
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            // Les photos collées (0013_photos_collees.sql). Un nom de fichier
+            // n'est jamais réutilisé — remplacer une photo en dépose une
+            // nouvelle —, d'où CacheFirst sans risque de garder une vieille image.
+            urlPattern: /\/storage\/v1\/object\/public\/photos\//,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'photos-collees',
+              expiration: { maxEntries: 400, maxAgeSeconds: 60 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
         cleanupOutdatedCaches: true,
       },
 
@@ -81,9 +110,15 @@ export default defineConfig({
     // Surtout, ces valeurs empêchent un test de toucher la VRAIE base par
     // accident. Le jour où un test appellera Supabase pour de bon, il échouera
     // sur une URL qui n'existe pas plutôt que d'écrire dans la production.
+    //
+    // Google, à l'inverse, est VIDÉ : sans clé, carte et recherche se rendent
+    // dans leur état « non configuré », le même en local qu'en CI, et aucun
+    // test ne peut consommer le quota payant par accident.
     env: {
       VITE_SUPABASE_URL: 'https://base-de-test.supabase.co',
       VITE_SUPABASE_ANON_KEY: 'cle-publishable-de-test',
+      VITE_GOOGLE_MAPS_KEY: '',
+      VITE_GOOGLE_MAP_ID: '',
     },
   },
 });

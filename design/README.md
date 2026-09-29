@@ -107,31 +107,39 @@ Sur ces 13, **4 ne sont référencées nulle part** dans le `.dc.html` — ce so
 variantes inutilisées, inutile de les récupérer : `alpes2`, `deco-fuji2`,
 `koyasan2`, `miyajima2`.
 
-Les **9 réellement utilisées** :
+Les 3 qui comptaient ont été récupérées depuis : `deco-momiji` et `deco-fuji`
+(décors du header), `hero-pagode` (bandeau hero). Les 6 autres (`sushi`, `sumo`,
+`shirakawago2`, `narai`, `matcha`, `baguettes`) ne servaient qu'à l'appariement
+photo ↔ item, retiré depuis : il n'y a plus rien à récupérer.
 
-| Image | Rôle | Bloque L3 ? |
-|---|---|---|
-| `deco-momiji` | décor du header, en haut à gauche | **oui** |
-| `deco-fuji` | décor du header, en haut à droite | **oui** |
-| `hero-pagode` | bandeau hero pleine largeur | **oui** |
-| `sushi` | items « sushi », « toyosu », « tsukiji » | non |
-| `sumo` | items « sumo », « ryogoku » | non |
-| `shirakawago2` | items « shiroyama », « vallée » | non |
-| `narai` | items « narai », « nakasendo » | non |
-| `matcha` | items « matcha », « thé » | non |
-| `baguettes` | items « baguette » | non |
+**Procédure** pour une image de décor : exporter depuis le canvas Claude Design,
+déposer le `.png` dans `design/img/`, puis `npm run img`. Le manifeste et les
+WebP se mettent à jour tout seuls, il n'y a rien d'autre à toucher.
 
-Les 6 dernières alimentent l'appariement par mots-clés (voir plus bas) : leur
-absence laisse simplement l'item sans photo, sans rien casser. Les 3 premières
-sont structurantes pour le shell de L3.
+## Appariement photo ↔ item — retiré
 
-**Procédure** : exporter depuis le canvas Claude Design, déposer les `.png` dans
-`design/img/`, puis `npm run img`. Le manifeste et les WebP se mettent à jour
-tout seuls, il n'y a rien d'autre à toucher.
+Le design fait correspondre des **mots-clés du titre de l'item** à une image
+(`.dc.html`, lignes 366-381), et l'app l'avait repris pour le bandeau des étapes.
+Retiré en septembre 2026 avec ses 27 images : c'était une bibliothèque de démo,
+figée sur un voyage au Japon, qui affichait une photo sans rien savoir du lieu.
+Les illustrations du `.dc.html` qui en dépendaient ne s'affichent donc plus.
 
-## Appariement photo ↔ item
+## Style de la carte Google (L10)
 
-Le design n'attache pas les photos aux étapes : il fait correspondre des
-**mots-clés du titre de l'item** à une image (`.dc.html`, lignes 366-381). Le
-bandeau d'une étape est composé des photos de ses items qui matchent. À reprendre
-tel quel pour le `StepCard` de L3.
+`carte-google-style.json` est la **source de vérité** du fond de carte Google.
+Il reprend la carte SVG : mer crème (`#fbf3e3`), terre kaki (`#dfdcbc`), et
+**rien d'autre** — ni noms, ni routes, ni lieux, ni transports, ni frontières de
+Google. Seuls restent les dessins de l'app : épingles, pastilles, arcs et
+pointillés du voyage. Le logo Google et la ligne d'attribution, eux, sont
+obligatoires.
+
+Il ne s'applique pas depuis le code : un Map ID impose le style « cloud ». On
+l'importe à la main, comme le SQL :
+
+1. Google Cloud → Google Maps Platform → **Styles de carte** → créer un style →
+   importer ce fichier JSON → enregistrer ;
+2. **Gestion des plans** → l'ID de carte `travel-app` → associer ce style.
+
+Google convertit ce JSON à son format récent, de façon « approximative » selon
+sa documentation : vérifier le rendu après import. Toute retouche faite dans
+l'éditeur se réexporte ici (bouton Export), pour que le fichier reste la vérité.

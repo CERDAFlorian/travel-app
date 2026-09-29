@@ -115,7 +115,7 @@ export async function sealHotel(step, id) {
   if (doomed.length === 0) return;
 
   const { error: sweep } = await supabase.from('items').delete().in('id', doomed);
-  if (sweep) fail(sweep, 'Suppression des hôtels non retenus');
+  if (sweep) fail(sweep, 'Suppression des logements non retenus');
 }
 
 // Défait le scellement. Les candidats supprimés ne reviennent pas — c'est
@@ -222,12 +222,22 @@ export async function duplicateItemOnDay(step, item, dayOffset, slot = null) {
       price: item.price,
       currency: item.currency,
       notes: item.notes,
-      // Les coordonnées suivent, `geocoded_at` compris : c'est le même lieu,
-      // et le redemander à Nominatim pour une adresse déjà résolue serait une
-      // requête pour rien.
+      // Le lieu suit, place_id et date de synchronisation compris : c'est le
+      // même lieu, et le redemander à Google serait une requête payée pour
+      // rien. La date est recopiée telle quelle : les 30 jours courent depuis
+      // l'obtention des coordonnées, pas depuis la copie.
       lat: item.lat,
       lng: item.lng,
       geocoded_at: item.geocoded_at,
+      place_id: item.place_id ?? null,
+      place_synced_at: item.place_synced_at ?? null,
+      // La photo aussi : même lieu, même photo.
+      photo_url: item.photo_url ?? null,
+      photo_credit: item.photo_credit ?? null,
+      photo_license: item.photo_license ?? null,
+      photo_page: item.photo_page ?? null,
+      photo_checked_at: item.photo_checked_at ?? null,
+      photo_source: item.photo_source ?? null,
       position,
       day_offset: dayOffset,
       day_slot: slot,
@@ -244,24 +254,84 @@ export async function duplicateItemOnDay(step, item, dayOffset, slot = null) {
   return data.id;
 }
 
-// `geocoded_at` distingue les deux origines, comme le prévoit le schéma :
-// renseigné quand Nominatim a répondu, NULL quand les coordonnées ont été
-// collées à la main. Utile le jour où l'on voudra re-géocoder en masse sans
-// écraser ce qui a été corrigé manuellement.
-export async function setCoordinates(id, { lat, lng }, { geocoded }) {
-  const { error } = await supabase
-    .from('items')
-    .update({ lat, lng, geocoded_at: geocoded ? new Date().toISOString() : null })
-    .eq('id', id);
+// Coordonnées d'un lieu, et d'où elles viennent (0010_google.sql).
+//
+// Avec un `placeId`, elles viennent de Google : le place_id se garde
+// indéfiniment, les coordonnées 30 jours, comptés depuis `place_synced_at`.
+// Sans, elles ont été collées à la main : elles sont à nous, et un lien Google
+// antérieur est rompu — sinon le rafraîchissement des 30 jours écraserait la
+// correction manuelle. `geocoded_at` était la trace de Nominatim : il n'est
+// plus jamais posé.
+//
+// Un lieu qui CHANGE perd sa photo Wikimedia : elle était celle de l'ancien,
+// et sera cherchée de nouveau pour le nouveau (usePhotoFill). Une photo COLLÉE
+// reste : c'est l'utilisateur qui l'a choisie. Un simple rafraîchissement des
+// 30 jours (`keepPhoto`) ne touche à rien : c'est le même lieu.
+const NO_PHOTO = {
+  photo_url: null,
+  photo_credit: null,
+  photo_license: null,
+  photo_page: null,
+  photo_checked_at: null,
+  photo_source: null,
+};
+
+function placeColumns({ lat, lng, placeId }) {
+  return {
+    lat,
+    lng,
+    place_id: placeId ?? null,
+    place_synced_at: placeId ? new Date().toISOString() : null,
+    geocoded_at: null,
+  };
+}
+
+// `table` : 'items' ou 'steps'. Deux écritures : la position, puis — sauf
+// rafraîchissement — l'oubli de la photo, seulement si elle n'est pas collée.
+async function relocate(table, id, point, { keepPhoto = false } = {}) {
+  const columns = placeColumns(point);
+  if (table === 'steps') delete columns.geocoded_at;
+  const { error } = await supabase.from(table).update(columns).eq('id', id);
   if (error) fail(error, 'Enregistrement des coordonnées');
+  if (keepPhoto) return;
+  const { error: photoError } = await supabase
+    .from(table)
+    .update(NO_PHOTO)
+    .eq('id', id)
+    .or('photo_source.is.null,photo_source.neq.user');
+  if (photoError) fail(photoError, 'Enregistrement des coordonnées');
+}
+
+export async function setCoordinates(id, point, options) {
+  await relocate('items', id, point, options);
 }
 
 export async function clearCoordinates(id) {
   const { error } = await supabase
     .from('items')
-    .update({ lat: null, lng: null, geocoded_at: null })
+    .update({ lat: null, lng: null, geocoded_at: null, place_id: null, place_synced_at: null, ...NO_PHOTO })
     .eq('id', id);
   if (error) fail(error, 'Effacement des coordonnées');
+}
+
+// La photo d'un lieu (0012_photos.sql, 0013_photos_collees.sql).
+// `source` : 'wikimedia' (trouvée seule) ou 'user' (collée). `photo` à null :
+// rien de trouvé, ou photo retirée — on le note quand même, pour que Wikimedia
+// ne revienne pas la chercher à chaque ouverture.
+function photoColumns(photo, source) {
+  return {
+    photo_url: photo?.url ?? null,
+    photo_credit: photo?.credit ?? null,
+    photo_license: photo?.license ?? null,
+    photo_page: photo?.page ?? null,
+    photo_source: photo ? source : null,
+    photo_checked_at: new Date().toISOString(),
+  };
+}
+
+export async function setItemPhoto(id, photo, source = 'wikimedia') {
+  const { error } = await supabase.from('items').update(photoColumns(photo, source)).eq('id', id);
+  if (error) fail(error, 'Enregistrement de la photo');
 }
 
 // Lien de partage.
@@ -399,10 +469,10 @@ export async function setStepNights(trip, stepId, nights) {
   );
 }
 
-// Coordonnées d'une étape, posées depuis le géocodage.
-export async function setStepCoordinates(stepId, { lat, lng }) {
-  const { error } = await supabase.from('steps').update({ lat, lng }).eq('id', stepId);
-  if (error) fail(error, 'Enregistrement des coordonnées');
+// Coordonnées d'une étape : mêmes règles que pour un lieu (voir
+// placeColumns), sans `geocoded_at`, que les étapes n'ont jamais eu.
+export async function setStepCoordinates(stepId, point, options) {
+  await relocate('steps', stepId, point, options);
 }
 
 // Déplace une étape d'un cran.

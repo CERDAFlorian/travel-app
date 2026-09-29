@@ -12,7 +12,6 @@ import Experiences from '@/components/Experiences.jsx';
 import BudgetPanel from '@/components/BudgetPanel.jsx';
 import ShareLink from '@/components/ShareLink.jsx';
 import NightsGap from '@/components/NightsGap.jsx';
-import LocateAll from '@/components/LocateAll.jsx';
 import AddStep from '@/components/AddStep.jsx';
 import TripProgram from '@/components/TripProgram.jsx';
 import { CitiesIcon, DaysIcon } from '@/components/ViewIcons.jsx';
@@ -21,6 +20,8 @@ import LoveNote from '@/components/LoveNote.jsx';
 import { addStep, moveStep, removeStep, setStepNights } from '@/lib/mutations.js';
 import { resolveItinerary, timelineEntries } from '@/lib/itinerary.js';
 import { LoveNotesProvider } from '@/hooks/useLoveNotes.js';
+import { useRefreshPlaces } from '@/hooks/useRefreshPlaces.js';
+import { usePhotoFill } from '@/hooks/usePhotoFill.js';
 import './TripView.scss';
 
 // L'itinéraire, mis en page comme le design.
@@ -52,6 +53,13 @@ export default function TripView({
   // perdrait son zoom et sa position au moment précis où l'on s'en sert.
   const [byDay, setByDay] = useState(false);
   const [justAddedStep, setJustAddedStep] = useState(null);
+
+  // La règle des 30 jours : les lieux Google qui vont expirer sont redemandés
+  // à l'ouverture, par qui peut écrire le voyage.
+  useRefreshPlaces(trip, { enabled: !readOnly && !shared && !isOffline, onChanged });
+  // Les photos Wikimedia qui manquent — villes, lieux touristiques, hôtels —
+  // se cherchent au même moment, gratuitement, et s'enregistrent.
+  usePhotoFill(trip, { enabled: !readOnly && !shared && !isOffline, onChanged });
 
   // LA HAUTEUR DE LA FRISE SE MESURE, ELLE NE SE DEVINE PLUS.
   //
@@ -291,12 +299,8 @@ export default function TripView({
             <div className="trip__map-card">
               <div className="trip__map-head">
                 <h2 className="trip__map-title">La carte du voyage</h2>
-                {/* L'indication « molette pour zoomer » disait ce que tout le
-                    monde essaie de toute façon. La place sert mieux à une
-                    action. */}
-                <LocateAll trip={view} readOnly={readOnly} onChanged={onChanged} />
               </div>
-              <TripMap trip={view} selectedStepId={selectedStepId} onSelectStep={selectStep} />
+              <TripMap trip={view} selectedStepId={selectedStepId} onSelectStep={selectStep} onDemand={shared} />
               <TravelTimes steps={view.steps} legs={view.legs} />
             </div>
           </aside>
@@ -346,7 +350,6 @@ function StepsColumn({
           <Fragment key={step.id}>
             <StepCard
               step={step}
-              tripTitle={view.title}
               readOnly={readOnly}
               // D'où l'on vient et où l'on va. L'onglet Jour par jour d'une
               // ville ne montre QUE cette ville : sans ses voisines, le trajet
