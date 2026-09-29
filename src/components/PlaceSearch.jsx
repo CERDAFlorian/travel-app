@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { hasGoogleMaps } from '@/lib/googleMaps.js';
 import { newSession, resolve, suggest } from '@/lib/places.js';
 import { parseCoordinates } from '@/lib/geocode.js';
+import { renameProposal } from '@/lib/placeMatch.js';
 import { haversine, formatDistance, MAX_DISTANCE_FROM_STEP_KM } from '@/lib/geo.js';
 import { useOnline } from '@/hooks/useOnline.js';
 import './PlaceSearch.scss';
@@ -26,8 +27,14 @@ import './PlaceSearch.scss';
 // `near`, et pour une étape, l'étape voisine (`biasName` la nomme). Aucun
 // filtre de type : une étape peut être une île ou un village de montagne.
 //
-// `onSave({ lat, lng, placeId })` : placeId vaut null pour des coordonnées
-// collées à la main.
+// `onSave({ lat, lng, placeId, title })` : placeId vaut null pour des
+// coordonnées collées à la main.
+//
+// `offerRename` (un item) : si le lieu choisi porte un autre nom que le titre,
+// on demande s'il faut renommer — `title` vaut alors le nom retenu, sinon il
+// est absent. Sans cette question, changer de lieu déplaçait l'épingle mais
+// laissait l'ancien nom. Une étape ne se renomme pas : son nom est le fil de
+// tout le voyage.
 
 // Attendre que la frappe se pose avant d'interroger Google : sans ce délai,
 // chaque lettre partirait en requête.
@@ -41,6 +48,7 @@ export default function PlaceSearch({
   bias = near,
   biasName = stepName,
   forStep = false,
+  offerRename = false,
   onSave,
   onCancel,
 }) {
@@ -53,6 +61,7 @@ export default function PlaceSearch({
   const [error, setError] = useState(null);
   const [manual, setManual] = useState('');
   const [pending, setPending] = useState(null);
+  const [naming, setNaming] = useState(null);
   const [saving, setSaving] = useState(false);
 
   // Une session par recherche, de la première lettre au lieu choisi. Un ref :
@@ -100,11 +109,11 @@ export default function PlaceSearch({
   const distanceOf = (point) =>
     near ? haversine({ lat: Number(near.lat), lng: Number(near.lng) }, point) : null;
 
-  async function commit(point) {
+  async function commit({ lat, lng, placeId, title: newTitle }) {
     setSaving(true);
     setError(null);
     try {
-      await onSave(point);
+      await onSave(newTitle ? { lat, lng, placeId, title: newTitle } : { lat, lng, placeId });
     } catch (failure) {
       setError(failure.message);
       setSaving(false);
@@ -120,6 +129,17 @@ export default function PlaceSearch({
       setPending({ point, distance });
       return;
     }
+    ask(point);
+  }
+
+  // Un autre nom que le titre : on demande avant d'enregistrer.
+  function ask(point) {
+    const name = offerRename ? renameProposal(title, point.name) : null;
+    if (name) {
+      setPending(null);
+      setNaming({ point, name });
+      return;
+    }
     commit(point);
   }
 
@@ -132,7 +152,7 @@ export default function PlaceSearch({
       // ouvrira une nouvelle.
       session.current = null;
       setSaving(false);
-      choose(point);
+      choose({ ...point, name: suggestion.main });
     } catch {
       setError('Google n’a pas pu donner la position de ce lieu. Réessaie ou colle des coordonnées.');
       setSaving(false);
@@ -162,7 +182,7 @@ export default function PlaceSearch({
             type="button"
             className="place-search__confirm"
             disabled={saving}
-            onClick={() => commit(pending.point)}
+            onClick={() => ask(pending.point)}
           >
             Enregistrer quand même
           </button>
@@ -170,6 +190,39 @@ export default function PlaceSearch({
             Choisir autre chose
           </button>
         </div>
+      </div>
+    );
+  }
+
+  if (naming) {
+    return (
+      <div className="place-search" role="group" aria-label="Renommer">
+        <p className="place-search__warning">
+          Ce lieu s'appelle <strong>{naming.name}</strong>. Renommer « {title} » ?
+        </p>
+        <div className="place-search__actions">
+          <button
+            type="button"
+            className="place-search__submit"
+            disabled={saving}
+            onClick={() => commit({ ...naming.point, title: naming.name })}
+          >
+            Renommer
+          </button>
+          <button
+            type="button"
+            className="place-search__cancel"
+            disabled={saving}
+            onClick={() => commit(naming.point)}
+          >
+            Garder le nom actuel
+          </button>
+        </div>
+        {error && (
+          <p className="place-search__error" role="alert">
+            {error}
+          </p>
+        )}
       </div>
     );
   }
