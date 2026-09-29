@@ -330,11 +330,11 @@ export default function ItemRow({ item, step, readOnly, autoLocate, onChanged })
           stepName={step.name}
           near={step.lat != null && step.lng != null ? step : null}
           onCancel={() => setLocating(false)}
-          offerRename
+          adoptName
           onSave={async (point) => {
             await setCoordinates(item.id, point);
-            // Le nom du lieu choisi, si l'utilisateur a accepté de renommer.
-            if (point.title) await updateItem(item.id, { title: point.title });
+            // Le lieu choisi dans Google donne son nom à l'item.
+            if (point.title && point.title !== item.title) await updateItem(item.id, { title: point.title });
             await onChanged();
             setLocating(false);
           }}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decideItem, decideStep, namesMatch, renameProposal } from './placeMatch.js';
+import { decideItem, decideStep, namesMatch } from './placeMatch.js';
 
 // Les cas viennent du vrai voyage rapatrié le 26 septembre 2026 et des
 // réponses de Google au test F0.
@@ -88,27 +88,5 @@ describe('decideStep', () => {
 
   it('relie une étape pas encore située quand le nom concorde', () => {
     expect(decideStep({ name: 'Kamikochi', lat: null, lng: null }, { name: 'Kamikōchi', lat: 36.25, lng: 137.64 }).link).toBe(true);
-  });
-});
-
-describe('renameProposal', () => {
-  // Le même lieu, écrit autrement : on ne demande rien.
-  it('ne propose rien quand le titre désigne déjà le lieu', () => {
-    expect(renameProposal('JARDIN KENROKUEN', 'Kenroku-en')).toBeNull();
-    expect(renameProposal('Fushimi anari', 'Fushimi Inari-taisha')).toBeNull();
-  });
-
-  // Un autre lieu : l'épingle bouge, le nom doit pouvoir suivre.
-  it('propose le nom de Google quand c’est un autre lieu', () => {
-    expect(renameProposal("Temple d'or", 'Kinkaku-ji')).toBe('Kinkaku-ji');
-    expect(renameProposal('Temple', ' Kiyomizu-dera ')).toBe('Kiyomizu-dera');
-    // Une activité : la question est posée, « Garder le nom actuel » y répond.
-    expect(renameProposal('VUE SUR LA SKYTREE', 'Tokyo Skytree')).toBe('Tokyo Skytree');
-    expect(renameProposal('Dîner à Pontocho', 'Pontochō Alley')).toBe('Pontochō Alley');
-  });
-
-  it('ne propose rien sans nom', () => {
-    expect(renameProposal('Kinkaku', '')).toBeNull();
-    expect(renameProposal('Kinkaku', null)).toBeNull();
   });
 });

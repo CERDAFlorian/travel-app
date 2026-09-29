@@ -73,17 +73,6 @@ export function namesMatch(title, googleName) {
   return mine.every((word) => theirs.some((other) => close(word, other)));
 }
 
-// Le nom à proposer quand on change le lieu d'un item : celui de Google,
-// seulement s'il désigne autre chose que le titre. « JARDIN KENROKUEN » relié à
-// « Kenroku-en » garde son titre sans question ; « Temple d'or » relié à
-// « Kinkaku-ji » se voit proposer le nouveau nom. Jamais imposé : le titre
-// d'une activité (« VUE SUR LA SKYTREE ») dit ce qu'on y fait, pas où.
-export function renameProposal(title, googleName) {
-  const name = String(googleName ?? '').trim();
-  if (!name || namesMatch(title ?? '', name)) return null;
-  return name;
-}
-
 // Un item ne se relie jamais à une ville ou une préfecture : « Château
 // d'Osaka » réduit à « Osaka » ne doit pas tomber sur la ville.
 const AREA_TYPES = new Set(['locality', 'administrative_area_level_1', 'administrative_area_level_2', 'country']);
