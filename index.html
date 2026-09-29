@@ -14,6 +14,9 @@
 
   <!-- iOS ignore les icônes du manifest pour l'écran d'accueil et lit ce lien. -->
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <!-- Le SVG, net à toutes les tailles d'onglet ; le PNG pour les navigateurs
+       qui ne lisent pas les favicons SVG. Voir scripts/build-icons.mjs. -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/icon-192.png" sizes="192x192">
 
   <!-- Polices hébergées en local. Chargées depuis Google Fonts, elles

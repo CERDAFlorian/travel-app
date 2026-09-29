@@ -1034,6 +1034,14 @@ japonaise, alors que la charte pays ne vaut qu'à l'intérieur d'un voyage.
 rastériseur SVG ni Pillow, et une dépendance graphique pour quatre fichiers
 générés une fois était disproportionnée.
 
+**Nouvelle icône le 29 septembre 2026, qui fait penser au voyage.** Un avion en
+papier s'envole d'une épingle orange en laissant un trajet en pointillés, sur un
+ciel en dégradé du bleu `neutral`. Toujours rien de japonais. Le même script
+écrit aussi `public/favicon.svg`, net à toutes les tailles d'onglet : la scène
+est décrite une fois, le PNG et le SVG ne peuvent pas diverger. Dessin agrandi
+pour l'onglet et l'écran d'accueil, resserré dans les 80 % de sécurité pour
+l'icône maskable d'Android.
+
 **Un bug de précache attrapé au build** : les icônes étaient inscrites deux
 fois, par `includeAssets` puis par le manifest, avec des révisions
 différentes — Workbox refuse l'installation dans ce cas. `globIgnores` règle
