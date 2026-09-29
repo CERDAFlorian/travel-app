@@ -1034,13 +1034,15 @@ japonaise, alors que la charte pays ne vaut qu'à l'intérieur d'un voyage.
 rastériseur SVG ni Pillow, et une dépendance graphique pour quatre fichiers
 générés une fois était disproportionnée.
 
-**Nouvelle icône le 29 septembre 2026, qui fait penser au voyage.** Un avion en
-papier s'envole d'une épingle orange en laissant un trajet en pointillés, sur un
-ciel en dégradé du bleu `neutral`. Toujours rien de japonais. Le même script
-écrit aussi `public/favicon.svg`, net à toutes les tailles d'onglet : la scène
-est décrite une fois, le PNG et le SVG ne peuvent pas diverger. Dessin agrandi
-pour l'onglet et l'écran d'accueil, resserré dans les 80 % de sécurité pour
-l'icône maskable d'Android.
+**Nouvelle icône le 29 septembre 2026, qui fait penser au voyage.** Un avion
+qui survole le globe, trajet en pointillés, sur un cercle corail : une image
+fournie par Florian, qui en a confirmé les droits (elle ressemble aux icônes
+Flaticon/Freepik, dont la licence interdit l'usage en logo — à revérifier si
+l'app devient publique). Toujours rien de japonais. La source est
+`design/icone-source.png` ; `scripts/build-icons.mjs` la lit et en tire le
+favicon 32 px, les icônes 192/512, l'icône maskable (dessin dans les 80 % de
+sécurité, fond corail) et celle d'iOS (opaque, fond corail). Changer d'icône :
+remplacer la source, relancer le script.
 
 **Un bug de précache attrapé au build** : les icônes étaient inscrites deux
 fois, par `includeAssets` puis par le manifest, avec des révisions
