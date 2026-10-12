@@ -165,8 +165,31 @@ describe('TripProgram — les trajets', () => {
     expect(html).toContain('15 min');
   });
 
-  it('signale un transfert dont la durée manque', () => {
-    expect(render({ trip: trip({ legs: [] }) })).toContain('durée non renseignée');
+  // Un trajet manquant est une chose à faire : en construction, la ligne
+  // invite à le saisir ; en lecture, elle dit ce qui manque.
+  it('invite à saisir un trajet manquant', () => {
+    expect(render({ trip: trip({ legs: [] }) })).toContain('+ ajouter le transport');
+    expect(render({ trip: trip({ legs: [] }), readOnly: true })).toContain('durée non renseignée');
+  });
+
+  // L11 F3 : le trajet se saisit ICI, sur le jour où l'on change de ville.
+  it('rend la ligne du trajet modifiable en construction', () => {
+    const html = render();
+    expect(html).toMatch(/<button[^>]*class="pday__move"[^>]*title="Modifier ce trajet"/);
+  });
+
+  it('laisse la ligne du trajet inerte en lecture', () => {
+    const html = render({ readOnly: true });
+    expect(html).not.toContain('Modifier ce trajet');
+    expect(html).toContain('Kyoto → Osaka');
+  });
+
+  it('montre le prix et la note du trajet', () => {
+    const legs = [{ ...trip().legs[0], price: 15, currency: 'EUR', note: 'JR Pass' }];
+    const html = render({ trip: trip({ legs }) });
+
+    expect(html).toContain('JR Pass');
+    expect(html).toMatch(/15\s?€/);
   });
 });
 

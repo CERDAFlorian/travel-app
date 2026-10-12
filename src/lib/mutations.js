@@ -583,7 +583,7 @@ export async function deleteFlight(trip, id) {
 // panneau des temps de trajet, et parce qu'un trajet peut n'avoir qu'une durée
 // connue, sans horaire.
 
-export async function saveLeg({ id, tripId, fromStep, toStep, mode, dep, arr, price }) {
+export async function saveLeg({ id, tripId, fromStep, toStep, mode, dep, arr, price, note }) {
   const row = {
     trip_id: tripId,
     from_step: fromStep,
@@ -596,6 +596,9 @@ export async function saveLeg({ id, tripId, fromStep, toStep, mode, dep, arr, pr
     // Même choix que pour les items ajoutés depuis l'app.
     price: price ?? null,
     currency: 'EUR',
+    // « JR Pass », « réserver les places » : ce qu'on doit se rappeler au
+    // guichet. Vide vaut NULL, pas une chaîne vide qu'on afficherait.
+    note: note?.trim() || null,
   };
 
   // Un trajet existe déjà entre ces deux étapes : on le remplace plutôt que

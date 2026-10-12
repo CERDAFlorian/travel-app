@@ -13,7 +13,7 @@ demande le réseau et affiche un message à la place. Le pas-à-pas de mise en p
 de L10 (étape 9) dit l'inverse du README. À corriger dans `README.md`, sinon
 quelqu'un croira son voyage mal préparé en voyant la carte vide.
 
-**`TravelTimes` appelle un hook après un `return`.** Le composant sort tôt quand
+**✅ Corrigé le 12 octobre 2026 (L11 F3). `TravelTimes` appelle un hook après un `return`.** Le composant sort tôt quand
 il n'y a aucun trajet, puis appelle `useLoveNotes`. C'est contraire aux règles
 des hooks React. Sans conséquence aujourd'hui, car c'est le seul
 hook du composant et qu'il ne lit qu'un contexte. Le jour où on y ajoutera un

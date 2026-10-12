@@ -124,6 +124,22 @@
     font-size: var(--fs-sm);
   }
 
+  // Le trajet entre deux villes est un bouton en construction : cliquer la
+  // ligne ouvre sa saisie juste dessous. Il garde l'allure d'une ligne de
+  // programme, et ne se trahit qu'au survol.
+  button#{&}__move {
+    width: 100%;
+    border: 1px solid transparent;
+    font: inherit;
+    font-size: var(--fs-sm);
+    text-align: left;
+    cursor: pointer;
+
+    &:hover,
+    &[data-open] { border-color: var(--accent-2); }
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
   &__move-kind {
     flex: none;
     padding: 0 6px;

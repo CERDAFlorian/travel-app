@@ -1,3 +1,5 @@
+import { priceInEuros } from './currency.js';
+
 // Trajets entre étapes.
 //
 // Les modes reprennent le CHECK de `legs.mode` dans 0001_schema.sql. Comme
@@ -53,4 +55,25 @@ export function formatDuration(minutes) {
 // n'apprennent rien.
 export function formatClock(time) {
   return time ? String(time).slice(0, 5) : null;
+}
+
+// Ce qui se lit d'un trajet connu : « Shinkansen · 09:12 → 11:52 · 2 h 40 ·
+// 110 € ». La durée reste même sans horaire, pour les trajets dont on ne
+// connaît que ça. Le prix se lit là où l'œil passe déjà : six trajets pèsent
+// lourd, et les chercher un par un dans le budget ne dit pas lequel coûte cher.
+//
+// Un seul endroit pour cette phrase : elle s'affiche dans la route de la vue
+// Villes et dans le jour du programme, et deux versions finiraient par dire
+// deux choses.
+export function legSummary(leg) {
+  if (!leg) return null;
+
+  return [
+    modeLabel(leg.mode),
+    formatClock(leg.dep) && `${formatClock(leg.dep)} → ${formatClock(leg.arr) ?? '?'}`,
+    formatDuration(leg.duration_min),
+    priceInEuros(leg.price, leg.currency ?? 'EUR'),
+  ]
+    .filter(Boolean)
+    .join(' · ');
 }

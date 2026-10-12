@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TRANSPORT_MODES, durationBetween, formatClock, formatDuration, modeLabel } from './transport.js';
+import { TRANSPORT_MODES, durationBetween, formatClock, formatDuration, legSummary, modeLabel } from './transport.js';
 
 describe('durationBetween', () => {
   it('compte les minutes entre deux horaires', () => {
@@ -67,5 +67,28 @@ describe('TRANSPORT_MODES', () => {
 
   it('retombe sur la valeur brute pour un mode inconnu', () => {
     expect(modeLabel('fusee')).toBe('fusee');
+  });
+});
+
+describe('legSummary', () => {
+  it('dit le mode, les horaires et la durée', () => {
+    expect(
+      legSummary({ mode: 'shinkansen', dep: '09:12:00', arr: '11:52:00', duration_min: 160 }),
+    ).toBe('Shinkansen · 09:12 → 11:52 · 2 h 40');
+  });
+
+  // Beaucoup de trajets ne sont connus que par leur durée.
+  it('se contente de la durée sans horaire', () => {
+    expect(legSummary({ mode: 'bus', duration_min: 45 })).toBe('Bus · 45 min');
+  });
+
+  it('ajoute le prix quand il est connu', () => {
+    const text = legSummary({ mode: 'train', duration_min: 60, price: 110, currency: 'EUR' });
+    expect(text.startsWith('Train · 1 h · 110')).toBe(true);
+    expect(text).toContain('€');
+  });
+
+  it('ne dit rien d’un trajet absent', () => {
+    expect(legSummary(null)).toBeNull();
   });
 });

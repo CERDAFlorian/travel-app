@@ -1,9 +1,11 @@
-import { Fragment, useEffect, useMemo, useRef } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { daysOf, tripSchedule, unplacedOf } from '@/lib/days.js';
 import { formatDayFull, todayIso } from '@/lib/dates.js';
 import { formatClock, formatDuration, modeLabel } from '@/lib/transport.js';
+import { priceInEuros } from '@/lib/currency.js';
 import DayPlan from './DayPlan.jsx';
 import CityReserve from './CityReserve.jsx';
+import LegEditor from './LegEditor.jsx';
 import './TripProgram.scss';
 
 // Le voyage jour par jour — la colonne de gauche, à la place des étapes.
@@ -119,7 +121,13 @@ export default function TripProgram({ trip, readOnly, onChanged, selectedStepId,
               ))}
 
               {day.transfer ? (
-                <TransferDay day={day} cities={cities} readOnly={readOnly} onChanged={onChanged} />
+                <TransferDay
+                  day={day}
+                  tripId={trip.id}
+                  cities={cities}
+                  readOnly={readOnly}
+                  onChanged={onChanged}
+                />
               ) : (
                 <DayPlan
                   day={first}
@@ -165,7 +173,7 @@ export default function TripProgram({ trip, readOnly, onChanged, selectedStepId,
 // Le trajet est AU MILIEU, pas en tête : avant F2 il ouvrait la journée, qui
 // appartenait tout entière à la ville d'arrivée, et le matin à Tokyo avant le
 // train ne se notait nulle part.
-function TransferDay({ day, cities, readOnly, onChanged }) {
+function TransferDay({ day, tripId, cities, readOnly, onChanged }) {
   const [leaving, arriving] = day.parts;
   const { transfer } = day;
 
@@ -189,26 +197,7 @@ function TransferDay({ day, cities, readOnly, onChanged }) {
         </div>
       )}
 
-      <p className="pday__move" data-kind="transfert">
-        <span className="pday__move-kind">{transfer.leg ? modeLabel(transfer.leg.mode) : 'Transfert'}</span>
-        <span className="pday__move-route">
-          {transfer.from.name} → {transfer.to.name}
-        </span>
-
-        {/* La durée en clair : une demi-journée de train n'est pas une
-            matinée libre, et c'est ce qu'on vient vérifier. */}
-        {transfer.leg?.duration_min != null && (
-          <span className="pday__move-time">{formatDuration(transfer.leg.duration_min)}</span>
-        )}
-        {transfer.leg?.dep && (
-          <span className="pday__move-when">
-            {formatClock(transfer.leg.dep)}
-            {transfer.leg.arr && ` → ${formatClock(transfer.leg.arr)}`}
-          </span>
-        )}
-        {transfer.leg?.note && <span className="pday__move-note">{transfer.leg.note}</span>}
-        {!transfer.leg && <span className="pday__move-note">durée non renseignée</span>}
-      </p>
+      <TransferLine transfer={transfer} tripId={tripId} readOnly={readOnly} onChanged={onChanged} />
 
       {show(arriving) && (
         <div className="pday__part" data-way="in">
@@ -224,6 +213,82 @@ function TransferDay({ day, cities, readOnly, onChanged }) {
       )}
 
       {nothing && <p className="dayplan__empty">Rien de plus que la route.</p>}
+    </>
+  );
+}
+
+// La ligne du trajet, au milieu du jour où l'on change de ville.
+//
+// C'EST ICI QU'ON LE SAISIT depuis L11 F3 : cliquer la ligne ouvre la saisie
+// juste dessous, entre ce qu'on fait avant de partir et ce qu'on fait en
+// arrivant — on règle l'horaire du train en voyant ce qu'il laisse de la
+// journée. La vue Villes ne fait plus que le rappeler.
+function TransferLine({ transfer, tripId, readOnly, onChanged }) {
+  const [editing, setEditing] = useState(false);
+  const { leg } = transfer;
+
+  const content = (
+    <>
+      <span className="pday__move-kind">{leg ? modeLabel(leg.mode) : 'Transfert'}</span>
+      <span className="pday__move-route">
+        {transfer.from.name} → {transfer.to.name}
+      </span>
+
+      {/* La durée en clair : une demi-journée de train n'est pas une
+          matinée libre, et c'est ce qu'on vient vérifier. */}
+      {leg?.duration_min != null && (
+        <span className="pday__move-time">{formatDuration(leg.duration_min)}</span>
+      )}
+      {leg?.dep && (
+        <span className="pday__move-when">
+          {formatClock(leg.dep)}
+          {leg.arr && ` → ${formatClock(leg.arr)}`}
+        </span>
+      )}
+      {leg?.price != null && (
+        <span className="pday__move-when">{priceInEuros(leg.price, leg.currency ?? 'EUR')}</span>
+      )}
+      {leg?.note && <span className="pday__move-note">{leg.note}</span>}
+      {!leg && (
+        <span className="pday__move-note">
+          {readOnly ? 'durée non renseignée' : '+ ajouter le transport'}
+        </span>
+      )}
+    </>
+  );
+
+  if (readOnly) {
+    return (
+      <p className="pday__move" data-kind="transfert">
+        {content}
+      </p>
+    );
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        className="pday__move"
+        data-kind="transfert"
+        data-open={editing || undefined}
+        aria-expanded={editing}
+        title={leg ? 'Modifier ce trajet' : 'Saisir ce trajet'}
+        onClick={() => setEditing((value) => !value)}
+      >
+        {content}
+      </button>
+
+      {editing && (
+        <LegEditor
+          tripId={tripId}
+          fromStep={transfer.from}
+          toStep={transfer.to}
+          leg={leg}
+          onClose={() => setEditing(false)}
+          onChanged={onChanged}
+        />
+      )}
     </>
   );
 }

@@ -373,14 +373,7 @@ function StepsColumn({
             {/* Le trajet appartient à l'intervalle, pas à la ville qu'on
                 quitte : il se pose donc entre les deux cartes. */}
             {next && (
-              <StepLink
-                trip={view}
-                fromStep={step}
-                toStep={next}
-                leg={legBetween(step.id, next.id)}
-                readOnly={readOnly}
-                onChanged={onChanged}
-              />
+              <StepLink leg={legBetween(step.id, next.id)} />
             )}
           </Fragment>
         );
