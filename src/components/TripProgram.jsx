@@ -7,6 +7,7 @@ import DayPlan from './DayPlan.jsx';
 import CityReserve from './CityReserve.jsx';
 import LegEditor from './LegEditor.jsx';
 import ClashMark from './ClashMark.jsx';
+import StopPlan from './StopPlan.jsx';
 import './TripProgram.scss';
 
 // Le voyage jour par jour — la colonne de gauche, à la place des étapes.
@@ -211,6 +212,23 @@ function TransferDay({ day, tripId, cities, transports, clashes, readOnly, onCha
         </div>
       )}
 
+      {/* Les arrêts en chemin (F5), dans l'ordre où on les rencontre :
+          Hakushu entre Tokyo et Matsumoto. Chacun porte le transport qui y
+          mène. */}
+      {transfer.stops.map((plan, index) => (
+        <StopPlan
+          key={plan.container.id}
+          plan={plan}
+          origin={index > 0 ? transfer.stops[index - 1].container.title : transfer.from.name}
+          date={day.date}
+          transports={transports}
+          clashes={clashes}
+          tripId={tripId}
+          readOnly={readOnly}
+          onChanged={onChanged}
+        />
+      ))}
+
       <TransferLine
         transfer={transfer}
         clashes={transfer.leg ? clashes.get(transfer.leg.id) : null}
@@ -250,11 +268,16 @@ function TransferLine({ transfer, clashes, tripId, readOnly, onChanged }) {
   const [editing, setEditing] = useState(false);
   const { leg } = transfer;
 
+  // Avec des arrêts, ce trajet est le DERNIER tronçon : il part du dernier
+  // arrêt, pas de la ville qu'on a quittée le matin.
+  const lastStop = transfer.stops.at(-1)?.container ?? null;
+  const origin = lastStop?.title ?? transfer.from.name;
+
   const content = (
     <>
       <span className="pday__move-kind">{leg ? modeLabel(leg.mode) : 'Transfert'}</span>
       <span className="pday__move-route">
-        {transfer.from.name} → {transfer.to.name}
+        {origin} → {transfer.to.name}
       </span>
 
       {/* La durée en clair : une demi-journée de train n'est pas une
@@ -323,14 +346,21 @@ function TransferLine({ transfer, clashes, tripId, readOnly, onChanged }) {
 // chevauche le train du départ est la même faute qu'un bus qui chevauche un
 // train.
 function clashesOf(day, transports) {
+  const ofItems = (items) =>
+    items.flatMap((item) => {
+      const own = transports.get(item.id);
+      return own ? [...own.aller, ...own.retour] : [];
+    });
+
+  // Les arrêts aussi : le transport qui mène à Hakushu, et ceux de ce qu'il
+  // contient.
+  const stops = day.transfer?.stops ?? [];
+
   const legs = [
     day.transfer?.leg,
-    ...day.parts.flatMap((part) =>
-      part.items.flatMap((item) => {
-        const own = transports.get(item.id);
-        return own ? [...own.aller, ...own.retour] : [];
-      }),
-    ),
+    ...day.parts.flatMap((part) => ofItems(part.items)),
+    ...ofItems(stops.map((plan) => plan.container)),
+    ...stops.flatMap((plan) => ofItems(plan.items)),
   ].filter(Boolean);
 
   return overlappingLegs(legs);

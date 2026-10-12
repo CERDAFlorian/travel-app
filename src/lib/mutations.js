@@ -30,11 +30,13 @@ import {
 // d'un item remonte à son étape puis au voyage, dont on est déjà membre au
 // moment de l'insertion. Sur `trips`, c'est le trigger AFTER qui crée
 // l'appartenance, donc trop tard pour un RETURNING — voir 0002_rls.sql.
-export async function addItem({ stepId, category, title, price, position, currency }) {
+export async function addItem({ stepId, category, title, price, position, currency, parentId = null }) {
   const { data, error } = await supabase
     .from('items')
     .insert({
       step_id: stepId,
+      // Rangé dans un arrêt ou une excursion (L11, F5) : même étape que lui.
+      parent_id: parentId,
       category,
       title: title.trim(),
       price: price ?? null,
@@ -179,6 +181,52 @@ export async function unplaceItem(id) {
     .update({ day_offset: null, day_slot: null, day_position: 0 })
     .eq('id', id);
   if (error) fail(error, "Retrait de l'item du programme");
+}
+
+// UN ARRÊT EN CHEMIN (L11, F5) : Hakushu entre Tokyo et Matsumoto.
+//
+// Il appartient à la ville qu'on QUITTE et n'a ni jour ni moment à lui : sa
+// date est celle du départ, déduite des nuits (0015_arrets_excursions.sql). Il
+// se range après les arrêts déjà posés sur cette route — on les saisit dans
+// l'ordre où on les rencontre. Catégorie « lieu » : on le relie ensuite à
+// Google comme n'importe quel lieu, et il gagne sa photo et son épingle.
+export async function addStop(step, title) {
+  const last = (step.items ?? [])
+    .filter((item) => item.kind === 'arret')
+    .reduce((max, item) => Math.max(max, item.position ?? 0), 0);
+
+  const { data, error } = await supabase
+    .from('items')
+    .insert({ step_id: step.id, kind: 'arret', category: 'lieu', title: title.trim(), position: last + 1 })
+    .select('id')
+    .single();
+  if (error) fail(error, "Ajout de l'arrêt");
+  return data.id;
+}
+
+// Range un item contenu dans un moment de son lieu — ou le renvoie dans la
+// réserve du lieu (`slot` vide). Pas de jour : c'est celui du lieu. Il se
+// range en fin de moment, comme placeItem le fait dans une journée.
+export async function setChildSlot(step, id, slot) {
+  if (!slot) {
+    const { error } = await supabase
+      .from('items')
+      .update({ day_slot: null, day_position: 0 })
+      .eq('id', id);
+    if (error) fail(error, "Retrait de l'item du programme du lieu");
+    return;
+  }
+
+  const item = (step.items ?? []).find((candidate) => candidate.id === id);
+  const last = (step.items ?? [])
+    .filter((other) => other.parent_id === item?.parent_id && other.day_slot === slot && other.id !== id)
+    .reduce((max, other) => Math.max(max, other.day_position ?? 0), 0);
+
+  const { error } = await supabase
+    .from('items')
+    .update({ day_slot: slot, day_position: last + 1 })
+    .eq('id', id);
+  if (error) fail(error, "Placement de l'item dans le lieu");
 }
 
 // Déplace un item d'un cran dans sa journée. `items` est la liste du jour,

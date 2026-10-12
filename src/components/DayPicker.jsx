@@ -20,8 +20,14 @@ import './DayPicker.scss';
 // titres du programme. Sans date — étape jamais datée —, le rang reste le seul
 // repère possible.
 const dayLabel = (entry) => (entry.date ? formatDayShort(entry.date) : `Jour ${entry.offset + 1}`);
-export default function DayPicker({ days, current, currentSlot, label, busy, onPick, onCancel }) {
-  const [day, setDay] = useState(null);
+//
+// `slots` restreint les moments proposés : un arrêt en chemin n'a pas de
+// « journée entière ». Avec un seul jour possible — le contenu d'un arrêt vit
+// le jour de l'arrêt —, la question du jour ne se pose pas : on passe
+// directement aux moments.
+export default function DayPicker({ days, slots = SLOTS, current, currentSlot, label, busy, onPick, onCancel }) {
+  const single = days.length === 1;
+  const [day, setDay] = useState(single ? days[0].offset : null);
   const chosen = day ?? null;
 
   if (chosen === null) {
@@ -58,16 +64,18 @@ export default function DayPicker({ days, current, currentSlot, label, busy, onP
   return (
     <div className="daypick" role="group" aria-label={`${label} — moment de la journée`}>
       {/* Le retour, pas une annulation : on s'est trompé de jour, on ne
-          renonce pas au placement. */}
-      <button
-        type="button"
-        className="daypick__back"
-        disabled={busy}
-        title="Changer de jour"
-        onClick={() => setDay(null)}
-      >
-        ←<span className="sr-only">Revenir au choix du jour</span>
-      </button>
+          renonce pas au placement. Rien à quoi revenir s'il n'y a qu'un jour. */}
+      {!single && (
+        <button
+          type="button"
+          className="daypick__back"
+          disabled={busy}
+          title="Changer de jour"
+          onClick={() => setDay(null)}
+        >
+          ←<span className="sr-only">Revenir au choix du jour</span>
+        </button>
+      )}
 
       <span className="daypick__label">
         {target?.date ? formatDayFull(target.date) : `Jour ${chosen + 1}`}
@@ -75,7 +83,7 @@ export default function DayPicker({ days, current, currentSlot, label, busy, onP
       </span>
 
       <span className="daypick__chips">
-        {SLOTS.map((slot) => (
+        {slots.map((slot) => (
           <button
             key={slot.key}
             type="button"

@@ -321,3 +321,92 @@ describe('TripProgram — les horaires qui se chevauchent', () => {
     expect(render()).not.toContain('chevauche');
   });
 });
+
+describe('TripProgram — les arrêts en chemin (F5)', () => {
+  // Entre Kyoto et Osaka, un arrêt à Fushimi : une brasserie de saké le
+  // matin, un déjeuner, et un sanctuaire pas encore placé.
+  const withStop = () => {
+    const t = trip();
+    t.steps[0].items.push(
+      item('Nishiki', { day_offset: 2, day_slot: 'matin', day_position: 1 }),
+      item('Fushimi', { kind: 'arret', position: 1 }),
+      item('Gekkeikan', { parent_id: 'Fushimi', day_slot: 'apres-midi', day_position: 1 }),
+      item('Torisei', { category: 'restaurant', parent_id: 'Fushimi', day_slot: 'midi', day_position: 1 }),
+      item('Goko-gu', { parent_id: 'Fushimi' }),
+    );
+    t.legs.push({ id: 'keihan', item_id: 'Fushimi', direction: 'aller', position: 1, mode: 'train', duration_min: 20 });
+    return t;
+  };
+
+  // Le 13 se lit dans l'ordre où on le vit : Kyoto avant de partir, le train
+  // vers Fushimi, Fushimi, puis le trajet vers Osaka.
+  it('pose l’arrêt entre la ville quittée et le dernier tronçon', () => {
+    const html = render({ trip: withStop() });
+
+    const kyoto = html.indexOf('Nishiki');
+    const toStop = html.indexOf('20 min');
+    const stop = html.indexOf('stopplan__name">Fushimi');
+    const lastLeg = html.indexOf('Fushimi → Osaka');
+
+    expect(kyoto).toBeGreaterThan(-1);
+    expect(toStop).toBeGreaterThan(kyoto);
+    expect(stop).toBeGreaterThan(toStop);
+    expect(lastLeg).toBeGreaterThan(stop);
+  });
+
+  // Avec un arrêt, le trajet entre villes devient le dernier tronçon : il part
+  // de l'arrêt.
+  it('fait partir le dernier tronçon du dernier arrêt', () => {
+    const html = render({ trip: withStop() });
+    expect(html).toContain('Fushimi → Osaka');
+    expect(html).not.toContain('Kyoto → Osaka');
+  });
+
+  it('range le contenu de l’arrêt par moments', () => {
+    const html = render({ trip: withStop() });
+    expect(html.indexOf('Torisei')).toBeLessThan(html.indexOf('Gekkeikan'));
+  });
+
+  it('montre la réserve de l’arrêt', () => {
+    const html = render({ trip: withStop() });
+    expect(html).toContain('À placer à Fushimi');
+    expect(html).toContain('Goko-gu');
+  });
+
+  // Dans un arrêt, on change de moment, pas de jour, et on ne refait pas
+  // ailleurs ce qui n'existe qu'en passant par là.
+  it('propose « Moment » plutôt que « Jour » dans un arrêt', () => {
+    const html = render({ trip: withStop() });
+    const stopBlock = html.slice(html.indexOf('class="stopplan"'));
+    expect(stopBlock).toContain('>Moment<');
+  });
+
+  it('garde l’arrêt hors de la réserve de la ville', () => {
+    const html = render({ trip: withStop() });
+    const reserve = html.slice(html.indexOf('À placer à Kyoto'), html.indexOf('sam. 14 nov.'));
+    expect(reserve).not.toContain('Goko-gu');
+    expect(reserve).not.toContain('>Fushimi<');
+  });
+
+  // Le trajet vers l'arrêt se réclame comme celui entre deux villes.
+  it('réclame le trajet qui mène à l’arrêt tant qu’il manque', () => {
+    const t = withStop();
+    t.legs = t.legs.filter((leg) => leg.id !== 'keihan');
+    const html = render({ trip: t });
+
+    expect(html).toContain('Kyoto → Fushimi');
+    expect(html.indexOf('Kyoto → Fushimi')).toBeLessThan(html.indexOf('stopplan__name'));
+    expect(html.match(/\+ ajouter le transport/g).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('nomme le tronçon vers l’arrêt quand il est saisi', () => {
+    expect(render({ trip: withStop() })).toContain('Kyoto → Fushimi');
+  });
+
+  it('montre l’arrêt sans commande en lecture', () => {
+    const html = render({ trip: withStop(), readOnly: true });
+    expect(html).toContain('Fushimi');
+    expect(html).not.toContain('À placer à Fushimi');
+    expect(html).not.toContain('+ trajet');
+  });
+});

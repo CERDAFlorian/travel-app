@@ -28,30 +28,21 @@ import { addDays } from './itinerary.js';
 import { categoryOf } from './categories.js';
 import { cityLegs } from './transport.js';
 
-// Les moments d'une journée.
-//
-// DES MOMENTS, PAS UNE GRILLE HORAIRE. Personne ne tient un créneau de 14h15 à
-// Arashiyama : une journée se pense en « le matin Fushimi, le soir un kaiseki ».
-// Quatre moments se remplissent en trois clics là où un emploi du temps à
-// l'heure resterait vide, et se lisent d'un coup d'œil sur place.
-//
-// `journee` n'est pas un moment mais un mode : Kōyasan, c'est 2h30 de trajet,
-// ça mange la journée. Il se pose donc en tête et se lit comme un bandeau —
-// on doit voir que rien d'autre ne tiendra ce jour-là.
-export const SLOTS = [
-  { key: 'journee', label: 'Journée entière', full: true },
-  { key: 'matin', label: 'Matin' },
-  { key: 'midi', label: 'Midi' },
-  { key: 'apres-midi', label: 'Après-midi' },
-  { key: 'soir', label: 'Soir' },
-];
+// Les moments d'une journée vivent dans slots.js : containers.js en a besoin
+// aussi, et ce fichier a besoin de containers.js. Réexportés ici pour ne rien
+// changer aux imports existants.
+import { SLOTS, UNSLOTTED } from './slots.js';
+import { containerPlan, isContained, isStop, stopsOf } from './containers.js';
 
-// Un item posé avant que les moments n'existent, ou placé sans en choisir un.
-// Il ne disparaît pas dans un moment arbitraire : il reste visible en pied de
-// journée, à caler. Se vide tout seul à mesure qu'on range.
-export const UNSLOTTED = { key: null, label: 'À caler' };
+export { SLOTS, UNSLOTTED };
 
 const SLOT_RANK = new Map(SLOTS.map((slot, index) => [slot.key, index]));
+
+// Les items DE LA VILLE : ni ses arrêts en chemin, ni ce qu'un lieu contient
+// (L11, F5). Eux vivent sur la route ou dans leur lieu, avec leur propre
+// programme (containers.js) — ils n'ont rien à faire dans les jours ni dans la
+// réserve de la ville.
+const ofCity = (item) => !isStop(item) && !isContained(item);
 const rankOf = (item) => SLOT_RANK.get(item.day_slot) ?? SLOTS.length;
 
 // Les jours d'une étape, dans l'ordre : ses nuits, puis le jour du départ.
@@ -89,7 +80,7 @@ export function scheduleOf(step) {
   const byDay = new Map(days.map((day) => [day.offset, []]));
 
   for (const item of step.items ?? []) {
-    if (item.day_offset == null) continue;
+    if (item.day_offset == null || !ofCity(item)) continue;
     byDay.get(item.day_offset)?.push(item);
   }
 
@@ -126,6 +117,7 @@ export function unplacedOf(step) {
 
   return (step.items ?? []).filter(
     (item) =>
+      ofCity(item) &&
       categoryOf(item.category)?.planifiable &&
       (item.day_offset == null || item.day_offset >= count),
   );
@@ -224,6 +216,12 @@ export function tripSchedule(trip) {
         shared.transfer = {
           from: previous,
           to: step,
+          // Les arrêts sur la route (F5), dans l'ordre où on les rencontre,
+          // chacun avec son programme. Ils appartiennent à la ville qu'on
+          // quitte : c'est elle qui les porte.
+          stops: stopsOf(previous).map((stop) => containerPlan(previous, stop)),
+          // Le trajet entre les deux villes. S'il y a des arrêts, c'est le
+          // DERNIER tronçon : du dernier arrêt à la ville d'arrivée.
           leg: legs.get(`${previous.id}>${step.id}`) ?? null,
         };
         return;

@@ -20,7 +20,10 @@ function parsePrice(raw) {
 // Tout est replié au départ : on prépare un voyage en ouvrant la catégorie
 // qu'on cherche, pas en faisant défiler les six. Sur 48 items, tout déplier
 // d'emblée ferait de Tokyo un mur de texte.
-export default function CategoryAccordion({ category, items, step, readOnly, onChanged }) {
+// `parentId` : la catégorie d'un arrêt en chemin (L11, F5). Ce qu'on y ajoute
+// est rangé dans l'arrêt, et `step` est alors l'arrêt vu comme une ville — son
+// nom, sa position, son contenu.
+export default function CategoryAccordion({ category, items, step, parentId = null, readOnly, onChanged }) {
   const [open, setOpen] = useState(false);
   // Item tout juste créé : sa ligne ouvre d'elle-même la recherche d'adresse.
   const [justAdded, setJustAdded] = useState(null);
@@ -56,6 +59,7 @@ export default function CategoryAccordion({ category, items, step, readOnly, onC
     try {
       const id = await addItem({
         stepId: step.id,
+        parentId,
         category: category.key,
         position: nextPosition,
         title: trimmed,

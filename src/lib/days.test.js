@@ -478,6 +478,53 @@ describe('tripSchedule', () => {
     expect(on(days, '2026-11-13').transfer.leg).toBeNull();
   });
 
+  // F5 : Kyoto a un arrêt sur la route d'Osaka. Il se lit dans le trajet du
+  // 13, pas dans les jours de Kyoto ni dans sa réserve.
+  describe('les arrêts en chemin', () => {
+    const withStop = () => {
+      const t = trip();
+      t.steps[0].items.push(
+        { id: 'fushimi-sake', category: 'activite', title: 'Fushimi', kind: 'arret', position: 9 },
+        { id: 'kura', category: 'lieu', title: 'Kura', parent_id: 'fushimi-sake', day_slot: 'matin' },
+      );
+      return t;
+    };
+
+    it('pose l’arrêt dans le trajet du jour où l’on change de ville', () => {
+      const shared = on(tripSchedule(withStop()), '2026-11-13');
+      expect(shared.transfer.stops.map((plan) => plan.container.id)).toEqual(['fushimi-sake']);
+      expect(shared.transfer.stops[0].items.map((i) => i.id)).toEqual(['kura']);
+    });
+
+    it('garde l’arrêt et son contenu hors des jours de la ville', () => {
+      const days = tripSchedule(withStop());
+      const cityItems = days.flatMap((day) => day.parts.flatMap((part) => part.items.map((i) => i.id)));
+      expect(cityItems).not.toContain('fushimi-sake');
+      expect(cityItems).not.toContain('kura');
+    });
+
+    it('garde l’arrêt hors de la réserve de la ville', () => {
+      const kyoto = withStop().steps[0];
+      expect(unplacedOf(kyoto).map((i) => i.id)).not.toContain('fushimi-sake');
+      expect(unplacedOf(kyoto).map((i) => i.id)).not.toContain('kura');
+    });
+
+    // Ajouter une nuit à Kyoto déplace le départ, donc l'arrêt, sans rien
+    // écrire : il n'a pas de jour à lui.
+    it('suit le jour du départ quand la ville gagne une nuit', () => {
+      const t = withStop();
+      t.steps[0].nights = 3;
+      t.steps[1].date_start = '2026-11-14';
+      const days = tripSchedule(t);
+      expect(on(days, '2026-11-14').transfer.stops).toHaveLength(1);
+      expect(on(days, '2026-11-13').transfer).toBeNull();
+    });
+
+    it('rend une route sans arrêt', () => {
+      expect(on(tripSchedule(trip()), '2026-11-13').transfer.stops).toEqual([]);
+    });
+  });
+
   it('ne rend rien pour un voyage sans étape', () => {
     expect(tripSchedule({ steps: [], flights: [], legs: [] })).toEqual([]);
   });

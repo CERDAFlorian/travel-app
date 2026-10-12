@@ -24,8 +24,9 @@ automatiquement : ni le repo, ni la CI, ni le déploiement ne parlent à Supabas
 | 12 | `migrations/0012_photos.sql` | photos Wikimedia des lieux et des villes | oui |
 | 13 | `migrations/0013_photos_collees.sql` | photos collées, espace de stockage « photos » | oui |
 | 14 | `migrations/0014_transports_activites.sql` | un trajet peut mener à une activité, aller ou retour (L11 F4) | oui |
-| 15 | `seed.sql` | le voyage Japon de novembre | oui, **il écrase `japon-2026`** — garde-fou en tête de fichier |
-| 16 | `seed-japon-octobre.sql` | le voyage Japon d'octobre, second compte | oui, **il écrase `japon-octobre-2026`** |
+| 15 | `migrations/0015_arrets_excursions.sql` | arrêts en chemin et excursions : des lieux qui en contiennent d'autres (L11 F5, F6) | oui |
+| 16 | `seed.sql` | le voyage Japon de novembre | oui, **il écrase `japon-2026`** — garde-fou en tête de fichier |
+| 17 | `seed-japon-octobre.sql` | le voyage Japon d'octobre, second compte | oui, **il écrase `japon-octobre-2026`** |
 
 ## Deux bases : dev et prod
 

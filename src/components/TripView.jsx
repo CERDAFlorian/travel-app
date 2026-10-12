@@ -19,7 +19,7 @@ import StepLink from '@/components/StepLink.jsx';
 import LoveNote from '@/components/LoveNote.jsx';
 import { addStep, moveStep, removeStep, setStepNights } from '@/lib/mutations.js';
 import { resolveItinerary, timelineEntries } from '@/lib/itinerary.js';
-import { cityLegs } from '@/lib/transport.js';
+import { cityLegs, transportsByItem } from '@/lib/transport.js';
 import { LoveNotesProvider } from '@/hooks/useLoveNotes.js';
 import { useRefreshPlaces } from '@/hooks/useRefreshPlaces.js';
 import { usePhotoFill } from '@/hooks/usePhotoFill.js';
@@ -344,6 +344,10 @@ function StepsColumn({
   handleAddStep,
   onChanged,
 }) {
+  // Les transports qui mènent aux arrêts en chemin (F4, F5), pour les
+  // tronçons de chaque route.
+  const transports = useMemo(() => transportsByItem(view.legs), [view.legs]);
+
   return (
     <>
       {view.steps.map((step, index) => {
@@ -374,7 +378,14 @@ function StepsColumn({
             {/* Le trajet appartient à l'intervalle, pas à la ville qu'on
                 quitte : il se pose donc entre les deux cartes. */}
             {next && (
-              <StepLink leg={legBetween(step.id, next.id)} />
+              <StepLink
+                from={step}
+                to={next}
+                leg={legBetween(step.id, next.id)}
+                transports={transports}
+                readOnly={readOnly}
+                onChanged={onChanged}
+              />
             )}
           </Fragment>
         );

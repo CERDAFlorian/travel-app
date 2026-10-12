@@ -10,10 +10,14 @@ import './DayPlan.scss';
 // `days` est la liste des jours DE LA VILLE du jour affiché : c'est parmi eux
 // qu'un item se déplace ou se refait. On ne déménage pas une activité de Kyoto
 // à Hiroshima depuis le programme — elle appartient à son étape.
-export default function DayPlan({ day, days, transports, clashes, tripId, readOnly, onChanged, emptyText }) {
+//
+// `container` : le programme d'un arrêt en chemin (F5). Ses items ne changent
+// que de moment, le jour étant celui de l'arrêt.
+export default function DayPlan({ day, days, transports, clashes, container, tripId, readOnly, onChanged, emptyText }) {
   // Le message d'un jour vide dépend de ce qui l'entoure — journée libre,
   // matin d'un départ, soir d'une arrivée : c'est le programme qui le sait.
-  if (day.items.length === 0) return <p className="dayplan__empty">{emptyText}</p>;
+  // Sans message, rien : un arrêt vide EST la visite, il n'a rien à annoncer.
+  if (day.items.length === 0) return emptyText ? <p className="dayplan__empty">{emptyText}</p> : null;
 
   // Le précédent dans l'ordre RÉEL de la journée, moments confondus : c'est
   // entre le dernier lieu du matin et le premier de l'après-midi que la
@@ -60,6 +64,7 @@ export default function DayPlan({ day, days, transports, clashes, tripId, readOn
                     canMoveDown={index < group.items.length - 1}
                     transports={transports?.get(item.id)}
                     clashes={clashes}
+                    container={container}
                     tripId={tripId}
                     readOnly={readOnly}
                     onChanged={onChanged}

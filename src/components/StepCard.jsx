@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { CATEGORIES } from '@/lib/categories.js';
 import { chosenHotel, hotelsOf } from '@/lib/lodging.js';
 import { unplacedOf } from '@/lib/days.js';
+import { cityOnly } from '@/lib/containers.js';
 import { formatStepDates } from '@/lib/dates.js';
 import { setStepCoordinates } from '@/lib/mutations.js';
 import PlaceSearch from './PlaceSearch.jsx';
@@ -43,8 +44,12 @@ export default function StepCard({
   const situated = (other) => (other?.lat != null && other?.lng != null ? other : null);
   const aroundStep = situated(neighbours?.previous) ?? situated(neighbours?.next);
 
+  // La ville sans ses arrêts en chemin (L11, F5) : Hakushu n'est pas un lieu
+  // de Tokyo, il vit sur la route, dans la bande entre les deux cartes.
+  const city = cityOnly(step);
+
   const itemsByCategory = new Map(CATEGORIES.map(({ key }) => [key, []]));
-  for (const item of step.items) {
+  for (const item of city.items) {
     itemsByCategory.get(item.category)?.push(item);
   }
 
@@ -55,8 +60,8 @@ export default function StepCard({
   // Il n'y a jamais d'entre-deux : dès qu'un hôtel est saisi, il y en a un de
   // retenu (voir lodging.js). Ce qui s'affiche ici est donc soit un nom, soit
   // une étape où personne n'a encore cherché où dormir.
-  const lodging = chosenHotel(step);
-  const candidates = hotelsOf(step).length;
+  const lodging = chosenHotel(city);
+  const candidates = hotelsOf(city).length;
   const toPlace = unplacedOf(step).length;
 
   return (
@@ -247,7 +252,7 @@ export default function StepCard({
           </div>
         )}
 
-        <PhotoStrip items={step.items} />
+        <PhotoStrip items={city.items} />
 
         {/* La ville, c'est le garde-manger : ce qu'on aimerait y faire, rangé
             par catégorie. Le menu — quel jour, à quel moment — se compose
@@ -258,7 +263,7 @@ export default function StepCard({
               key={category.key}
               category={category}
               items={itemsByCategory.get(category.key)}
-              step={step}
+              step={city}
               readOnly={readOnly}
               onChanged={onChanged}
             />

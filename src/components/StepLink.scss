@@ -56,3 +56,62 @@
     white-space: nowrap;
   }
 }
+
+// La route : ses tronçons, ses arrêts, et de quoi en ajouter un.
+.route {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  // Discret : sept intervalles, sept boutons — ils ne doivent pas hacher la
+  // lecture de l'itinéraire.
+  &__add {
+    align-self: center;
+    padding: 0 var(--sp-2);
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: var(--fs-xs);
+    text-decoration: underline dotted;
+    cursor: pointer;
+
+    &:hover { color: var(--accent); }
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  &__add-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin: 2px clamp(16px, 4vw, 48px);
+  }
+
+  &__add-title {
+    flex: 1 1 220px;
+    padding: 4px 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: 7px;
+    background: var(--surface-raised);
+    color: var(--text);
+    font: inherit;
+    // 16 px minimum : en dessous, Safari iOS zoome au focus.
+    font-size: var(--fs-md);
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  &__add-submit { @include mixins.action-button; }
+
+  &__add-cancel {
+    padding: 0 var(--sp-2);
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: var(--fs-sm);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+}

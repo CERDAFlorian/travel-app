@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { placeItem } from '@/lib/mutations.js';
+import { placeItem, setChildSlot } from '@/lib/mutations.js';
+import { CONTAINER_SLOTS } from '@/lib/containers.js';
 import DayPicker from './DayPicker.jsx';
 import PlaceThumb from './PlaceThumb.jsx';
 import './PlannedRow.scss';
@@ -15,19 +16,31 @@ import './CityReserve.scss';
 // Rien quand tout est casé : sur huit villes, huit blocs « tout est casé »
 // alourdiraient le programme pour ne rien dire. Le compteur de la carte de
 // ville le dit déjà.
-export default function CityReserve({ step, days, items, readOnly, onChanged }) {
+//
+// Elle sert aussi à un arrêt en chemin (F5) : `container` est alors l'arrêt,
+// dont le contenu se place dans ses moments, le jour de l'arrêt.
+export default function CityReserve({ step, days, items, container = null, readOnly, onChanged }) {
   if (readOnly || items.length === 0) return null;
 
+  const name = container?.title ?? step.name;
+
   return (
-    <section className="reserve" aria-label={`À placer à ${step.name}`}>
+    <section className="reserve" data-inside={container ? true : undefined} aria-label={`À placer à ${name}`}>
       <h3 className="reserve__head">
-        <span className="reserve__title">À placer à {step.name}</span>
+        <span className="reserve__title">À placer à {name}</span>
         <span className="reserve__count">{items.length}</span>
       </h3>
 
       <ul className="reserve__items">
         {items.map((item) => (
-          <ReserveRow key={item.id} item={item} step={step} days={days} onChanged={onChanged} />
+          <ReserveRow
+            key={item.id}
+            item={item}
+            step={step}
+            days={days}
+            container={container}
+            onChanged={onChanged}
+          />
         ))}
       </ul>
     </section>
@@ -35,7 +48,7 @@ export default function CityReserve({ step, days, items, readOnly, onChanged }) 
 }
 
 // Un item de la réserve : voulu, pas encore daté.
-function ReserveRow({ item, step, days, onChanged }) {
+function ReserveRow({ item, step, days, container, onChanged }) {
   const [picking, setPicking] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -60,6 +73,7 @@ function ReserveRow({ item, step, days, onChanged }) {
       {picking && (
         <DayPicker
           days={days}
+          slots={container ? CONTAINER_SLOTS : undefined}
           current={null}
           currentSlot={null}
           busy={busy}
@@ -68,7 +82,7 @@ function ReserveRow({ item, step, days, onChanged }) {
           onPick={async (offset, slot) => {
             setBusy(true);
             try {
-              await placeItem(step, item.id, offset, slot);
+              await (container ? setChildSlot(step, item.id, slot) : placeItem(step, item.id, offset, slot));
               await onChanged();
               setPicking(false);
             } finally {

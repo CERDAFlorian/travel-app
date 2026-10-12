@@ -38,7 +38,7 @@ function parsePrice(raw) {
 // Une ligne d'item, sur UNE ligne comme dans le design : vignette, pastille,
 // nom, note, pilule Plan, puis à droite l'étoile, LOCALISER, le prix et la
 // corbeille.
-export default function ItemRow({ item, step, readOnly, autoLocate, onChanged }) {
+export default function ItemRow({ item, step, readOnly, autoLocate, deleteNote, onChanged }) {
   // `autoLocate` n'est vrai qu'au montage de la ligne créée à l'instant : la
   // recherche part sans qu'on ait à cliquer « Localiser ».
   const [locating, setLocating] = useState(Boolean(autoLocate));
@@ -358,6 +358,8 @@ export default function ItemRow({ item, step, readOnly, autoLocate, onChanged })
         <p>
           <strong>{item.title}</strong> sera retiré de {step.name}.
         </p>
+        {/* Un arrêt emporte ce qu'il contient : ça doit se lire avant. */}
+        {deleteNote && <p>{deleteNote}</p>}
         <p>Cette action est définitive : il n'y a pas de corbeille.</p>
       </ConfirmDialog>
 

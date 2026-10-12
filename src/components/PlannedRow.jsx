@@ -6,9 +6,11 @@ import {
   moveItemInDay,
   placeItem,
   setBooked,
+  setChildSlot,
   setStartTime,
   unplaceItem,
 } from '@/lib/mutations.js';
+import { CONTAINER_SLOTS } from '@/lib/containers.js';
 import DayPicker from './DayPicker.jsx';
 import PlaceThumb from './PlaceThumb.jsx';
 import ItemTransports from './ItemTransports.jsx';
@@ -31,6 +33,7 @@ export default function PlannedRow({
   canMoveDown,
   transports,
   clashes,
+  container = null,
   tripId,
   readOnly,
   onChanged,
@@ -174,30 +177,39 @@ export default function PlannedRow({
             >
               + trajet
             </button>
+            {/* Dans un arrêt (F5), le jour est celui de l'arrêt : on ne change
+                que de moment, et on ne « refait » pas un autre jour ce qui
+                n'existe qu'en passant par là. */}
             <button
               type="button"
               className="planned__act"
               disabled={busy}
-              title="Déplacer vers un autre jour ou un autre moment"
+              title={container ? 'Changer de moment' : 'Déplacer vers un autre jour ou un autre moment'}
               onClick={() => toggle('move')}
             >
-              Jour
+              {container ? 'Moment' : 'Jour'}
             </button>
+            {!container && (
+              <button
+                type="button"
+                className="planned__act"
+                disabled={busy}
+                title="Refaire un autre jour : une copie, avec son prix et son adresse"
+                onClick={() => toggle('copy')}
+              >
+                Refaire
+              </button>
+            )}
             <button
               type="button"
               className="planned__act"
               disabled={busy}
-              title="Refaire un autre jour : une copie, avec son prix et son adresse"
-              onClick={() => toggle('copy')}
-            >
-              Refaire
-            </button>
-            <button
-              type="button"
-              className="planned__act"
-              disabled={busy}
-              title="Renvoyer en réserve — l'item reste dans sa catégorie"
-              onClick={() => run(() => unplaceItem(item.id))}
+              title={
+                container
+                  ? `Renvoyer dans la réserve de ${container.title}`
+                  : "Renvoyer en réserve — l'item reste dans sa catégorie"
+              }
+              onClick={() => run(() => (container ? setChildSlot(step, item.id, null) : unplaceItem(item.id)))}
             >
               ✕<span className="sr-only">Renvoyer {item.title} en réserve</span>
             </button>
@@ -237,6 +249,7 @@ export default function PlannedRow({
       {(panel === 'move' || panel === 'copy') && (
         <DayPicker
           days={days}
+          slots={container ? CONTAINER_SLOTS : undefined}
           // Sur une copie, aucun créneau n'est « l'actuel » : refaire la même
           // chose deux fois dans la journée est un cas réel — un café le
           // matin, le même bar le soir.
@@ -247,9 +260,11 @@ export default function PlannedRow({
           onCancel={() => setPanel(null)}
           onPick={(offset, slot) =>
             run(() =>
-              panel === 'move'
-                ? placeItem(step, item.id, offset, slot)
-                : duplicateItemOnDay(step, item, offset, slot),
+              container
+                ? setChildSlot(step, item.id, slot)
+                : panel === 'move'
+                  ? placeItem(step, item.id, offset, slot)
+                  : duplicateItemOnDay(step, item, offset, slot),
             )
           }
         />

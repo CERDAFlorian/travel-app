@@ -117,6 +117,7 @@ const files = {
   photos: 'supabase/migrations/0012_photos.sql',
   pastedPhotos: 'supabase/migrations/0013_photos_collees.sql',
   activityTransport: 'supabase/migrations/0014_transports_activites.sql',
+  containers: 'supabase/migrations/0015_arrets_excursions.sql',
   seed: 'supabase/seed.sql',
 };
 
