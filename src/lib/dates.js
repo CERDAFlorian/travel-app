@@ -107,6 +107,18 @@ export function formatDayFull(iso) {
   return date ? WEEKDAY_DAY_MONTH.format(date) : '';
 }
 
+const WEEKDAY_DAY = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric' });
+
+// « ven. 13 » — une pastille du sélecteur de jour.
+//
+// La date remplace « J2 » : sur place on ne vit pas le deuxième jour de Kyoto,
+// on vit le vendredi 13. Le mois n'y figure pas — les pastilles d'une même
+// ville se suivent sur quelques jours, et la ligne doit tenir sur un téléphone.
+export function formatDayShort(iso) {
+  const date = parse(iso);
+  return date ? WEEKDAY_DAY.format(date) : '';
+}
+
 // « Du 7 nov. au 26 nov. 2026 » — la forme de l'en-tête dans le design.
 // L'année n'apparaît qu'une fois, à la fin : un voyage ne chevauche pas deux
 // années dans la pratique, et la répéter alourdit une ligne déjà dense.

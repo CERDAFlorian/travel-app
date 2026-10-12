@@ -401,6 +401,28 @@ describe('tripSchedule', () => {
     expect(days.flatMap((day) => day.flights)).toHaveLength(2);
   });
 
+  // La réserve d'une ville se pose après son dernier jour : c'est là qu'on
+  // pioche pour remplir les jours qu'on vient de lire.
+  it('marque le dernier jour de chaque ville', () => {
+    const days = tripSchedule(trip());
+
+    expect(days.map((day) => [day.step.id, day.lastOfStep])).toEqual([
+      ['kyoto', false],
+      ['kyoto', true],
+      ['osaka', false],
+      ['osaka', false],
+      ['osaka', true],
+    ]);
+  });
+
+  // Le placement ne propose que les jours de la ville de l'item : il faut
+  // donc savoir, jour par jour, si l'étape porte le jour du vol retour.
+  it('dit si le jour appartient à la dernière étape', () => {
+    const days = tripSchedule(trip());
+
+    expect(days.map((day) => day.isLastStep)).toEqual([false, false, true, true, true]);
+  });
+
   it('ne rend rien pour un voyage sans étape', () => {
     expect(tripSchedule({ steps: [], flights: [], legs: [] })).toEqual([]);
   });

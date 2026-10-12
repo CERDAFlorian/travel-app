@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { SLOTS } from '@/lib/days.js';
-import { formatDayFull } from '@/lib/dates.js';
+import { formatDayFull, formatDayShort } from '@/lib/dates.js';
 import './DayPicker.scss';
 
 // Choisir un jour, puis un moment.
@@ -14,6 +14,12 @@ import './DayPicker.scss';
 // puis « quel moment ? » est la question qu'on se pose de toute façon dans cet
 // ordre. Le jour courant reste choisissable : changer seulement le moment est
 // le cas le plus fréquent une fois la journée bâtie.
+//
+// LA DATE, PAS LE RANG. « J2 » obligeait à recompter depuis l'arrivée dans la
+// ville ; la date se lit telle qu'on la vivra, et c'est la même que celle des
+// titres du programme. Sans date — étape jamais datée —, le rang reste le seul
+// repère possible.
+const dayLabel = (entry) => (entry.date ? formatDayShort(entry.date) : `Jour ${entry.offset + 1}`);
 export default function DayPicker({ days, current, currentSlot, label, busy, onPick, onCancel }) {
   const [day, setDay] = useState(null);
   const chosen = day ?? null;
@@ -34,8 +40,8 @@ export default function DayPicker({ days, current, currentSlot, label, busy, onP
               title={entry.date ? formatDayFull(entry.date) : `Jour ${entry.offset + 1}`}
               onClick={() => setDay(entry.offset)}
             >
-              {entry.departure ? 'Départ' : `J${entry.offset + 1}`}
-              <span className="sr-only"> — {entry.date ? formatDayFull(entry.date) : ''}</span>
+              {dayLabel(entry)}
+              {entry.departure && <span className="daypick__mark"> · départ</span>}
             </button>
           ))}
         </span>
@@ -64,8 +70,8 @@ export default function DayPicker({ days, current, currentSlot, label, busy, onP
       </button>
 
       <span className="daypick__label">
-        {target?.departure ? 'Départ' : `J${chosen + 1}`}
-        {target?.date && ` · ${formatDayFull(target.date)}`}
+        {target?.date ? formatDayFull(target.date) : `Jour ${chosen + 1}`}
+        {target?.departure && ' · départ'}
       </span>
 
       <span className="daypick__chips">

@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useRef } from 'react';
-import { tripSchedule } from '@/lib/days.js';
+import { Fragment, useEffect, useMemo, useRef } from 'react';
+import { daysOf, tripSchedule, unplacedOf } from '@/lib/days.js';
 import { formatDayFull, todayIso } from '@/lib/dates.js';
 import { formatClock, formatDuration, modeLabel } from '@/lib/transport.js';
-import { haversine, formatDistance } from '@/lib/geo.js';
+import DayPlan from './DayPlan.jsx';
+import CityReserve from './CityReserve.jsx';
 import './TripProgram.scss';
-import PlaceThumb from './PlaceThumb.jsx';
 
 // Le voyage jour par jour — la colonne de gauche, à la place des étapes.
 //
@@ -18,10 +18,26 @@ import PlaceThumb from './PlaceThumb.jsx';
 // d'étape. Une page séparée aurait coupé le programme de la carte, alors que
 // c'est précisément ensemble qu'ils servent.
 //
-// Lecture seule, sans exception : on suit un programme, on ne le construit pas
-// dans le train. L'organisation reste dans la carte d'étape.
-export default function TripProgram({ trip, selectedStepId, onSelectStep }) {
+// C'EST AUSSI LÀ QU'ON LE CONSTRUIT (L11, F1). Le programme vivait en double :
+// éditable dans un onglet de chaque ville, en lecture seule ici. Deux écrans
+// pour la même chose, dont un seul montrait le voyage d'un bout à l'autre. Il
+// n'en reste qu'un : on place, déplace et réordonne ici, et la carte de ville
+// ne garde que ses catégories — le garde-manger. La vue partagée et le mode
+// hors ligne le rendent en lecture seule, sans une commande.
+export default function TripProgram({ trip, readOnly, onChanged, selectedStepId, onSelectStep }) {
   const days = useMemo(() => tripSchedule(trip), [trip]);
+
+  // Par ville : ses jours, parmi lesquels un item se place ou se déplace, et
+  // sa réserve. Calculés une fois par étape, pas une fois par jour affiché.
+  const cities = useMemo(() => {
+    const steps = trip.steps ?? [];
+    return new Map(
+      steps.map((step, index) => {
+        const isLast = index === steps.length - 1;
+        return [step.id, { days: daysOf(step, { isLast }), reserve: unplacedOf(step, { isLast }) }];
+      }),
+    );
+  }, [trip]);
 
   const today = todayIso();
   const current = useRef(null);
@@ -45,141 +61,96 @@ export default function TripProgram({ trip, selectedStepId, onSelectStep }) {
     <div className="program">
       {days.map((day) => {
         const isToday = day.date === today;
+        const city = cities.get(day.step.id);
 
         return (
-          <section
-            key={`${day.step.id}-${day.offset}`}
-            id={`day-${day.step.id}-${day.offset}`}
-            className="pday"
-            data-today={isToday || undefined}
-            data-selected={day.step.id === selectedStepId || undefined}
-            ref={isToday ? current : null}
-          >
-            <header className="pday__head">
-              <span className="pday__date">{formatDayFull(day.date)}</span>
+          <Fragment key={`${day.step.id}-${day.offset}`}>
+            <section
+              id={`day-${day.step.id}-${day.offset}`}
+              className="pday"
+              data-today={isToday || undefined}
+              data-selected={day.step.id === selectedStepId || undefined}
+              ref={isToday ? current : null}
+            >
+              <header className="pday__head">
+                <span className="pday__date">{formatDayFull(day.date)}</span>
 
-              {/* La ville reste cliquable : c'est le lien avec la carte, qu'on
-                  garde sous les yeux. */}
-              <button
-                type="button"
-                className="pday__city"
-                title={`Voir ${day.step.name} sur la carte`}
-                onClick={() => onSelectStep?.(day.step.id)}
-              >
-                {day.step.name}
-              </button>
+                {/* La ville reste cliquable : c'est le lien avec la carte, qu'on
+                    garde sous les yeux. */}
+                <button
+                  type="button"
+                  className="pday__city"
+                  title={`Voir ${day.step.name} sur la carte`}
+                  onClick={() => onSelectStep?.(day.step.id)}
+                >
+                  {day.step.name}
+                </button>
 
-              <span className="pday__rank">{day.departure ? 'départ' : `J${day.offset + 1}`}</span>
-              {isToday && <span className="pday__now">aujourd'hui</span>}
-            </header>
+                {/* La date suffit à situer le jour : « J2 » obligeait à
+                    recompter depuis l'arrivée. Seul le départ se signale — on
+                    n'y tient pas une journée de visites. */}
+                {day.departure && <span className="pday__rank">départ</span>}
+                {isToday && <span className="pday__now">aujourd'hui</span>}
+              </header>
 
-            {/* Le déplacement AVANT le programme : on arrive quelque part,
-                ensuite on y fait quelque chose. */}
-            {day.flights.map((flight) => (
-              <p className="pday__move" key={flight.id} data-kind="vol">
-                <span className="pday__move-kind">Vol</span>
-                <span className="pday__move-route">
-                  {flight.from_code} → {flight.to_code}
-                </span>
-                {flight.dep && (
-                  <span className="pday__move-when">
-                    {formatClock(flight.dep)}
-                    {flight.arr && ` → ${formatClock(flight.arr)}`}
+              {/* Le déplacement AVANT le programme : on arrive quelque part,
+                  ensuite on y fait quelque chose. */}
+              {day.flights.map((flight) => (
+                <p className="pday__move" key={flight.id} data-kind="vol">
+                  <span className="pday__move-kind">Vol</span>
+                  <span className="pday__move-route">
+                    {flight.from_code} → {flight.to_code}
                   </span>
-                )}
-                {flight.flight_no && <span className="pday__move-note">{flight.flight_no}</span>}
-              </p>
-            ))}
-
-            {day.from && (
-              <p className="pday__move" data-kind="transfert">
-                <span className="pday__move-kind">{day.leg ? modeLabel(day.leg.mode) : 'Transfert'}</span>
-                <span className="pday__move-route">
-                  {day.from.name} → {day.step.name}
-                </span>
-
-                {/* La durée en clair : une demi-journée de train n'est pas une
-                    matinée libre, et c'est ce qu'on vient vérifier. */}
-                {day.leg?.duration_min != null && (
-                  <span className="pday__move-time">{formatDuration(day.leg.duration_min)}</span>
-                )}
-                {day.leg?.dep && (
-                  <span className="pday__move-when">
-                    {formatClock(day.leg.dep)}
-                    {day.leg.arr && ` → ${formatClock(day.leg.arr)}`}
-                  </span>
-                )}
-                {day.leg?.note && <span className="pday__move-note">{day.leg.note}</span>}
-                {!day.leg && <span className="pday__move-note">durée non renseignée</span>}
-              </p>
-            )}
-
-            <DayBody day={day} />
-          </section>
-        );
-      })}
-    </div>
-  );
-}
-
-function DayBody({ day }) {
-  if (day.items.length === 0) {
-    if (day.departure) return <p className="pday__empty">Rien de prévu — journée de départ.</p>;
-    // Un jour d'arrivée sans programme n'est pas une journée vide : le trajet
-    // l'occupe, et il est déjà affiché au-dessus.
-    if (day.from) return <p className="pday__empty">Rien de plus que la route.</p>;
-    return <p className="pday__empty">Journée libre.</p>;
-  }
-
-  // Le précédent dans l'ordre réel de la journée, moments confondus : la
-  // distance se paie entre le dernier lieu du matin et le premier de
-  // l'après-midi, pas à l'intérieur d'un créneau.
-  const before = new Map(day.items.map((item, index) => [item.id, day.items[index - 1]]));
-
-  return (
-    <div className="pday__slots">
-      {day.groups.map((group) => {
-        if (group.items.length === 0) return null;
-
-        return (
-          <div className="pslot" key={group.key ?? 'unslotted'} data-full={group.full || undefined}>
-            <span className="pslot__name">{group.label}</span>
-
-            <ul className="pslot__items">
-              {group.items.map((item) => (
-                <ProgramRow key={item.id} item={item} previous={before.get(item.id)} />
+                  {flight.dep && (
+                    <span className="pday__move-when">
+                      {formatClock(flight.dep)}
+                      {flight.arr && ` → ${formatClock(flight.arr)}`}
+                    </span>
+                  )}
+                  {flight.flight_no && <span className="pday__move-note">{flight.flight_no}</span>}
+                </p>
               ))}
-            </ul>
-          </div>
+
+              {day.from && (
+                <p className="pday__move" data-kind="transfert">
+                  <span className="pday__move-kind">{day.leg ? modeLabel(day.leg.mode) : 'Transfert'}</span>
+                  <span className="pday__move-route">
+                    {day.from.name} → {day.step.name}
+                  </span>
+
+                  {/* La durée en clair : une demi-journée de train n'est pas une
+                      matinée libre, et c'est ce qu'on vient vérifier. */}
+                  {day.leg?.duration_min != null && (
+                    <span className="pday__move-time">{formatDuration(day.leg.duration_min)}</span>
+                  )}
+                  {day.leg?.dep && (
+                    <span className="pday__move-when">
+                      {formatClock(day.leg.dep)}
+                      {day.leg.arr && ` → ${formatClock(day.leg.arr)}`}
+                    </span>
+                  )}
+                  {day.leg?.note && <span className="pday__move-note">{day.leg.note}</span>}
+                  {!day.leg && <span className="pday__move-note">durée non renseignée</span>}
+                </p>
+              )}
+
+              <DayPlan day={day} days={city.days} readOnly={readOnly} onChanged={onChanged} />
+            </section>
+
+            {/* Ce qui reste à caser dans cette ville, juste après ses jours :
+                on pioche là où l'on vient de lire les trous. */}
+            {day.lastOfStep && (
+              <CityReserve
+                step={day.step}
+                days={city.days}
+                items={city.reserve}
+                readOnly={readOnly}
+                onChanged={onChanged}
+              />
+            )}
+          </Fragment>
         );
       })}
     </div>
-  );
-}
-
-function ProgramRow({ item, previous }) {
-  const hop =
-    previous && item.lat != null && previous.lat != null
-      ? haversine(
-          { lat: Number(previous.lat), lng: Number(previous.lng) },
-          { lat: Number(item.lat), lng: Number(item.lng) },
-        )
-      : null;
-
-  const clock = formatClock(item.start_time);
-
-  return (
-    <li className="prow" data-booked={item.booked || undefined}>
-      {hop != null && <span className="prow__hop">{formatDistance(hop)}</span>}
-
-      <span className="prow__line">
-        {clock && <span className="prow__time">{clock}</span>}
-        <PlaceThumb place={item} size="xs" />
-        <span className="prow__dot" data-cat={item.category} aria-hidden="true" />
-        <span className="prow__name">{item.title}</span>
-        {item.booked && <span className="prow__booked">réservé</span>}
-        {item.notes && <span className="prow__meta">{item.notes}</span>}
-      </span>
-    </li>
   );
 }

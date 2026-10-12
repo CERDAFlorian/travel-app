@@ -181,10 +181,17 @@ export function tripSchedule(trip) {
 
   return steps.flatMap((step, index) => {
     const previous = index > 0 ? steps[index - 1] : null;
+    const isLastStep = index === steps.length - 1;
+    const schedule = scheduleOf(step, { isLast: isLastStep });
 
-    return scheduleOf(step, { isLast: index === steps.length - 1 }).map((day) => ({
+    return schedule.map((day) => ({
       ...day,
       step,
+      // Le programme est aussi l'écran où l'on construit : chaque jour doit
+      // savoir à quelle étape il appartient pour proposer les bons jours au
+      // placement, et le dernier jour d'une ville porte sa réserve.
+      isLastStep,
+      lastOfStep: day.offset === schedule.length - 1,
       // LE JOUR DE TRANSFERT EST UN JOUR DE PROGRAMME. Kyoto → Hiroshima,
       // c'est 1h45 de Shinkansen plus les gares : la demi-journée est prise,
       // et un programme qui ne le dirait pas laisserait croire à une matinée

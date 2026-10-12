@@ -1,0 +1,68 @@
+@use '../theme/mixins';
+
+// La réserve : ce qu'on veut faire sans avoir dit quand.
+.reserve {
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-warm);
+
+  &__head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    margin: 0 0 4px;
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+  }
+
+  &__count {
+    padding: 0 6px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-action);
+    color: var(--text-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__items {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+}
+
+.spare {
+  padding: 4px 0;
+
+  & + & { border-top: 1px solid var(--border-soft); }
+
+  &__line {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-width: 0;
+  }
+
+  &__place {
+    margin-left: auto;
+    flex: none;
+    min-height: var(--hit-dense);
+    padding: 1px 9px;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-pill);
+    background: none;
+    color: var(--accent);
+    font: inherit;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+
+    &:hover:not(:disabled) { background: var(--accent-soft); }
+    &:focus-visible { @include mixins.focus-ring; }
+    &:disabled { opacity: 0.5; cursor: progress; }
+  }
+}

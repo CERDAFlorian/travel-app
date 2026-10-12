@@ -9,7 +9,6 @@ import ConfirmDialog from './ConfirmDialog.jsx';
 import TrashIcon from './TrashIcon.jsx';
 import PhotoStrip from './PhotoStrip.jsx';
 import CategoryAccordion from './CategoryAccordion.jsx';
-import StepDays from './StepDays.jsx';
 import LoveNote from './LoveNote.jsx';
 import './StepCard.scss';
 
@@ -36,9 +35,6 @@ export default function StepCard({
   const [asking, setAsking] = useState(false);
   const [nightsAdded, setNightsAdded] = useState(0);
   const [removing, setRemoving] = useState(false);
-  // Les catégories d'abord : c'est par elles qu'on saisit, et une étape qu'on
-  // n'a pas encore remplie n'a pas de programme à montrer.
-  const [view, setView] = useState('cats');
   // Vrai au montage de l'étape qu'on vient d'ajouter : elle cherche sa
   // position toute seule.
   const [locating, setLocating] = useState(Boolean(autoLocate));
@@ -178,6 +174,18 @@ export default function StepCard({
           {/* Seulement sur la nuit ajoutee : retirer une nuit, c'est raccourcir
               le voyage, et le moment se prete moins au compliment. */}
           <LoveNote kind="nights" seed={step.id} trigger={nightsAdded} />
+
+          {/* Le reste à faire, visible depuis la ville. Le placement lui-même
+              se fait dans la vue Jour par jour du voyage : c'est là que vit
+              le programme, une seule fois, toutes villes confondues. */}
+          {toPlace > 0 && (
+            <span
+              className="step__toplace"
+              title="Items de cette ville sans jour : ils se placent dans la vue Jour par jour"
+            >
+              {toPlace} à placer
+            </span>
+          )}
         </div>
 
         <p className="step__lodging" data-empty={lodging ? undefined : true}>
@@ -242,59 +250,21 @@ export default function StepCard({
 
         <PhotoStrip items={step.items} />
 
-        {/* Deux lectures des mêmes items : les catégories sont le garde-manger,
-            les jours sont le menu. On saisit dans l'une, on organise dans
-            l'autre — d'où une bascule et non deux blocs empilés, qui auraient
-            doublé la hauteur d'une étape déjà longue. */}
-        <div className="step__tabs" role="tablist" onClick={(event) => event.stopPropagation()}>
-          <button
-            type="button"
-            role="tab"
-            className="step__tab"
-            data-on={view === 'cats' || undefined}
-            aria-selected={view === 'cats'}
-            onClick={() => setView('cats')}
-          >
-            Catégories
-          </button>
-          <button
-            type="button"
-            role="tab"
-            className="step__tab"
-            data-on={view === 'days' || undefined}
-            aria-selected={view === 'days'}
-            onClick={() => setView('days')}
-          >
-            Jour par jour
-            {/* Le reste à faire, visible sans ouvrir l'onglet. */}
-            {toPlace > 0 && <span className="step__tab-count">{toPlace}</span>}
-          </button>
-        </div>
-
-        {view === 'cats' ? (
-          <div className="step__cats">
-            {CATEGORIES.map((category) => (
-              <CategoryAccordion
-                key={category.key}
-                category={category}
-                items={itemsByCategory.get(category.key)}
-                step={step}
-                readOnly={readOnly}
-                onChanged={onChanged}
-              />
-            ))}
-          </div>
-        ) : (
-          <div onClick={(event) => event.stopPropagation()}>
-            <StepDays
+        {/* La ville, c'est le garde-manger : ce qu'on aimerait y faire, rangé
+            par catégorie. Le menu — quel jour, à quel moment — se compose
+            dans la vue Jour par jour du voyage. */}
+        <div className="step__cats">
+          {CATEGORIES.map((category) => (
+            <CategoryAccordion
+              key={category.key}
+              category={category}
+              items={itemsByCategory.get(category.key)}
               step={step}
-              isLast={isLast}
-              neighbours={neighbours}
               readOnly={readOnly}
               onChanged={onChanged}
             />
-          </div>
-        )}
+          ))}
+        </div>
 
         {/* Le trajet vers l'étape suivante, en pied de carte : il appartient à
             l'intervalle, pas à l'étape d'arrivée. */}

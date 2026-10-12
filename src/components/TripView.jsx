@@ -274,6 +274,8 @@ export default function TripView({
             {byDay ? (
               <TripProgram
                 trip={view}
+                readOnly={readOnly}
+                onChanged={onChanged}
                 selectedStepId={selectedStepId}
                 onSelectStep={selectStep}
               />
@@ -351,18 +353,9 @@ function StepsColumn({
             <StepCard
               step={step}
               readOnly={readOnly}
-              // D'où l'on vient et où l'on va. L'onglet Jour par jour d'une
-              // ville ne montre QUE cette ville : sans ses voisines, le trajet
-              // n'y apparaîtrait nulle part, et on planifierait une journée
-              // pleine le matin d'un Shinkansen.
-              neighbours={{
-                previous: view.steps[index - 1] ?? null,
-                next,
-                legIn: view.steps[index - 1]
-                  ? legBetween(view.steps[index - 1].id, step.id)
-                  : null,
-                legOut: next ? legBetween(step.id, next.id) : null,
-              }}
+              // D'où l'on vient et où l'on va : la recherche d'un lieu pour
+              // situer la ville s'oriente autour de ses voisines.
+              neighbours={{ previous: view.steps[index - 1] ?? null, next }}
               selected={step.id === selectedStepId}
               onSelect={setSelectedStepId}
               onRemove={handleRemoveStep}

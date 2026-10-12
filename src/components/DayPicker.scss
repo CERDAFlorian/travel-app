@@ -27,6 +27,13 @@
     gap: 4px;
   }
 
+  // Le jour du départ reste un jour comme les autres, mais il se signale :
+  // on n'y tient pas une journée de visites.
+  &__mark {
+    color: var(--muted);
+    font-size: var(--fs-xs);
+  }
+
   &__chip {
     display: inline-flex;
     align-items: center;

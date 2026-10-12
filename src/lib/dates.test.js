@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   formatDayFull,
+  formatDayShort,
   formatPeriod,
   formatSince,
   formatStepDates,
@@ -97,5 +98,19 @@ describe('formatDayFull', () => {
 
   it('rend une chaîne vide sans date', () => {
     expect(formatDayFull(null)).toBe('');
+  });
+});
+
+describe('formatDayShort', () => {
+  it('donne le jour de la semaine et le quantième', () => {
+    expect(formatDayShort('2026-11-13')).toBe('ven. 13');
+  });
+
+  it('ne recule pas d’un jour à l’ouest de Greenwich', () => {
+    expect(formatDayShort('2026-11-01')).toBe('dim. 1');
+  });
+
+  it('rend une chaîne vide sans date', () => {
+    expect(formatDayShort(null)).toBe('');
   });
 });
