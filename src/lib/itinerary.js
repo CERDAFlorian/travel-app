@@ -226,8 +226,3 @@ export function reorderSteps(steps, stepId, delta) {
   [next[index], next[target]] = [next[target], next[index]];
   return next;
 }
-
-export function canMoveStep(steps, stepId, delta) {
-  const index = steps.findIndex((step) => step.id === stepId);
-  return index >= 0 && index + delta >= 0 && index + delta < steps.length;
-}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { haversine, walkMinutes, formatDistance, MAX_DISTANCE_FROM_STEP_KM } from './geo.js';
+import { haversine, formatDistance, parseCoordinates, MAX_DISTANCE_FROM_STEP_KM } from './geo.js';
 
 describe('haversine', () => {
   // Le contrat de L4 annonçait ≈ 39 km pour ce couple. C'est faux : 39 km est
@@ -41,17 +41,6 @@ describe('haversine', () => {
   });
 });
 
-describe('walkMinutes', () => {
-  // 4,5 km/h avec un facteur de détour urbain de 1,3.
-  it('compte 17 min pour un kilomètre à vol d’oiseau', () => {
-    expect(walkMinutes(1)).toBe(17);
-  });
-
-  it('rend null sans distance', () => {
-    expect(walkMinutes(null)).toBeNull();
-  });
-});
-
 describe('formatDistance', () => {
   // Une décimale sous 10 km, aucune au-delà : « 43 km » suffit à décider d'y
   // aller, « 42,9 km » donne une précision que la marche ne respecte pas.
@@ -67,4 +56,31 @@ describe('formatDistance', () => {
 
 it('garde le seuil de cohérence à 50 km', () => {
   expect(MAX_DISTANCE_FROM_STEP_KM).toBe(50);
+});
+
+describe('parseCoordinates', () => {
+  // Le format qu'on obtient d'un clic droit sur Google Maps, et ses variantes
+  // plausibles au clavier. La virgule décimale compte : un clavier français la
+  // produit naturellement, et « 35,0394, 135,7292 » est ambigu à l'œil mais
+  // doit passer.
+  it.each([
+    ['35.0394, 135.7292', 35.0394, 135.7292],
+    ['35.0394,135.7292', 35.0394, 135.7292],
+    ['35.0394 135.7292', 35.0394, 135.7292],
+    ['35,0394, 135,7292', 35.0394, 135.7292],
+    ['  34.21 135.58  ', 34.21, 135.58],
+    ['-33.8688, 151.2093', -33.8688, 151.2093],
+  ])('lit « %s »', (input, lat, lng) => {
+    expect(parseCoordinates(input)).toEqual({ lat, lng });
+  });
+
+  it.each([
+    ['un nom de lieu', 'Kinkaku-ji'],
+    ['une latitude hors plage', '91.0, 10.0'],
+    ['une longitude hors plage', '35.0, 181.0'],
+    ['une chaîne vide', ''],
+    ['un seul nombre', '35.0394'],
+  ])('rejette %s', (_label, input) => {
+    expect(parseCoordinates(input)).toBeNull();
+  });
 });

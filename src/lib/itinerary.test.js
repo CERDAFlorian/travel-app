@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   addDays,
-  canMoveStep,
   chainDates,
   datesToUpdate,
   flightArrival,
@@ -9,7 +8,6 @@ import {
   resolveItinerary,
   plannedEndDate,
   timelineEntries,
-  tripEndFromFlights,
   tripStartFromFlights,
 } from './itinerary.js';
 
@@ -392,20 +390,7 @@ describe('reorderSteps', () => {
   });
 });
 
-describe('canMoveStep', () => {
-  const steps = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
-
-  it.each([
-    ['a', -1, false],
-    ['a', 1, true],
-    ['b', -1, true],
-    ['b', 1, true],
-    ['c', -1, true],
-    ['c', 1, false],
-  ])('%s vers %i → %s', (id, delta, expected) => {
-    expect(canMoveStep(steps, id, delta)).toBe(expected);
-  });
-
+describe('reorderSteps et les dates', () => {
   // Le déplacement change les DATES, pas seulement l'ordre : une étape de
   // quatre nuits qui passe devant une d'une nuit décale tout ce qui suit.
   it('le réordonnancement recale la chaîne des dates', () => {

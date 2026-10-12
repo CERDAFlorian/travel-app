@@ -24,23 +24,37 @@ export function haversine(a, b) {
   return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(h));
 }
 
-// Temps de marche estimé, en minutes.
-//
-// 4,5 km/h est une marche soutenue de touriste. Le facteur 1,3 corrige le vol
-// d'oiseau : en ville on contourne des pâtés de maisons, on attend aux feux, on
-// prend des passages. Sans lui, toutes les estimations sont optimistes d'un
-// bon tiers — et on rate un train.
-export function walkMinutes(km) {
-  if (km == null) return null;
-  return Math.round(((km * 1.3) / 4.5) * 60);
-}
-
-// Seuil de cohérence du géocodage. Un item à plus de 50 km du centre de son
-// étape est presque certainement mal géocodé : les noms romanisés japonais sont
-// ambigus, et Nominatim rend volontiers un homonyme à l'autre bout du pays.
+// Seuil de cohérence de la localisation. Un item à plus de 50 km du centre de
+// son étape est presque certainement mal placé : les noms romanisés japonais
+// sont ambigus, et une recherche rend volontiers un homonyme à l'autre bout du
+// pays — ou c'est le centre de l'étape qui est faux.
 export const MAX_DISTANCE_FROM_STEP_KM = 50;
 
 export function formatDistance(km) {
   if (km == null) return null;
   return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(km < 10 ? 1 : 0)} km`;
+}
+
+// Saisie manuelle : « 35.0394, 135.7292 », le format qu'on obtient d'un clic
+// droit sur Google Maps. Le repli quand la recherche ne trouve pas le lieu ;
+// des coordonnées collées rompent le lien avec Google.
+//
+// La virgule décimale est acceptée : un clavier français la produit
+// naturellement, et « 35,0394 135,7292 » est une saisie plausible.
+export function parseCoordinates(text) {
+  const cleaned = String(text).trim();
+  const match = cleaned.match(
+    /^(-?\d{1,3}(?:[.,]\d+)?)\s*[,;]?\s+?(-?\d{1,3}(?:[.,]\d+)?)$|^(-?\d{1,3}(?:[.,]\d+)?)\s*,\s*(-?\d{1,3}(?:[.,]\d+)?)$/,
+  );
+  if (!match) return null;
+
+  const rawLat = match[1] ?? match[3];
+  const rawLng = match[2] ?? match[4];
+  const lat = Number(String(rawLat).replace(',', '.'));
+  const lng = Number(String(rawLng).replace(',', '.'));
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+
+  return { lat, lng };
 }

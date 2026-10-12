@@ -39,8 +39,8 @@ const CSS_URL = 'https://fonts.googleapis.com/css2?family=Lora:wght@600;700&disp
 const UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36';
 
-const slug = (family, style, weight) =>
-  `${family.toLowerCase().replace(/\s+/g, '-')}-${weight}${style === 'italic' ? 'i' : ''}.woff2`;
+const slug = (family, style, weights) =>
+  `${family.toLowerCase().replace(/\s+/g, '-')}-${weights.join('-')}${style === 'italic' ? 'i' : ''}.woff2`;
 
 async function main() {
   mkdirSync(OUT, { recursive: true });
@@ -51,9 +51,13 @@ async function main() {
   });
 
   // Chaque @font-face porte son sous-ensemble en commentaire juste avant.
+  //
+  // Lora est une police VARIABLE : Google déclare un @font-face par graisse,
+  // mais toutes pointent vers le même fichier. On regroupe donc par adresse,
+  // pour télécharger — et précacher — ce fichier une seule fois, déclaré avec
+  // sa plage de graisses (« font-weight: 600 700 »).
   const blocks = css.split('/*').slice(1);
-  const faces = [];
-  let total = 0;
+  const sources = new Map();
 
   for (const block of blocks) {
     const subset = block.slice(0, block.indexOf('*/')).trim();
@@ -65,7 +69,16 @@ async function main() {
     const url = /src:\s*url\(([^)]+)\)/.exec(block)?.[1];
     if (!family || !weight || !url) continue;
 
-    const name = slug(family, style, weight);
+    const source = sources.get(url) ?? { family, style, weights: [] };
+    source.weights.push(weight);
+    sources.set(url, source);
+  }
+
+  const faces = [];
+  let total = 0;
+
+  for (const [url, { family, style, weights }] of sources) {
+    const name = slug(family, style, weights);
     const bytes = Buffer.from(await fetch(url).then((r) => r.arrayBuffer()));
     writeFileSync(resolve(OUT, name), bytes);
     total += bytes.length;
@@ -74,7 +87,7 @@ async function main() {
       `@font-face {\n` +
         `  font-family: '${family}';\n` +
         `  font-style: ${style};\n` +
-        `  font-weight: ${weight};\n` +
+        `  font-weight: ${weights.join(' ')};\n` +
         // swap : le texte s'affiche tout de suite dans la police de repli puis
         // bascule. Mieux qu'un écran vide le temps du chargement.
         `  font-display: swap;\n` +

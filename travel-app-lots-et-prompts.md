@@ -123,8 +123,8 @@ texte `--text` `--text-heading` `--muted` `--text-invert` ; accent `--accent`
 `--ok` `--warn` `--danger` `--info` ; typo `--font-display` `--font-body` ;
 formes `--radius-sm|md|lg|pill` `--shadow-sm|md|lg`.
 
-**Invariants** — `--cat-*` et `--cat-*-soft` (les 6 catégories), `--sp-1..8`,
-`--fs-xs..3xl`, `--lh-tight` `--lh-base`, `--z-*`, `--dur-*` `--ease-out`,
+**Invariants** — `--cat-*` (les 6 catégories), `--sp-1..8`,
+`--fs-xs..3xl`, `--lh-tight` `--lh-base`, `--z-sticky`, `--dur-*` `--ease-out`,
 `--page-max` `--page-pad`.
 
 **Ajouter un pays** : copier `themes/_neutral.scss`, une ligne dans `$themes`
@@ -1917,6 +1917,17 @@ tant que le lien circule entre proches.
 vrais titres. F1 avant F2 : une position Google n'a pas le droit d'apparaître
 sur la carte SVG. F3 en prod moins de 30 jours après F2. M après F3, pour la même
 raison, et avant F4, qui a besoin des `place_id`.
+
+**F5, le ménage, est fait le 6 octobre 2026.** Partis : Nominatim
+(`lib/geocode.js`), la projection et le fond de carte SVG (`lib/projection.js`,
+`data/japan-geometry.js`, `scripts/build-map.mjs` et `npm run map`), le placement
+d'étiquettes SVG (`lib/labels.js`), avec leurs tests. Ce qui servait encore a
+été gardé ailleurs : la lecture de coordonnées collées dans `lib/geo.js`, la
+mesure d'un nom dans `lib/mapGeometry.js`. Les jetons `map-land` et
+`map-land-line` quittent le contrat de thème : la terre est dessinée par le
+style cloud de Google. Le client ne lit plus les colonnes photo ni `images` des
+étapes. Les colonnes restent en base. Les incohérences relevées pendant ce ménage
+sont dans `INCOHERENCES.md`.
 
 ### Mise en prod de L10 — pas à pas (écrit le 29 septembre 2026)
 

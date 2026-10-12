@@ -6,7 +6,13 @@
 // sur la carte Google.
 
 import { categoryOf } from './categories.js';
-import { measureText } from './labels.js';
+
+// Largeur moyenne d'un glyphe, en fraction de la taille de police. Mesurer
+// vraiment supposerait un canvas ou un DOM : inutile ici, on cherche à éviter
+// des chevauchements, pas à composer une page.
+const GLYPH_RATIO = 0.52;
+
+const measureText = (text, size) => String(text).length * size * GLYPH_RATIO;
 
 // Couronne des items sans coordonnées, autour de leur ville, en PIXELS : elle
 // garde la même taille à tous les niveaux de zoom. Valeurs du design, reprises

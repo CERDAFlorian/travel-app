@@ -41,10 +41,6 @@ export const UNSLOTTED = { key: null, label: 'À caler' };
 const SLOT_RANK = new Map(SLOTS.map((slot, index) => [slot.key, index]));
 const rankOf = (item) => SLOT_RANK.get(item.day_slot) ?? SLOTS.length;
 
-export function slotLabel(key) {
-  return (SLOTS.find((slot) => slot.key === key) ?? UNSLOTTED).label;
-}
-
 // Les jours d'une étape, dans l'ordre.
 export function daysOf(step, { isLast = false } = {}) {
   const nights = step.nights ?? 0;

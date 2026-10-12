@@ -8,7 +8,7 @@ import './AddStep.scss';
 // s'arrêtait. Le design propose une liste de villes prédéfinies — on ne la
 // reprend pas : ces 25 villes sont japonaises, et les figer dans l'app la
 // marquerait pour un seul pays. Une saisie libre, puis « Situer sur la carte »
-// via Nominatim, fonctionne partout.
+// par la recherche Google, fonctionne partout.
 export default function AddStep({ onAdd }) {
   const [name, setName] = useState('');
   const [nights, setNights] = useState(2);

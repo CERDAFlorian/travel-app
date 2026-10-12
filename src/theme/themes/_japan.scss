@@ -18,8 +18,6 @@ $brou:        #8a6c47; // annotations italiques
 $vermillon-p: #7a2027; // petites capitales
 $mer:         #fbf3e3; // centre de la mer
 $mer-bord:    #f3e5cd; // bord de la mer
-$terre:       #dfdcbc; // terres émergées
-$cote:        #b6a476; // trait de côte
 $paille:      #e0caa2;
 $paille-fonce:#d9bd8c;
 $paille-clair:#e6d2ab;
@@ -65,8 +63,6 @@ $theme: contract.validate('japan', (
 
   map-sea:         $mer,
   map-sea-edge:    $mer-bord,
-  map-land:        $terre,
-  map-land-line:   $cote,
 
   // Lora plutôt que Playfair Display : le contraste de traits de Playfair —
   // pleins épais, déliés presque invisibles — se lit mal à l'écran, surtout

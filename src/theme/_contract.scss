@@ -37,9 +37,10 @@ $required: (
   border, border-strong, border-soft,
   // États
   ok, warn, danger, info,
-  // Carte — la mer, la terre et le trait de côte appartiennent au pays :
-  // un voyage au Maroc voudra des tons désertiques là où le Japon est kaki.
-  map-sea, map-sea-edge, map-land, map-land-line,
+  // Carte — le fond qui s'affiche pendant que la carte Google charge, et le
+  // cadre de son message hors ligne. La terre, elle, est dessinée par le style
+  // cloud de Google (design/carte-google-style.json), pas par le thème.
+  map-sea, map-sea-edge,
   // Typographie
   font-display, font-body,
   // Formes

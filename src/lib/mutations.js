@@ -288,12 +288,14 @@ function placeColumns({ lat, lng, placeId }) {
 
 // `table` : 'items' ou 'steps'. Deux écritures : la position, puis — sauf
 // rafraîchissement — l'oubli de la photo, seulement si elle n'est pas collée.
+// Une étape n'a plus de photo depuis le 29 septembre 2026 : la seconde
+// écriture ne la concerne pas.
 async function relocate(table, id, point, { keepPhoto = false } = {}) {
   const columns = placeColumns(point);
   if (table === 'steps') delete columns.geocoded_at;
   const { error } = await supabase.from(table).update(columns).eq('id', id);
   if (error) fail(error, 'Enregistrement des coordonnées');
-  if (keepPhoto) return;
+  if (keepPhoto || table === 'steps') return;
   const { error: photoError } = await supabase
     .from(table)
     .update(NO_PHOTO)
@@ -304,14 +306,6 @@ async function relocate(table, id, point, { keepPhoto = false } = {}) {
 
 export async function setCoordinates(id, point, options) {
   await relocate('items', id, point, options);
-}
-
-export async function clearCoordinates(id) {
-  const { error } = await supabase
-    .from('items')
-    .update({ lat: null, lng: null, geocoded_at: null, place_id: null, place_synced_at: null, ...NO_PHOTO })
-    .eq('id', id);
-  if (error) fail(error, 'Effacement des coordonnées');
 }
 
 // La photo d'un lieu (0012_photos.sql, 0013_photos_collees.sql).

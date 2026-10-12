@@ -18,9 +18,10 @@ export default defineConfig({
       // service worker échouait.
 
       workbox: {
-        // Le shell ET les images. Les 31 WebP font 311 Ko : les précacher
-        // coûte un téléchargement à l'installation et évite sept bandeaux
-        // photo vides dans un train sans réseau.
+        // Le shell ET les images de décor (trois WebP, une soixantaine de Ko) :
+        // l'en-tête et le bandeau d'un voyage restent habillés sans réseau.
+        // Les photos des lieux, elles, passent par le cache d'exécution
+        // ci-dessous.
         globPatterns: ['**/*.{js,css,html,webp,png,woff2,svg}'],
         // Les icônes déclarées au manifest sont précachées par le plugin
         // lui-même : les reprendre ici les inscrirait deux fois, avec des

@@ -39,7 +39,6 @@ const trip = {
       nights: 2,
       lat: 35.68,
       lng: 139.69,
-      images: null,
       items: [
         {
           id: 'item-1',
@@ -107,7 +106,6 @@ const trip = {
       nights: 2,
       lat: 35.01,
       lng: 135.77,
-      images: null,
       items: [],
     },
   ],

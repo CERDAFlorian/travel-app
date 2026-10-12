@@ -26,8 +26,6 @@ $paper-5:    #eef1f3; // emplacements vides
 $paper-6:    #d8dee4; // commandes
 $sea:        #eef3f6;
 $sea-edge:   #e2eaf0;
-$land:       #dfe4e2;
-$coast:      #9aa5a2;
 $blue:       #2f5d8c;
 $blue-dark:  #234869;
 $teal:       #3d6b66;
@@ -68,8 +66,6 @@ $theme: contract.validate('neutral', (
 
   map-sea:         $sea,
   map-sea-edge:    $sea-edge,
-  map-land:        $land,
-  map-land-line:   $coast,
 
   font-display:    (system-ui, -apple-system, 'Segoe UI', sans-serif),
   font-body:       (system-ui, -apple-system, 'Segoe UI', sans-serif),

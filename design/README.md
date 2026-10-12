@@ -42,7 +42,7 @@ Nécessite `cwebp` : `brew install webp` (ou `apt install webp`). Seul
 Après avoir ajouté ou remplacé un PNG, lance `npm run img` et commite
 `public/img/` **et** `design/img/.manifest.json` — sinon la CI échoue.
 
-Réglages : WebP q80, `-alpha_q 90`, `-m 6`. Les 28 images ont toutes de la
+Réglages : WebP q80, `-alpha_q 90`, `-m 6`. Les images de décor ont toutes de la
 transparence réelle, donc JPEG est exclu. AVIF ne gagnerait que ~5 % de plus
 pour un encodage 10× plus lent et un support limité à iOS 16+.
 
@@ -111,6 +111,10 @@ Les 3 qui comptaient ont été récupérées depuis : `deco-momiji` et `deco-fuj
 (décors du header), `hero-pagode` (bandeau hero). Les 6 autres (`sushi`, `sumo`,
 `shirakawago2`, `narai`, `matcha`, `baguettes`) ne servaient qu'à l'appariement
 photo ↔ item, retiré depuis : il n'y a plus rien à récupérer.
+
+`deco-band` (la frise du bas du design) est retirée le 6 octobre 2026 : l'app
+ne l'affichait plus depuis ses débuts, mais le service worker la précachait.
+Le `.dc.html` la référence encore et l'affiche donc vide.
 
 **Procédure** pour une image de décor : exporter depuis le canvas Claude Design,
 déposer le `.png` dans `design/img/`, puis `npm run img`. Le manifeste et les
