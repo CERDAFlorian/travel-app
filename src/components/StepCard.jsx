@@ -20,7 +20,6 @@ import './StepCard.scss';
 export default function StepCard({
   step,
   readOnly,
-  isLast,
   neighbours,
   selected,
   onSelect,
@@ -58,7 +57,7 @@ export default function StepCard({
   // une étape où personne n'a encore cherché où dormir.
   const lodging = chosenHotel(step);
   const candidates = hotelsOf(step).length;
-  const toPlace = unplacedOf(step, { isLast }).length;
+  const toPlace = unplacedOf(step).length;
 
   return (
     <article

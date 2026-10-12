@@ -84,8 +84,9 @@ describe('TripProgram — les dates à la place des rangs', () => {
   });
 
   // Le jour du vol retour se signale : on n'y tient pas une journée de visites.
-  it('signale le jour du départ', () => {
-    expect(render()).toContain('départ');
+  // Un seul : le départ d'une ville vers la suivante se lit dans le trajet.
+  it('signale le jour du vol retour, et lui seul', () => {
+    expect(render().match(/pday__rank/g)).toHaveLength(1);
   });
 });
 
@@ -107,17 +108,18 @@ describe('TripProgram — construire le programme', () => {
   });
 
   // La réserve se lit juste après les jours de SA ville : on pioche là où l'on
-  // vient de lire les trous, pas en fin de voyage.
-  it('pose la réserve après le dernier jour de la ville, avant la suivante', () => {
+  // vient de lire les trous, pas en fin de voyage. Le dernier jour de Kyoto
+  // est celui où l'on part pour Osaka.
+  it('pose la réserve après le jour du départ de la ville', () => {
     const html = render();
 
-    const lastKyotoDay = html.indexOf('jeu. 12 nov.');
+    const leavingDay = html.indexOf('ven. 13 nov.');
     const reserve = html.indexOf('À placer à Kyoto');
-    const firstOsakaDay = html.indexOf('ven. 13 nov.');
+    const nextDay = html.indexOf('sam. 14 nov.');
 
-    expect(lastKyotoDay).toBeGreaterThan(-1);
-    expect(reserve).toBeGreaterThan(lastKyotoDay);
-    expect(firstOsakaDay).toBeGreaterThan(reserve);
+    expect(leavingDay).toBeGreaterThan(-1);
+    expect(reserve).toBeGreaterThan(leavingDay);
+    expect(nextDay).toBeGreaterThan(reserve);
   });
 
   // Huit blocs « tout est casé » alourdiraient le programme pour ne rien dire.
@@ -165,5 +167,59 @@ describe('TripProgram — les trajets', () => {
 
   it('signale un transfert dont la durée manque', () => {
     expect(render({ trip: trip({ legs: [] }) })).toContain('durée non renseignée');
+  });
+});
+
+describe('TripProgram — le jour du départ (F2)', () => {
+  const leaving = trip();
+  leaving.steps[0].items.push(
+    item('Nishiki', { day_offset: 2, day_slot: 'matin', day_position: 1 }),
+  );
+  leaving.steps[1].items.push(
+    item('Dōtonbori', { category: 'restaurant', day_offset: 0, day_slot: 'soir', day_position: 1 }),
+  );
+
+  // Le 13 se lit en trois temps : Kyoto avant de partir, le trajet, Osaka en
+  // arrivant.
+  it('lit le jour du changement de ville dans l’ordre où on le vit', () => {
+    const html = render({ trip: leaving });
+
+    const before = html.indexOf('Nishiki');
+    const road = html.indexOf('Kyoto → Osaka');
+    const after = html.indexOf('Dōtonbori');
+
+    expect(before).toBeGreaterThan(-1);
+    expect(road).toBeGreaterThan(before);
+    expect(after).toBeGreaterThan(road);
+  });
+
+  it('nomme les deux parties de la journée', () => {
+    const html = render({ trip: leaving });
+
+    expect(html).toContain('À Kyoto, avant de partir');
+    expect(html).toContain('À Osaka');
+  });
+
+  // En construction, une partie vide reste une place à prendre.
+  it('garde visibles les parties vides en construction', () => {
+    const html = render();
+
+    expect(html).toContain('Rien de prévu avant de partir.');
+    expect(html).toContain('Rien de prévu en arrivant.');
+  });
+
+  // En lecture, on suit la route : rien à dire d'une partie vide.
+  it('tait les parties vides en lecture', () => {
+    const html = render({ readOnly: true });
+
+    expect(html).not.toContain('avant de partir');
+    expect(html).toContain('Rien de plus que la route.');
+  });
+
+  // Le jour où l'on part se place depuis Kyoto : le sélecteur le propose.
+  it('propose le jour du départ dans les jours de la ville', () => {
+    const html = render({ trip: leaving });
+    // Trois jours à Kyoto : 11, 12 et 13 — le dernier porte Nishiki.
+    expect(html.indexOf('Nishiki')).toBeGreaterThan(html.indexOf('ven. 13 nov.'));
   });
 });

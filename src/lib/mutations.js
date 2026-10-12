@@ -439,13 +439,12 @@ export async function setStepNights(trip, stepId, nights) {
   if (nights < 1) return;
 
   const step = trip.steps.find((candidate) => candidate.id === stepId);
-  const isLast = trip.steps.at(-1)?.id === stepId;
 
   // LIBÉRER AVANT DE RACCOURCIR. Raccourcir un séjour fait perdre des jours,
   // pas des envies : les items qui y étaient posés repassent en réserve. Dans
   // l'autre ordre, un échec laisserait des items accrochés à des jours qui
   // n'existent plus.
-  const released = step ? releasedBy(step, nights, { isLast }) : [];
+  const released = step ? releasedBy(step, nights) : [];
   if (released.length > 0) {
     const { error } = await supabase
       .from('items')

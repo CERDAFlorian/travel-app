@@ -69,6 +69,27 @@
     &:focus-visible { @include mixins.focus-ring; }
   }
 
+  &__arrow {
+    color: var(--muted);
+    font-size: var(--fs-sm);
+  }
+
+  // Le jour d'un changement de ville se lit en trois temps : la ville qu'on
+  // quitte, le trajet, la ville où l'on arrive. Chaque partie porte son nom,
+  // discret — c'est la date qui titre le jour.
+  &__part {
+    margin: 2px 0 6px;
+
+    &[data-way='in'] { margin-top: 6px; }
+  }
+
+  &__part-name {
+    margin: 0 0 2px;
+    color: var(--text-soft);
+    font-size: var(--fs-xs);
+    font-style: italic;
+  }
+
   &__rank {
     color: var(--muted);
     font-size: var(--fs-xs);

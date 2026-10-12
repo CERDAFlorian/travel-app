@@ -6,11 +6,23 @@
 // le rattachement d'un item est stocké (`items.day_offset`). Ajouter une nuit à
 // Kyoto insère un jour vide au bon endroit sans toucher à un seul item.
 //
-// UNE ÉTAPE POSSÈDE EXACTEMENT `nights` JOURS. Le jour où l'on change de ville
-// appartient à celle où l'on dort ce soir-là : `date_end` d'une étape étant
-// déjà `date_start` de la suivante, il n'y a ni chevauchement ni arbitrage.
-// Seule la dernière étape du voyage a un jour de plus — celui du vol retour,
-// où l'on ne dort nulle part mais où l'on fait encore quelque chose.
+// UNE ÉTAPE POSSÈDE `nights + 1` JOURS (L11, F2). Le dernier est le jour du
+// DÉPART : on y fait encore quelque chose — un marché le matin, un musée avant
+// le train — puis on part. Il est PARTAGÉ avec la ville suivante, dont c'est le
+// premier jour : `date_end` d'une étape est `date_start` de la suivante, et le
+// programme lit ce jour en trois temps — la ville qu'on quitte, le trajet, la
+// ville où l'on arrive. Pour la dernière étape, ce jour est celui du vol
+// retour : c'était déjà la règle, elle vaut désormais pour toutes les villes.
+//
+// Avant F2, le jour du trajet n'appartenait qu'à la ville d'arrivée : le matin
+// à Tokyo avant le train vers Matsumoto ne se notait nulle part, sinon dans
+// Matsumoto.
+//
+// AJOUTER UNE NUIT NE DÉPLACE RIEN. Ce qui était posé le jour du départ reste
+// à sa date, devenue un jour ordinaire ; le nouveau jour du départ arrive vide.
+// Un item qui changerait de date sans qu'on le demande se découvrirait sur
+// place. Retirer une nuit, à l'inverse, renvoie en réserve ce qui tombait sur
+// un jour disparu (`releasedBy`).
 
 import { addDays } from './itinerary.js';
 import { categoryOf } from './categories.js';
@@ -41,25 +53,24 @@ export const UNSLOTTED = { key: null, label: 'À caler' };
 const SLOT_RANK = new Map(SLOTS.map((slot, index) => [slot.key, index]));
 const rankOf = (item) => SLOT_RANK.get(item.day_slot) ?? SLOTS.length;
 
-// Les jours d'une étape, dans l'ordre.
-export function daysOf(step, { isLast = false } = {}) {
+// Les jours d'une étape, dans l'ordre : ses nuits, puis le jour du départ.
+export function daysOf(step) {
   const nights = step.nights ?? 0;
-  const count = nights + (isLast ? 1 : 0);
 
-  return Array.from({ length: count }, (_, offset) => ({
+  return Array.from({ length: dayCount(nights) }, (_, offset) => ({
     offset,
     date: step.date_start ? addDays(step.date_start, offset) : null,
-    // Le dernier jour de la dernière étape n'est pas une nuit : c'est le jour
-    // du départ. Il porte le check-out et le trajet vers l'aéroport, pas un
-    // programme de visite, et l'affichage doit pouvoir le dire.
-    departure: isLast && offset === nights,
+    // Le dernier jour n'est pas une nuit ici : c'est le jour où l'on part. On
+    // y fait encore quelque chose, mais pas une journée de visites — et
+    // l'affichage doit pouvoir le dire.
+    departure: offset === nights,
   }));
 }
 
 // Combien de jours une étape aurait avec ce nombre de nuits. Sert à savoir ce
 // qu'une réduction ferait perdre, avant de l'écrire.
-function dayCount(nights, isLast) {
-  return Math.max(0, nights) + (isLast ? 1 : 0);
+function dayCount(nights) {
+  return Math.max(0, nights) + 1;
 }
 
 // Le programme de l'étape : chaque jour, ses moments, et leurs items.
@@ -72,8 +83,8 @@ function dayCount(nights, isLast) {
 // `position` départage en dernier ressort, pour que deux items jamais
 // réordonnés — qui valent 0 tous les deux — ne s'échangent pas d'un rendu à
 // l'autre au gré de la réponse du serveur.
-export function scheduleOf(step, { isLast = false } = {}) {
-  const days = daysOf(step, { isLast });
+export function scheduleOf(step) {
+  const days = daysOf(step);
   const byDay = new Map(days.map((day) => [day.offset, []]));
 
   for (const item of step.items ?? []) {
@@ -109,8 +120,8 @@ export function scheduleOf(step, { isLast = false } = {}) {
 // normal `releasedBy` les a déjà libérés, mais si cette écriture a échoué —
 // réseau coupé au mauvais moment — l'item doit réapparaître ici plutôt que de
 // disparaître de l'écran en restant en base.
-export function unplacedOf(step, { isLast = false } = {}) {
-  const count = dayCount(step.nights ?? 0, isLast);
+export function unplacedOf(step) {
+  const count = dayCount(step.nights ?? 0);
 
   return (step.items ?? []).filter(
     (item) =>
@@ -124,8 +135,8 @@ export function unplacedOf(step, { isLast = false } = {}) {
 // Réduire un séjour ne doit rien détruire : on perd des jours, pas des envies.
 // Les écraser sur le dernier jour restant serait pire — on se retrouverait
 // avec six activités le même après-midi sans avoir rien demandé.
-export function releasedBy(step, nights, { isLast = false } = {}) {
-  const count = dayCount(nights, isLast);
+export function releasedBy(step, nights) {
+  const count = dayCount(nights);
 
   return (step.items ?? [])
     .filter((item) => item.day_offset != null && item.day_offset >= count)
@@ -160,8 +171,17 @@ export function positionsToUpdate(items) {
 // LE VOYAGE ENTIER, JOUR PAR JOUR.
 //
 // C'est la lecture qui sert SUR PLACE : on n'est pas dans « Kyoto », on est le
-// 13 novembre. Les étapes s'effacent derrière la suite des jours, et les vols
+// 13 novembre. Les étapes s'effacent derrière la suite des DATES, et les vols
 // comme les trajets se rangent à leur date, au milieu du programme.
+//
+// UNE ENTRÉE PAR DATE, pas par jour d'étape. Le jour d'un changement de ville
+// appartient aux deux (voir l'en-tête) : il rend deux PARTIES — la ville qu'on
+// quitte, puis celle où l'on arrive — et le TRANSFERT qui les sépare. Les
+// autres jours n'ont qu'une partie.
+//
+// Chaque partie porte le jour de SON étape (offset, moments, items) : c'est
+// lui qu'on modifie, et ses items ne se placent que parmi les jours de leur
+// ville.
 //
 // Les étapes doivent arriver AVEC LEURS DATES RÉSOLUES (resolveItinerary) : ce
 // sont elles qui font foi, pas les colonnes date_start stockées.
@@ -179,33 +199,43 @@ export function tripSchedule(trip) {
     flights.set(flight.date, [...(flights.get(flight.date) ?? []), flight]);
   }
 
-  return steps.flatMap((step, index) => {
-    const previous = index > 0 ? steps[index - 1] : null;
-    const isLastStep = index === steps.length - 1;
-    const schedule = scheduleOf(step, { isLast: isLastStep });
+  const entries = [];
 
-    return schedule.map((day) => ({
-      ...day,
-      step,
-      // Le programme est aussi l'écran où l'on construit : chaque jour doit
-      // savoir à quelle étape il appartient pour proposer les bons jours au
-      // placement, et le dernier jour d'une ville porte sa réserve.
-      isLastStep,
-      lastOfStep: day.offset === schedule.length - 1,
-      // LE JOUR DE TRANSFERT EST UN JOUR DE PROGRAMME. Kyoto → Hiroshima,
-      // c'est 1h45 de Shinkansen plus les gares : la demi-journée est prise,
-      // et un programme qui ne le dirait pas laisserait croire à une matinée
-      // libre. Le transfert se lit donc AVANT les moments, au premier jour de
-      // l'étape d'arrivée.
-      //
-      // `from` existe même sans liaison saisie : arriver d'ailleurs est déjà
-      // une information, la durée n'en est que le détail.
-      from: day.offset === 0 ? previous : null,
-      leg:
-        day.offset === 0 && previous
-          ? (legs.get(`${previous.id}>${step.id}`) ?? null)
-          : null,
-      flights: flights.get(day.date) ?? [],
-    }));
+  steps.forEach((step, index) => {
+    const previous = index > 0 ? steps[index - 1] : null;
+    const schedule = scheduleOf(step);
+
+    schedule.forEach((day) => {
+      const part = {
+        ...day,
+        step,
+        // La réserve d'une ville se pose après son dernier jour.
+        lastOfStep: day.offset === schedule.length - 1,
+      };
+
+      // LE JOUR DU CHANGEMENT DE VILLE. La ville qu'on quitte l'a déjà ouvert
+      // avec son jour de départ : celle où l'on arrive s'y ajoute, après le
+      // trajet. `from` existe même sans liaison saisie — arriver d'ailleurs
+      // est déjà une information, la durée n'en est que le détail.
+      if (day.offset === 0 && previous) {
+        const shared = entries.at(-1);
+        shared.parts.push(part);
+        shared.transfer = {
+          from: previous,
+          to: step,
+          leg: legs.get(`${previous.id}>${step.id}`) ?? null,
+        };
+        return;
+      }
+
+      entries.push({
+        date: day.date,
+        parts: [part],
+        transfer: null,
+        flights: flights.get(day.date) ?? [],
+      });
+    });
   });
+
+  return entries;
 }

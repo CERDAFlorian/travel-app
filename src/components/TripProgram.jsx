@@ -29,15 +29,13 @@ export default function TripProgram({ trip, readOnly, onChanged, selectedStepId,
 
   // Par ville : ses jours, parmi lesquels un item se place ou se déplace, et
   // sa réserve. Calculés une fois par étape, pas une fois par jour affiché.
-  const cities = useMemo(() => {
-    const steps = trip.steps ?? [];
-    return new Map(
-      steps.map((step, index) => {
-        const isLast = index === steps.length - 1;
-        return [step.id, { days: daysOf(step, { isLast }), reserve: unplacedOf(step, { isLast }) }];
-      }),
-    );
-  }, [trip]);
+  const cities = useMemo(
+    () =>
+      new Map(
+        (trip.steps ?? []).map((step) => [step.id, { days: daysOf(step), reserve: unplacedOf(step) }]),
+      ),
+    [trip],
+  );
 
   const today = todayIso();
   const current = useRef(null);
@@ -61,40 +59,49 @@ export default function TripProgram({ trip, readOnly, onChanged, selectedStepId,
     <div className="program">
       {days.map((day) => {
         const isToday = day.date === today;
-        const city = cities.get(day.step.id);
+        const [first] = day.parts;
+        // L'ancre que la frise et la carte visent : le premier jour d'une
+        // ville. Le jour d'un changement de ville est celui où la suivante
+        // commence.
+        const anchor = day.transfer ? `day-${day.transfer.to.id}-0` : `day-${first.step.id}-${first.offset}`;
 
         return (
-          <Fragment key={`${day.step.id}-${day.offset}`}>
+          <Fragment key={day.date ?? anchor}>
             <section
-              id={`day-${day.step.id}-${day.offset}`}
+              id={anchor}
               className="pday"
               data-today={isToday || undefined}
-              data-selected={day.step.id === selectedStepId || undefined}
+              data-selected={day.parts.some((part) => part.step.id === selectedStepId) || undefined}
               ref={isToday ? current : null}
             >
               <header className="pday__head">
                 <span className="pday__date">{formatDayFull(day.date)}</span>
 
-                {/* La ville reste cliquable : c'est le lien avec la carte, qu'on
-                    garde sous les yeux. */}
-                <button
-                  type="button"
-                  className="pday__city"
-                  title={`Voir ${day.step.name} sur la carte`}
-                  onClick={() => onSelectStep?.(day.step.id)}
-                >
-                  {day.step.name}
-                </button>
+                {/* Les villes restent cliquables : c'est le lien avec la carte,
+                    qu'on garde sous les yeux. Deux le jour où l'on change. */}
+                {day.parts.map((part, index) => (
+                  <Fragment key={part.step.id}>
+                    {index > 0 && <span className="pday__arrow" aria-hidden="true">→</span>}
+                    <button
+                      type="button"
+                      className="pday__city"
+                      title={`Voir ${part.step.name} sur la carte`}
+                      onClick={() => onSelectStep?.(part.step.id)}
+                    >
+                      {part.step.name}
+                    </button>
+                  </Fragment>
+                ))}
 
                 {/* La date suffit à situer le jour : « J2 » obligeait à
-                    recompter depuis l'arrivée. Seul le départ se signale — on
-                    n'y tient pas une journée de visites. */}
-                {day.departure && <span className="pday__rank">départ</span>}
+                    recompter depuis l'arrivée. Seul le vol retour se signale —
+                    on n'y tient pas une journée de visites. */}
+                {!day.transfer && first.departure && <span className="pday__rank">départ</span>}
                 {isToday && <span className="pday__now">aujourd'hui</span>}
               </header>
 
-              {/* Le déplacement AVANT le programme : on arrive quelque part,
-                  ensuite on y fait quelque chose. */}
+              {/* Les vols d'abord : on arrive au Japon avant d'y faire quoi
+                  que ce soit, et le vol retour clôt la journée qu'il occupe. */}
               {day.flights.map((flight) => (
                 <p className="pday__move" key={flight.id} data-kind="vol">
                   <span className="pday__move-kind">Vol</span>
@@ -111,46 +118,112 @@ export default function TripProgram({ trip, readOnly, onChanged, selectedStepId,
                 </p>
               ))}
 
-              {day.from && (
-                <p className="pday__move" data-kind="transfert">
-                  <span className="pday__move-kind">{day.leg ? modeLabel(day.leg.mode) : 'Transfert'}</span>
-                  <span className="pday__move-route">
-                    {day.from.name} → {day.step.name}
-                  </span>
-
-                  {/* La durée en clair : une demi-journée de train n'est pas une
-                      matinée libre, et c'est ce qu'on vient vérifier. */}
-                  {day.leg?.duration_min != null && (
-                    <span className="pday__move-time">{formatDuration(day.leg.duration_min)}</span>
-                  )}
-                  {day.leg?.dep && (
-                    <span className="pday__move-when">
-                      {formatClock(day.leg.dep)}
-                      {day.leg.arr && ` → ${formatClock(day.leg.arr)}`}
-                    </span>
-                  )}
-                  {day.leg?.note && <span className="pday__move-note">{day.leg.note}</span>}
-                  {!day.leg && <span className="pday__move-note">durée non renseignée</span>}
-                </p>
+              {day.transfer ? (
+                <TransferDay day={day} cities={cities} readOnly={readOnly} onChanged={onChanged} />
+              ) : (
+                <DayPlan
+                  day={first}
+                  days={cities.get(first.step.id).days}
+                  readOnly={readOnly}
+                  onChanged={onChanged}
+                  emptyText={
+                    first.departure
+                      ? 'Rien de prévu — journée de départ.'
+                      : readOnly
+                        ? 'Journée libre.'
+                        : 'Rien de prévu.'
+                  }
+                />
               )}
-
-              <DayPlan day={day} days={city.days} readOnly={readOnly} onChanged={onChanged} />
             </section>
 
-            {/* Ce qui reste à caser dans cette ville, juste après ses jours :
-                on pioche là où l'on vient de lire les trous. */}
-            {day.lastOfStep && (
-              <CityReserve
-                step={day.step}
-                days={city.days}
-                items={city.reserve}
-                readOnly={readOnly}
-                onChanged={onChanged}
-              />
-            )}
+            {/* Ce qui reste à caser dans une ville, juste après ses jours : on
+                pioche là où l'on vient de lire les trous. Le jour d'un
+                changement de ville clôt celle qu'on quitte. */}
+            {day.parts
+              .filter((part) => part.lastOfStep)
+              .map((part) => (
+                <CityReserve
+                  key={part.step.id}
+                  step={part.step}
+                  days={cities.get(part.step.id).days}
+                  items={cities.get(part.step.id).reserve}
+                  readOnly={readOnly}
+                  onChanged={onChanged}
+                />
+              ))}
           </Fragment>
         );
       })}
     </div>
+  );
+}
+
+// Le jour d'un changement de ville, en trois temps : ce qu'on fait avant de
+// partir, le trajet, ce qu'on fait en arrivant.
+//
+// Le trajet est AU MILIEU, pas en tête : avant F2 il ouvrait la journée, qui
+// appartenait tout entière à la ville d'arrivée, et le matin à Tokyo avant le
+// train ne se notait nulle part.
+function TransferDay({ day, cities, readOnly, onChanged }) {
+  const [leaving, arriving] = day.parts;
+  const { transfer } = day;
+
+  // En lecture, une partie vide ne dit rien : on suit la route. En
+  // construction, elle reste visible — c'est une place à prendre.
+  const show = (part) => !readOnly || part.items.length > 0;
+  const nothing = readOnly && !show(leaving) && !show(arriving);
+
+  return (
+    <>
+      {show(leaving) && (
+        <div className="pday__part" data-way="out">
+          <p className="pday__part-name">À {leaving.step.name}, avant de partir</p>
+          <DayPlan
+            day={leaving}
+            days={cities.get(leaving.step.id).days}
+            readOnly={readOnly}
+            onChanged={onChanged}
+            emptyText="Rien de prévu avant de partir."
+          />
+        </div>
+      )}
+
+      <p className="pday__move" data-kind="transfert">
+        <span className="pday__move-kind">{transfer.leg ? modeLabel(transfer.leg.mode) : 'Transfert'}</span>
+        <span className="pday__move-route">
+          {transfer.from.name} → {transfer.to.name}
+        </span>
+
+        {/* La durée en clair : une demi-journée de train n'est pas une
+            matinée libre, et c'est ce qu'on vient vérifier. */}
+        {transfer.leg?.duration_min != null && (
+          <span className="pday__move-time">{formatDuration(transfer.leg.duration_min)}</span>
+        )}
+        {transfer.leg?.dep && (
+          <span className="pday__move-when">
+            {formatClock(transfer.leg.dep)}
+            {transfer.leg.arr && ` → ${formatClock(transfer.leg.arr)}`}
+          </span>
+        )}
+        {transfer.leg?.note && <span className="pday__move-note">{transfer.leg.note}</span>}
+        {!transfer.leg && <span className="pday__move-note">durée non renseignée</span>}
+      </p>
+
+      {show(arriving) && (
+        <div className="pday__part" data-way="in">
+          <p className="pday__part-name">À {arriving.step.name}</p>
+          <DayPlan
+            day={arriving}
+            days={cities.get(arriving.step.id).days}
+            readOnly={readOnly}
+            onChanged={onChanged}
+            emptyText="Rien de prévu en arrivant."
+          />
+        </div>
+      )}
+
+      {nothing && <p className="dayplan__empty">Rien de plus que la route.</p>}
+    </>
   );
 }
