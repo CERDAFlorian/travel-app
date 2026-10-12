@@ -11,6 +11,8 @@ import {
 } from '@/lib/mutations.js';
 import DayPicker from './DayPicker.jsx';
 import PlaceThumb from './PlaceThumb.jsx';
+import ItemTransports from './ItemTransports.jsx';
+import LegEditor from './LegEditor.jsx';
 import './PlannedRow.scss';
 
 // Un item posé sur un jour.
@@ -19,9 +21,22 @@ import './PlannedRow.scss';
 // (vue partagée, hors ligne) elle perd ses commandes et garde l'heure, la
 // marque « réservé » et la distance au précédent — ce qu'on vient lire sur
 // place.
-export default function PlannedRow({ item, step, days, slotItems, previous, canMoveUp, canMoveDown, readOnly, onChanged }) {
+export default function PlannedRow({
+  item,
+  step,
+  days,
+  slotItems,
+  previous,
+  canMoveUp,
+  canMoveDown,
+  transports,
+  clashes,
+  tripId,
+  readOnly,
+  onChanged,
+}) {
   // Un seul panneau ouvert à la fois : 'move' pour déplacer, 'copy' pour
-  // refaire ailleurs, 'time' pour l'heure. Les deux premiers choisissent un
+  // refaire ailleurs, 'time' pour l'heure, 'transport' pour y aller. Les deux premiers choisissent un
   // créneau mais n'en font pas la même chose — le libellé doit le dire avant
   // le clic, pas après.
   const [panel, setPanel] = useState(null);
@@ -60,6 +75,16 @@ export default function PlannedRow({ item, step, days, slotItems, previous, canM
           {formatDistance(hop)}
         </span>
       )}
+
+      {/* Comment on y va, au-dessus : le train, puis le ferry. */}
+      <ItemTransports
+        item={item}
+        legs={transports?.aller}
+        clashes={clashes}
+        tripId={tripId}
+        readOnly={readOnly}
+        onChanged={onChanged}
+      />
 
       <div className="planned__line">
         {!readOnly && (
@@ -144,6 +169,15 @@ export default function PlannedRow({ item, step, days, slotItems, previous, canM
               type="button"
               className="planned__act"
               disabled={busy}
+              title="Ajouter un transport pour y aller ou en revenir : train, ferry, bus…"
+              onClick={() => toggle('transport')}
+            >
+              + trajet
+            </button>
+            <button
+              type="button"
+              className="planned__act"
+              disabled={busy}
               title="Déplacer vers un autre jour ou un autre moment"
               onClick={() => toggle('move')}
             >
@@ -170,6 +204,26 @@ export default function PlannedRow({ item, step, days, slotItems, previous, canM
           </span>
         )}
       </div>
+
+      {/* Le retour, en dessous : le dernier ferry qu'il ne faut pas rater. */}
+      <ItemTransports
+        item={item}
+        legs={transports?.retour}
+        clashes={clashes}
+        tripId={tripId}
+        readOnly={readOnly}
+        onChanged={onChanged}
+      />
+
+      {panel === 'transport' && (
+        <LegEditor
+          tripId={tripId}
+          item={item}
+          leg={null}
+          onClose={() => setPanel(null)}
+          onChanged={onChanged}
+        />
+      )}
 
       {panel === 'time' && (
         <TimeField

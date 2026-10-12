@@ -583,11 +583,31 @@ export async function deleteFlight(trip, id) {
 // panneau des temps de trajet, et parce qu'un trajet peut n'avoir qu'une durée
 // connue, sans horaire.
 
-export async function saveLeg({ id, tripId, fromStep, toStep, mode, dep, arr, price, note }) {
+//
+// UN TRAJET RELIE DEUX VILLES, OU MÈNE À UNE ACTIVITÉ (L11, F4) : `fromStep` +
+// `toStep`, ou `itemId` — jamais les deux, le schéma le refuse
+// (legs_anchor_one). Pour une activité, `direction` dit si on y va ou si on en
+// revient.
+export async function saveLeg({
+  id,
+  tripId,
+  fromStep = null,
+  toStep = null,
+  itemId = null,
+  direction = 'aller',
+  mode,
+  dep,
+  arr,
+  price,
+  note,
+}) {
   const row = {
     trip_id: tripId,
-    from_step: fromStep,
-    to_step: toStep,
+    from_step: itemId ? null : fromStep,
+    to_step: itemId ? null : toStep,
+    item_id: itemId,
+    // Entre deux villes, on ne fait qu'aller : la contrainte legs_direction_city.
+    direction: itemId ? direction : 'aller',
     mode,
     dep: dep || null,
     arr: arr || null,
@@ -601,8 +621,20 @@ export async function saveLeg({ id, tripId, fromStep, toStep, mode, dep, arr, pr
     note: note?.trim() || null,
   };
 
-  // Un trajet existe déjà entre ces deux étapes : on le remplace plutôt que
-  // d'échouer sur la contrainte unique (from_step, to_step).
+  // Un NOUVEAU transport d'activité se range après ceux qu'elle a déjà dans
+  // ce sens : on saisit le train, puis le ferry, dans l'ordre où on les prend.
+  if (!id && itemId) {
+    const { data, error } = await supabase
+      .from('legs')
+      .select('position')
+      .eq('item_id', itemId)
+      .eq('direction', row.direction)
+      .order('position', { ascending: false })
+      .limit(1);
+    if (error) fail(error, 'Lecture des transports de l’activité');
+    row.position = (data?.[0]?.position ?? 0) + 1;
+  }
+
   const query = id
     ? supabase.from('legs').update(row).eq('id', id)
     : supabase.from('legs').insert(row);

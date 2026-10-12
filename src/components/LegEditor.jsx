@@ -16,13 +16,16 @@ function parsePrice(raw) {
   return Number.isFinite(value) && value >= 0 ? value : null;
 }
 
-// La saisie d'un trajet entre deux villes.
+// La saisie d'un trajet : entre deux villes, ou pour aller à une activité.
 //
-// Elle vit dans le JOUR PAR JOUR depuis L11 F3, sur la ligne du trajet du jour
-// où l'on change de ville : c'est là qu'on voit ce que le trajet prend à la
-// journée — le matin qu'il laisse, le soir où l'on arrive. Entre deux cartes de
-// ville, on ne voyait que deux noms.
-export default function LegEditor({ tripId, fromStep, toStep, leg, onClose, onChanged }) {
+// Elle vit dans le JOUR PAR JOUR depuis L11 F3 : sur la ligne du trajet du jour
+// où l'on change de ville — c'est là qu'on voit ce que le trajet prend à la
+// journée —, ou sous une activité (F4) pour le ferry de Miyajima. Un seul
+// formulaire pour les deux : un transport reste un transport.
+//
+// Avec `item`, le trajet dessert l'activité et porte un SENS : l'aller se lit
+// avant elle, le retour après.
+export default function LegEditor({ tripId, fromStep, toStep, item, leg, onClose, onChanged }) {
   const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
@@ -32,6 +35,12 @@ export default function LegEditor({ tripId, fromStep, toStep, leg, onClose, onCh
   const [arr, setArr] = useState(formatClock(leg?.arr) ?? '');
   const [price, setPrice] = useState(eurosInput(leg?.price, leg?.currency) ?? '');
   const [note, setNote] = useState(leg?.note ?? '');
+  const [direction, setDirection] = useState(leg?.direction ?? 'aller');
+
+  // Ce que le trajet relie, pour les libellés et la confirmation.
+  const route = item
+    ? `${direction === 'retour' ? 'Retour de' : 'Pour aller à'} ${item.title}`
+    : `${fromStep.name} → ${toStep.name}`;
 
   async function run(action) {
     setBusy(true);
@@ -56,15 +65,17 @@ export default function LegEditor({ tripId, fromStep, toStep, leg, onClose, onCh
     <>
       <form
         className="legform"
-        aria-label={`Trajet ${fromStep.name} → ${toStep.name}`}
+        aria-label={`Trajet · ${route}`}
         onSubmit={(event) => {
           event.preventDefault();
           run(() =>
             saveLeg({
               id: leg?.id,
               tripId,
-              fromStep: fromStep.id,
-              toStep: toStep.id,
+              fromStep: fromStep?.id,
+              toStep: toStep?.id,
+              itemId: item?.id ?? null,
+              direction,
               mode,
               dep,
               arr,
@@ -74,6 +85,18 @@ export default function LegEditor({ tripId, fromStep, toStep, leg, onClose, onCh
           );
         }}
       >
+        {item && (
+          <select
+            className="legform__field"
+            value={direction}
+            aria-label="Sens du trajet"
+            onChange={(event) => setDirection(event.target.value)}
+          >
+            <option value="aller">Aller</option>
+            <option value="retour">Retour</option>
+          </select>
+        )}
+
         <select
           className="legform__field"
           value={mode}
@@ -161,12 +184,14 @@ export default function LegEditor({ tripId, fromStep, toStep, leg, onClose, onCh
         onConfirm={() => run(() => deleteLeg(leg.id))}
       >
         <p>
-          <strong>
-            {fromStep.name} → {toStep.name}
-          </strong>
+          <strong>{route}</strong>
           {leg ? ` · ${legSummary(leg)}` : ''}.
         </p>
-        <p>Les étapes ne bougent pas : seul le trajet entre elles est effacé.</p>
+        <p>
+          {item
+            ? 'L’activité reste à sa place : seul ce transport est effacé.'
+            : 'Les étapes ne bougent pas : seul le trajet entre elles est effacé.'}
+        </p>
       </ConfirmDialog>
     </>
   );

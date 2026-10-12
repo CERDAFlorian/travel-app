@@ -246,3 +246,78 @@ describe('TripProgram — le jour du départ (F2)', () => {
     expect(html.indexOf('Nishiki')).toBeGreaterThan(html.indexOf('ven. 13 nov.'));
   });
 });
+
+describe('TripProgram — le transport d’une activité (F4)', () => {
+  // Fushimi Inari, le 11 au matin : un train pour y aller, un bus pour revenir.
+  const withTransports = trip({
+    legs: [
+      ...trip().legs,
+      { id: 'bus', item_id: 'Fushimi Inari', direction: 'retour', position: 1, mode: 'bus', duration_min: 20 },
+      { id: 'jr', item_id: 'Fushimi Inari', direction: 'aller', position: 1, mode: 'train', duration_min: 5, note: 'JR Nara' },
+    ],
+  });
+
+  // L'aller au-dessus de l'activité, le retour en dessous : l'ordre où on le vit.
+  it('encadre l’activité de son aller et de son retour', () => {
+    const html = render({ trip: withTransports });
+
+    const aller = html.indexOf('JR Nara');
+    const activity = html.indexOf('class="planned__name">Fushimi Inari');
+    const retour = html.indexOf('>retour<');
+
+    expect(aller).toBeGreaterThan(-1);
+    expect(activity).toBeGreaterThan(aller);
+    expect(retour).toBeGreaterThan(activity);
+  });
+
+  it('propose d’ajouter un transport en construction', () => {
+    expect(render()).toContain('+ trajet');
+  });
+
+  it('montre les transports sans commande en lecture', () => {
+    const html = render({ trip: withTransports, readOnly: true });
+
+    expect(html).toContain('JR Nara');
+    expect(html).not.toContain('+ trajet');
+    expect(html).not.toContain('Modifier ce transport');
+  });
+
+  // Un trajet d'activité n'est pas un trajet entre villes : il ne doit pas se
+  // glisser dans la ligne Kyoto → Osaka.
+  it('ne confond pas un transport d’activité avec le trajet entre villes', () => {
+    const html = render({ trip: trip({ legs: [withTransports.legs[1]] }) });
+    expect(html).toContain('+ ajouter le transport');
+  });
+});
+
+describe('TripProgram — les horaires qui se chevauchent', () => {
+  // Le 13, on prend le Shinkansen de 9 h 12 vers Osaka… et on a noté un bus
+  // de 9 h pour aller à Nishiki, à Kyoto, le même matin.
+  const clashing = trip();
+  clashing.steps[0].items.push(item('Nishiki', { day_offset: 2, day_slot: 'matin', day_position: 1 }));
+  clashing.legs.push({
+    id: 'bus',
+    item_id: 'Nishiki',
+    direction: 'aller',
+    position: 1,
+    mode: 'bus',
+    dep: '09:00:00',
+    arr: '09:20:00',
+    duration_min: 20,
+  });
+
+  it('avertit sur les deux transports en conflit', () => {
+    const html = render({ trip: clashing });
+    expect(html.match(/⚠ chevauche/g)).toHaveLength(2);
+  });
+
+  // L'avertissement nomme l'autre transport : sans lui, on chercherait
+  // lequel corriger.
+  it('nomme le transport en cause', () => {
+    expect(render({ trip: clashing })).toContain('Chevauche : Shinkansen · 09:12 → 09:27');
+  });
+
+  it('ne dit rien quand les horaires se suivent', () => {
+    expect(render()).not.toContain('chevauche');
+  });
+});

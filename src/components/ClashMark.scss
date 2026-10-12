@@ -1,0 +1,14 @@
+// Un horaire qui en chevauche un autre : c'est une faute de saisie à corriger
+// avant de partir, pas une information de lecture. D'où la couleur
+// d'avertissement, qu'aucune autre ligne du programme n'emploie.
+.clash {
+  flex: none;
+  padding: 0 6px;
+  border: 1px solid var(--warn);
+  border-radius: var(--radius-pill);
+  color: var(--warn);
+  font-size: var(--fs-xs);
+  font-style: normal;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}

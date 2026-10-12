@@ -26,6 +26,7 @@
 
 import { addDays } from './itinerary.js';
 import { categoryOf } from './categories.js';
+import { cityLegs } from './transport.js';
 
 // Les moments d'une journée.
 //
@@ -191,7 +192,7 @@ export function tripSchedule(trip) {
   // Un trajet est identifié par le COUPLE d'étapes : une liaison qui subsiste
   // entre deux villes devenues non adjacentes ne doit pas s'inviter dans une
   // journée qu'elle ne concerne plus.
-  const legs = new Map((trip.legs ?? []).map((leg) => [`${leg.from_step}>${leg.to_step}`, leg]));
+  const legs = new Map(cityLegs(trip.legs).map((leg) => [`${leg.from_step}>${leg.to_step}`, leg]));
 
   const flights = new Map();
   for (const flight of trip.flights ?? []) {

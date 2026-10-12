@@ -19,6 +19,7 @@ import StepLink from '@/components/StepLink.jsx';
 import LoveNote from '@/components/LoveNote.jsx';
 import { addStep, moveStep, removeStep, setStepNights } from '@/lib/mutations.js';
 import { resolveItinerary, timelineEntries } from '@/lib/itinerary.js';
+import { cityLegs } from '@/lib/transport.js';
 import { LoveNotesProvider } from '@/hooks/useLoveNotes.js';
 import { useRefreshPlaces } from '@/hooks/useRefreshPlaces.js';
 import { usePhotoFill } from '@/hooks/usePhotoFill.js';
@@ -175,7 +176,7 @@ export default function TripView({
   // endroit.
   const legBetween = useMemo(() => {
     const map = new Map();
-    for (const leg of view.legs ?? []) map.set(`${leg.from_step}>${leg.to_step}`, leg);
+    for (const leg of cityLegs(view.legs)) map.set(`${leg.from_step}>${leg.to_step}`, leg);
     return (from, to) => map.get(`${from}>${to}`) ?? null;
   }, [view]);
 
@@ -303,7 +304,7 @@ export default function TripView({
                 <h2 className="trip__map-title">La carte du voyage</h2>
               </div>
               <TripMap trip={view} selectedStepId={selectedStepId} onSelectStep={selectStep} onDemand={shared} />
-              <TravelTimes steps={view.steps} legs={view.legs} />
+              <TravelTimes steps={view.steps} legs={cityLegs(view.legs)} />
             </div>
           </aside>
         </main>

@@ -116,6 +116,7 @@ const files = {
   purgeGoogle: 'supabase/migrations/0011_purge_google.sql',
   photos: 'supabase/migrations/0012_photos.sql',
   pastedPhotos: 'supabase/migrations/0013_photos_collees.sql',
+  activityTransport: 'supabase/migrations/0014_transports_activites.sql',
   seed: 'supabase/seed.sql',
 };
 

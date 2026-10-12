@@ -1,11 +1,12 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { daysOf, tripSchedule, unplacedOf } from '@/lib/days.js';
 import { formatDayFull, todayIso } from '@/lib/dates.js';
-import { formatClock, formatDuration, modeLabel } from '@/lib/transport.js';
+import { formatClock, formatDuration, modeLabel, overlappingLegs, transportsByItem } from '@/lib/transport.js';
 import { priceInEuros } from '@/lib/currency.js';
 import DayPlan from './DayPlan.jsx';
 import CityReserve from './CityReserve.jsx';
 import LegEditor from './LegEditor.jsx';
+import ClashMark from './ClashMark.jsx';
 import './TripProgram.scss';
 
 // Le voyage jour par jour — la colonne de gauche, à la place des étapes.
@@ -39,6 +40,10 @@ export default function TripProgram({ trip, readOnly, onChanged, selectedStepId,
     [trip],
   );
 
+  // Les transports de chaque activité : le ferry de Miyajima, le bus de
+  // Kōyasan (F4). Rangés une fois pour tout le voyage.
+  const transports = useMemo(() => transportsByItem(trip.legs), [trip.legs]);
+
   const today = todayIso();
   const current = useRef(null);
 
@@ -62,6 +67,7 @@ export default function TripProgram({ trip, readOnly, onChanged, selectedStepId,
       {days.map((day) => {
         const isToday = day.date === today;
         const [first] = day.parts;
+        const clashes = clashesOf(day, transports);
         // L'ancre que la frise et la carte visent : le premier jour d'une
         // ville. Le jour d'un changement de ville est celui où la suivante
         // commence.
@@ -125,6 +131,8 @@ export default function TripProgram({ trip, readOnly, onChanged, selectedStepId,
                   day={day}
                   tripId={trip.id}
                   cities={cities}
+                  transports={transports}
+                  clashes={clashes}
                   readOnly={readOnly}
                   onChanged={onChanged}
                 />
@@ -132,6 +140,9 @@ export default function TripProgram({ trip, readOnly, onChanged, selectedStepId,
                 <DayPlan
                   day={first}
                   days={cities.get(first.step.id).days}
+                  transports={transports}
+                  clashes={clashes}
+                  tripId={trip.id}
                   readOnly={readOnly}
                   onChanged={onChanged}
                   emptyText={
@@ -173,7 +184,7 @@ export default function TripProgram({ trip, readOnly, onChanged, selectedStepId,
 // Le trajet est AU MILIEU, pas en tête : avant F2 il ouvrait la journée, qui
 // appartenait tout entière à la ville d'arrivée, et le matin à Tokyo avant le
 // train ne se notait nulle part.
-function TransferDay({ day, tripId, cities, readOnly, onChanged }) {
+function TransferDay({ day, tripId, cities, transports, clashes, readOnly, onChanged }) {
   const [leaving, arriving] = day.parts;
   const { transfer } = day;
 
@@ -190,6 +201,9 @@ function TransferDay({ day, tripId, cities, readOnly, onChanged }) {
           <DayPlan
             day={leaving}
             days={cities.get(leaving.step.id).days}
+            transports={transports}
+            clashes={clashes}
+            tripId={tripId}
             readOnly={readOnly}
             onChanged={onChanged}
             emptyText="Rien de prévu avant de partir."
@@ -197,7 +211,13 @@ function TransferDay({ day, tripId, cities, readOnly, onChanged }) {
         </div>
       )}
 
-      <TransferLine transfer={transfer} tripId={tripId} readOnly={readOnly} onChanged={onChanged} />
+      <TransferLine
+        transfer={transfer}
+        clashes={transfer.leg ? clashes.get(transfer.leg.id) : null}
+        tripId={tripId}
+        readOnly={readOnly}
+        onChanged={onChanged}
+      />
 
       {show(arriving) && (
         <div className="pday__part" data-way="in">
@@ -205,6 +225,9 @@ function TransferDay({ day, tripId, cities, readOnly, onChanged }) {
           <DayPlan
             day={arriving}
             days={cities.get(arriving.step.id).days}
+            transports={transports}
+            clashes={clashes}
+            tripId={tripId}
             readOnly={readOnly}
             onChanged={onChanged}
             emptyText="Rien de prévu en arrivant."
@@ -223,7 +246,7 @@ function TransferDay({ day, tripId, cities, readOnly, onChanged }) {
 // juste dessous, entre ce qu'on fait avant de partir et ce qu'on fait en
 // arrivant — on règle l'horaire du train en voyant ce qu'il laisse de la
 // journée. La vue Villes ne fait plus que le rappeler.
-function TransferLine({ transfer, tripId, readOnly, onChanged }) {
+function TransferLine({ transfer, clashes, tripId, readOnly, onChanged }) {
   const [editing, setEditing] = useState(false);
   const { leg } = transfer;
 
@@ -249,6 +272,7 @@ function TransferLine({ transfer, tripId, readOnly, onChanged }) {
         <span className="pday__move-when">{priceInEuros(leg.price, leg.currency ?? 'EUR')}</span>
       )}
       {leg?.note && <span className="pday__move-note">{leg.note}</span>}
+      <ClashMark others={clashes} />
       {!leg && (
         <span className="pday__move-note">
           {readOnly ? 'durée non renseignée' : '+ ajouter le transport'}
@@ -291,4 +315,23 @@ function TransferLine({ transfer, tripId, readOnly, onChanged }) {
       )}
     </>
   );
+}
+
+// Les transports d'une journée qui se chevauchent : le trajet entre deux
+// villes, et ceux de toutes les activités du jour, aller comme retour. Sur
+// toute la journée et pas activité par activité : un ferry pour Miyajima qui
+// chevauche le train du départ est la même faute qu'un bus qui chevauche un
+// train.
+function clashesOf(day, transports) {
+  const legs = [
+    day.transfer?.leg,
+    ...day.parts.flatMap((part) =>
+      part.items.flatMap((item) => {
+        const own = transports.get(item.id);
+        return own ? [...own.aller, ...own.retour] : [];
+      }),
+    ),
+  ].filter(Boolean);
+
+  return overlappingLegs(legs);
 }

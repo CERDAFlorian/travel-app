@@ -471,6 +471,13 @@ describe('tripSchedule', () => {
     ]);
   });
 
+  // Le ferry d'une activité (F4) n'a pas d'étapes : il ne doit jamais passer
+  // pour le trajet entre deux villes.
+  it('ignore les transports d’activité', () => {
+    const days = tripSchedule(trip({ legs: [{ id: 'ferry', item_id: 'fushimi', mode: 'ferry' }] }));
+    expect(on(days, '2026-11-13').transfer.leg).toBeNull();
+  });
+
   it('ne rend rien pour un voyage sans étape', () => {
     expect(tripSchedule({ steps: [], flights: [], legs: [] })).toEqual([]);
   });
