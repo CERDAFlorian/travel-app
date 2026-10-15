@@ -28,17 +28,22 @@
   }
 
   &__open {
-    margin: 2px 0 0 30px;
-    padding: 0;
-    border: 0;
-    background: none;
-    color: var(--muted);
-    font: inherit;
-    font-size: var(--fs-xs);
-    text-decoration: underline dotted;
-    cursor: pointer;
-
-    &:hover { color: var(--accent); }
-    &:focus-visible { @include mixins.focus-ring; }
+    @include mixins.button-ghost;
+    margin: 2px 0 0;
+    padding: 0 var(--sp-2);
   }
+}
+
+.rstop__add-cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 2px;
+  margin: 4px 0 0 calc(var(--sp-2) * -1);
+
+  &:empty { display: none; }
+}
+
+.rstop__add-cat {
+  @include mixins.button-ghost;
+  padding: 0 var(--sp-2);
 }

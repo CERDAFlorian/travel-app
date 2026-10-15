@@ -17,7 +17,7 @@ import './StopPlan.scss';
 // choisir : c'est le contenu qui décide de la forme.
 //
 // `origin` : d'où l'on vient — la ville quittée le matin, ou l'arrêt précédent.
-export default function StopPlan({ plan, origin, date, transports, clashes, tripId, readOnly, onChanged }) {
+export default function StopPlan({ plan, origin, sync, date, transports, clashes, tripId, readOnly, onChanged }) {
   const [adding, setAdding] = useState(false);
   const { container: stop, step } = plan;
   const own = transports.get(stop.id);
@@ -68,6 +68,7 @@ export default function StopPlan({ plan, origin, date, transports, clashes, trip
           <ItemTransports
             item={stop}
             legs={toStop}
+            sync={sync}
             clashes={clashes}
             tripId={tripId}
             readOnly={readOnly}
@@ -101,6 +102,7 @@ export default function StopPlan({ plan, origin, date, transports, clashes, trip
           tripId={tripId}
           item={stop}
           leg={null}
+          sync={sync}
           onClose={() => setAdding(false)}
           onChanged={onChanged}
         />

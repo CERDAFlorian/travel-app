@@ -43,7 +43,8 @@
 
   &__name {
     margin: 0;
-    padding-top: 3px;
+    // Centrée sur la première ligne : la vignette fait 31 px de haut.
+    padding-top: 5px;
     font-size: var(--fs-xs);
     font-weight: 500;
     letter-spacing: 0.08em;
@@ -67,8 +68,20 @@
     list-style: none;
   }
 
-  @media (min-width: 560px) {
-    grid-template-columns: 92px 1fr;
+  // L'étiquette en marge dès que LE JOUR en a la place — sa largeur, pas celle
+  // de l'écran : à côté de la carte, la colonne est étroite même sur un grand
+  // écran.
+  @container day (min-width: 460px) {
+    grid-template-columns: 96px 1fr;
     align-items: start;
   }
+}
+
+// Un moment hors de la présence dans la ville (heures de ville, 0016) qui
+// contient pourtant quelque chose : à déplacer avant de partir.
+.slot__outside {
+  color: var(--warn);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
 }

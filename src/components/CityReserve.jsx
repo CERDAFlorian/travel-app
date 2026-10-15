@@ -19,19 +19,37 @@ import './CityReserve.scss';
 //
 // Elle sert aussi à un arrêt en chemin (F5) : `container` est alors l'arrêt,
 // dont le contenu se place dans ses moments, le jour de l'arrêt.
+//
+// REPLIÉE PAR DÉFAUT (passe UX du 15 octobre 2026) : vingt lieux à placer à
+// Tokyo s'étalaient entre deux jours et coupaient la lecture du programme. Une
+// ligne avec son compteur ; on la déplie quand on vient placer.
 export default function CityReserve({ step, days, items, container = null, readOnly, onChanged }) {
+  const [open, setOpen] = useState(false);
   if (readOnly || items.length === 0) return null;
 
   const name = container?.title ?? step.name;
 
   return (
-    <section className="reserve" data-inside={container ? true : undefined} aria-label={`À placer à ${name}`}>
+    <section
+      className="reserve"
+      data-inside={container ? true : undefined}
+      data-open={open || undefined}
+      aria-label={`À placer à ${name}`}
+    >
       <h3 className="reserve__head">
-        <span className="reserve__title">À placer à {name}</span>
-        <span className="reserve__count">{items.length}</span>
+        <button
+          type="button"
+          className="reserve__toggle"
+          aria-expanded={open}
+          onClick={() => setOpen((value) => !value)}
+        >
+          <span className="reserve__title">À placer à {name}</span>
+          <span className="reserve__count">{items.length}</span>
+          <span className="reserve__caret" aria-hidden="true">{open ? '▴' : '▾'}</span>
+        </button>
       </h3>
 
-      <ul className="reserve__items">
+      <ul className="reserve__items" hidden={!open}>
         {items.map((item) => (
           <ReserveRow
             key={item.id}

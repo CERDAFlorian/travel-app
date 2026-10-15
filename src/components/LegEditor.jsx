@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { TRANSPORT_MODES, durationBetween, formatClock, formatDuration, legSummary } from '@/lib/transport.js';
-import { deleteLeg, saveLeg } from '@/lib/mutations.js';
+import { deleteLeg, saveLeg, syncRouteTimes } from '@/lib/mutations.js';
 import { eurosInput } from '@/lib/currency.js';
 import ConfirmDialog from './ConfirmDialog.jsx';
 import TrashIcon from './TrashIcon.jsx';
@@ -25,7 +25,11 @@ function parsePrice(raw) {
 //
 // Avec `item`, le trajet dessert l'activité et porte un SENS : l'aller se lit
 // avant elle, le retour après.
-export default function LegEditor({ tripId, fromStep, toStep, item, leg, onClose, onChanged }) {
+//
+// `sync` : le trajet appartient à une route entre deux villes — entre les
+// villes elles-mêmes, ou vers un arrêt en chemin. Ses horaires règlent alors
+// le départ et l'arrivée des villes (le trajet prime, 0016).
+export default function LegEditor({ tripId, fromStep, toStep, item, leg, sync = null, onClose, onChanged }) {
   const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
@@ -36,6 +40,9 @@ export default function LegEditor({ tripId, fromStep, toStep, item, leg, onClose
   const [price, setPrice] = useState(eurosInput(leg?.price, leg?.currency) ?? '');
   const [note, setNote] = useState(leg?.note ?? '');
   const [direction, setDirection] = useState(leg?.direction ?? 'aller');
+  // Le prix est facultatif : un trajet inclus dans le JR Pass n'en a pas. Le
+  // champ ne s'ouvre que sur demande, ou s'il y a déjà un prix.
+  const [pricing, setPricing] = useState(price !== '');
 
   // Ce que le trajet relie, pour les libellés et la confirmation.
   const route = item
@@ -68,8 +75,8 @@ export default function LegEditor({ tripId, fromStep, toStep, item, leg, onClose
         aria-label={`Trajet · ${route}`}
         onSubmit={(event) => {
           event.preventDefault();
-          run(() =>
-            saveLeg({
+          run(async () => {
+            await saveLeg({
               id: leg?.id,
               tripId,
               fromStep: fromStep?.id,
@@ -81,8 +88,10 @@ export default function LegEditor({ tripId, fromStep, toStep, item, leg, onClose
               arr,
               price: parsePrice(price),
               note,
-            }),
-          );
+            });
+            // Le trajet prime : ses horaires règlent les heures des villes.
+            if (sync) await syncRouteTimes(sync);
+          });
         }}
       >
         {item && (
@@ -126,15 +135,22 @@ export default function LegEditor({ tripId, fromStep, toStep, item, leg, onClose
           onChange={(event) => setArr(event.target.value)}
         />
 
-        <input
-          className="legform__price"
-          type="text"
-          inputMode="numeric"
-          value={price}
-          placeholder="prix €"
-          aria-label="Prix du trajet, en euros"
-          onChange={(event) => setPrice(event.target.value)}
-        />
+        {pricing ? (
+          <input
+            className="legform__price"
+            type="text"
+            inputMode="numeric"
+            value={price}
+            autoFocus={price === ''}
+            placeholder="prix €"
+            aria-label="Prix du trajet, en euros"
+            onChange={(event) => setPrice(event.target.value)}
+          />
+        ) : (
+          <button type="button" className="legform__price-open" onClick={() => setPricing(true)}>
+            + prix
+          </button>
+        )}
 
         {preview && <span className="legform__preview">{preview}</span>}
 

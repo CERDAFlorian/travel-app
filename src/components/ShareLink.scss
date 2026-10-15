@@ -21,29 +21,17 @@
   }
 
   &__action {
-    flex: none;
-    padding: 3px 11px;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-pill);
-    background: var(--surface-warm);
-    color: var(--accent);
-    font: inherit;
-    font-size: var(--fs-xs);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    white-space: nowrap;
-    cursor: pointer;
-
-    &:hover { border-color: var(--accent); }
-    &:focus-visible { @include mixins.focus-ring; }
-    &:disabled { opacity: 0.6; cursor: progress; }
+    @include mixins.button-secondary;
 
     &--danger {
-      background: transparent;
-      color: var(--danger);
       border-color: var(--border);
+      background: none;
+      color: var(--danger);
 
-      &:hover { border-color: var(--danger); }
+      &:hover:not(:disabled) {
+        border-color: var(--danger);
+        background: none;
+      }
     }
   }
 

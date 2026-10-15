@@ -56,6 +56,11 @@ export function daysOf(step) {
     // y fait encore quelque chose, mais pas une journée de visites — et
     // l'affichage doit pouvoir le dire.
     departure: offset === nights,
+    // La fenêtre du jour (0016) : on n'est dans la ville qu'à partir de
+    // l'heure d'arrivée le premier jour, et jusqu'à l'heure de départ le
+    // dernier. NULL : pas d'heure connue, la journée reste ouverte.
+    from: offset === 0 ? (step.arrival_time ?? null) : null,
+    until: offset === nights ? (step.departure_time ?? null) : null,
   }));
 }
 

@@ -66,18 +66,7 @@
   // Discret : sept intervalles, sept boutons — ils ne doivent pas hacher la
   // lecture de l'itinéraire.
   &__add {
-    align-self: center;
-    padding: 0 var(--sp-2);
-    border: 0;
-    background: none;
-    color: var(--muted);
-    font: inherit;
-    font-size: var(--fs-xs);
-    text-decoration: underline dotted;
-    cursor: pointer;
-
-    &:hover { color: var(--accent); }
-    &:focus-visible { @include mixins.focus-ring; }
+    @include mixins.button-ghost;
   }
 
   &__add-form {
@@ -102,16 +91,9 @@
     &:focus-visible { @include mixins.focus-ring; }
   }
 
-  &__add-submit { @include mixins.action-button; }
+  &__add-submit { @include mixins.button-primary('sm'); }
 
   &__add-cancel {
-    padding: 0 var(--sp-2);
-    border: 0;
-    background: none;
-    color: var(--muted);
-    font: inherit;
-    font-size: var(--fs-sm);
-    text-decoration: underline;
-    cursor: pointer;
+    @include mixins.button-link;
   }
 }

@@ -91,14 +91,27 @@ export default function TripProgram({ trip, readOnly, onChanged, selectedStepId,
                 {day.parts.map((part, index) => (
                   <Fragment key={part.step.id}>
                     {index > 0 && <span className="pday__arrow" aria-hidden="true">→</span>}
-                    <button
-                      type="button"
-                      className="pday__city"
-                      title={`Voir ${part.step.name} sur la carte`}
-                      onClick={() => onSelectStep?.(part.step.id)}
-                    >
-                      {part.step.name}
-                    </button>
+                    {/* La ville et son heure ne se séparent pas au retour à la
+                        ligne : « 15:40 » seul en début de ligne ne dit rien. */}
+                    <span className="pday__place">
+                      <button
+                        type="button"
+                        className="pday__city"
+                        title={`Voir ${part.step.name} sur la carte`}
+                        onClick={() => onSelectStep?.(part.step.id)}
+                      >
+                        {part.step.name}
+                      </button>
+                      {/* Le jour d'un changement de ville, l'heure à laquelle on
+                          quitte la première et on arrive dans la seconde (0016),
+                          à côté de leur nom : « Tokyo 10:00 → Matsumoto 15:40 ». */}
+                      {day.transfer && index === 0 && part.until && (
+                        <span className="pday__clock">{formatClock(part.until)}</span>
+                      )}
+                      {day.transfer && index === 1 && part.from && (
+                        <span className="pday__clock">{formatClock(part.from)}</span>
+                      )}
+                    </span>
                   </Fragment>
                 ))}
 
@@ -106,6 +119,15 @@ export default function TripProgram({ trip, readOnly, onChanged, selectedStepId,
                     recompter depuis l'arrivée. Seul le vol retour se signale —
                     on n'y tient pas une journée de visites. */}
                 {!day.transfer && first.departure && <span className="pday__rank">départ</span>}
+                {/* L'arrivée du premier jour, le départ du dernier (0016). Le
+                    jour d'un changement de ville les porte sur ses deux
+                    parties. */}
+                {!day.transfer && first.from && (
+                  <span className="pday__clock">arrivée {formatClock(first.from)}</span>
+                )}
+                {!day.transfer && first.until && (
+                  <span className="pday__clock">départ {formatClock(first.until)}</span>
+                )}
                 {isToday && <span className="pday__now">aujourd'hui</span>}
               </header>
 
@@ -189,10 +211,12 @@ function TransferDay({ day, tripId, cities, transports, clashes, readOnly, onCha
   const [leaving, arriving] = day.parts;
   const { transfer } = day;
 
-  // En lecture, une partie vide ne dit rien : on suit la route. En
-  // construction, elle reste visible — c'est une place à prendre.
-  const show = (part) => !readOnly || part.items.length > 0;
-  const nothing = readOnly && !show(leaving) && !show(arriving);
+  // UNE PARTIE VIDE NE DIT RIEN (passe UX du 15 octobre 2026). « Rien de
+  // prévu avant de partir », « Rien de prévu en arrivant » : quatre lignes
+  // pour un jour où l'on ne fait que rouler. On place le matin du départ
+  // depuis la réserve, et la partie apparaît.
+  const show = (part) => part.items.length > 0;
+  const nothing = readOnly && !show(leaving) && !show(arriving) && transfer.stops.length === 0;
 
   return (
     <>
@@ -220,6 +244,7 @@ function TransferDay({ day, tripId, cities, transports, clashes, readOnly, onCha
           key={plan.container.id}
           plan={plan}
           origin={index > 0 ? transfer.stops[index - 1].container.title : transfer.from.name}
+          sync={routeOf(transfer)}
           date={day.date}
           transports={transports}
           clashes={clashes}
@@ -332,6 +357,7 @@ function TransferLine({ transfer, clashes, tripId, readOnly, onChanged }) {
           fromStep={transfer.from}
           toStep={transfer.to}
           leg={leg}
+          sync={routeOf(transfer)}
           onClose={() => setEditing(false)}
           onChanged={onChanged}
         />
@@ -364,4 +390,14 @@ function clashesOf(day, transports) {
   ].filter(Boolean);
 
   return overlappingLegs(legs);
+}
+
+// La route d'un jour de changement de ville, pour régler les heures des deux
+// villes après l'enregistrement d'un de ses trajets (le trajet prime, 0016).
+function routeOf(transfer) {
+  return {
+    fromStepId: transfer.from.id,
+    toStepId: transfer.to.id,
+    firstStopId: transfer.stops[0]?.container.id ?? null,
+  };
 }

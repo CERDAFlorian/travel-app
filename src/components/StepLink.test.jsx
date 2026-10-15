@@ -50,7 +50,7 @@ describe('StepLink — la route entre deux villes', () => {
   // Le trajet se règle dans le jour par jour : ici, seule la saisie des arrêts.
   it('ne propose rien d’autre que d’ajouter un arrêt', () => {
     const html = render({ leg: { id: 'l', mode: 'train', duration_min: 60 } });
-    expect(html).toContain('+ arrêt en chemin');
+    expect(html).toContain('+ arrêt');
     expect(html).not.toContain('Modifier ce trajet');
   });
 

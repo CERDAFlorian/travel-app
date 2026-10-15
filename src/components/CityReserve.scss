@@ -7,16 +7,42 @@
   border-radius: var(--radius-md);
   background: var(--surface-warm);
 
+  // Repliée, la réserve tient sur cette ligne : moins d'air autour.
+  &:not([data-open]) { padding-bottom: var(--sp-2); }
+
   &__head {
-    display: flex;
-    align-items: center;
-    gap: var(--sp-2);
-    margin: 0 0 4px;
+    margin: 0;
     font-size: var(--fs-xs);
     font-weight: 500;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--text-soft);
+  }
+
+  // Toute la ligne déplie : la cible est large, au doigt.
+  &__toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    width: 100%;
+    min-height: var(--hit-dense);
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover { color: var(--accent); }
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  &__caret {
+    margin-left: auto;
+    color: var(--muted);
   }
 
   &__count {
@@ -28,9 +54,11 @@
   }
 
   &__items {
-    margin: 0;
+    margin: 4px 0 0;
     padding: 0;
     list-style: none;
+
+    &[hidden] { display: none; }
   }
 }
 
@@ -47,22 +75,7 @@
   }
 
   &__place {
+    @include mixins.button-secondary;
     margin-left: auto;
-    flex: none;
-    min-height: var(--hit-dense);
-    padding: 1px 9px;
-    border: 1px solid var(--accent);
-    border-radius: var(--radius-pill);
-    background: none;
-    color: var(--accent);
-    font: inherit;
-    font-size: var(--fs-xs);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    cursor: pointer;
-
-    &:hover:not(:disabled) { background: var(--accent-soft); }
-    &:focus-visible { @include mixins.focus-ring; }
-    &:disabled { opacity: 0.5; cursor: progress; }
   }
 }

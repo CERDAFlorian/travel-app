@@ -4,7 +4,9 @@
 // activités qu'elles desservent. Le filet à gauche les rattache à la ligne
 // qu'elles encadrent.
 .itrans {
-  margin: 0 0 0 30px;
+  // Le retrait vient du contexte : le nom d'une activité (PlannedRow), le bord
+  // d'un arrêt (StopPlan).
+  margin: 0;
   padding: 0;
   list-style: none;
 

@@ -23,12 +23,18 @@ function parsePrice(raw) {
 // `parentId` : la catégorie d'un arrêt en chemin (L11, F5). Ce qu'on y ajoute
 // est rangé dans l'arrêt, et `step` est alors l'arrêt vu comme une ville — son
 // nom, sa position, son contenu.
-export default function CategoryAccordion({ category, items, step, parentId = null, readOnly, onChanged }) {
-  const [open, setOpen] = useState(false);
+//
+// `defaultOpen` : une catégorie vide qu'on vient d'ouvrir depuis les raccourcis
+// « + Logement », « + Restaurants » de la carte de ville — on vient pour y
+// ajouter quelque chose, le champ prend la main.
+export default function CategoryAccordion({ category, items, step, parentId = null, defaultOpen = false, readOnly, onChanged }) {
+  const [open, setOpen] = useState(defaultOpen);
   // Item tout juste créé : sa ligne ouvre d'elle-même la recherche d'adresse.
   const [justAdded, setJustAdded] = useState(null);
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState('');
+  // Le prix est facultatif : son champ ne s'ouvre que sur demande.
+  const [pricing, setPricing] = useState(false);
   const [busy, setBusy] = useState(false);
   // Dernier item ajouté, pour le mot doux. Voir AddStep : le compteur est là
   // pour que deux ajouts identiques d'affilée relancent bien l'affichage.
@@ -75,6 +81,7 @@ export default function CategoryAccordion({ category, items, step, parentId = nu
       await onChanged();
       setTitle('');
       setPrice('');
+      setPricing(false);
       setAdded((last) => ({ count: last.count + 1, title: trimmed }));
     } finally {
       setBusy(false);
@@ -123,20 +130,28 @@ export default function CategoryAccordion({ category, items, step, parentId = nu
                 type="text"
                 value={title}
                 placeholder={category.placeholder}
+                autoFocus={defaultOpen && items.length === 0}
                 aria-label={`Ajouter dans ${category.label}`}
                 onChange={(event) => setTitle(event.target.value)}
               />
-              {category.budget && (
-                <input
-                  className="cat__add-price"
-                  type="text"
-                  inputMode="numeric"
-                  value={price}
-                  placeholder="prix €"
-                  aria-label="Prix"
-                  onChange={(event) => setPrice(event.target.value)}
-                />
-              )}
+              {category.budget &&
+                (pricing ? (
+                  <input
+                    className="cat__add-price"
+                    type="text"
+                    inputMode="numeric"
+                    value={price}
+                    autoFocus
+                    placeholder="prix €"
+                    aria-label="Prix"
+                    onChange={(event) => setPrice(event.target.value)}
+                  />
+                ) : (
+                  // Facultatif : la plupart des lieux n'ont pas de prix.
+                  <button type="button" className="cat__add-price-open" onClick={() => setPricing(true)}>
+                    + prix
+                  </button>
+                ))}
               <button className="cat__add-submit" type="submit" disabled={busy}>
                 +
               </button>

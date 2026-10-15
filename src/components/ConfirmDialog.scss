@@ -48,20 +48,8 @@
     justify-content: flex-end;
   }
 
-  &__cancel,
-  &__go {
-    padding: var(--sp-2) var(--sp-4);
-    border-radius: var(--radius-pill);
-    font: inherit;
-    font-size: var(--fs-sm);
-    cursor: pointer;
-
-    &:focus-visible { @include mixins.focus-ring; }
-    &:disabled { opacity: 0.6; cursor: progress; }
-  }
-
   &__cancel {
-    border: 1px solid var(--border-strong);
+    @include mixins.button-secondary('md');
     background: var(--surface-raised);
     color: var(--text);
   }
@@ -69,8 +57,6 @@
   // La destruction se lit comme telle. Elle n'est pas mise en avant par un
   // focus automatique pour autant.
   &__go {
-    border: 1px solid var(--danger);
-    background: var(--danger);
-    color: var(--text-invert);
+    @include mixins.button-primary('md', 'danger');
   }
 }

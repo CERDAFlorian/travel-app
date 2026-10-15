@@ -56,39 +56,51 @@ export default function StepLink({ from, to, leg, transports, readOnly, onChange
         </Fragment>
       ))}
 
-      <Segment legs={leg ? [leg] : []} />
+      {/* Le dernier tronçon porte aussi « + arrêt » : une seule ligne entre
+          deux villes au lieu de deux (passe UX du 15 octobre 2026). */}
+      <Segment
+        legs={leg ? [leg] : []}
+        extra={
+          !readOnly &&
+          !adding && (
+            <button
+              type="button"
+              className="route__add"
+              title={`Un arrêt en chemin entre ${from.name} et ${to.name}`}
+              onClick={() => setAdding(true)}
+            >
+              + arrêt
+            </button>
+          )
+        }
+      />
 
-      {!readOnly &&
-        (adding ? (
-          <form className="route__add-form" onSubmit={submit}>
-            <input
-              className="route__add-title"
-              type="text"
-              value={title}
-              autoFocus
-              placeholder="Un arrêt en chemin : une distillerie, un village…"
-              aria-label={`Ajouter un arrêt entre ${from.name} et ${to.name}`}
-              onChange={(event) => setTitle(event.target.value)}
-            />
-            <button className="route__add-submit" type="submit" disabled={busy}>
-              Ajouter
-            </button>
-            <button className="route__add-cancel" type="button" onClick={() => setAdding(false)}>
-              Annuler
-            </button>
-          </form>
-        ) : (
-          <button type="button" className="route__add" onClick={() => setAdding(true)}>
-            + arrêt en chemin
+      {!readOnly && adding && (
+        <form className="route__add-form" onSubmit={submit}>
+          <input
+            className="route__add-title"
+            type="text"
+            value={title}
+            autoFocus
+            placeholder="Un arrêt en chemin : une distillerie, un village…"
+            aria-label={`Ajouter un arrêt entre ${from.name} et ${to.name}`}
+            onChange={(event) => setTitle(event.target.value)}
+          />
+          <button className="route__add-submit" type="submit" disabled={busy}>
+            Ajouter
           </button>
-        ))}
+          <button className="route__add-cancel" type="button" onClick={() => setAdding(false)}>
+            Annuler
+          </button>
+        </form>
+      )}
     </div>
   );
 }
 
 // Un tronçon de la route : le résumé de son trajet, ou « à préciser ». En
 // lecture seule — il se règle dans le jour par jour.
-function Segment({ legs }) {
+function Segment({ legs, extra = null }) {
   return (
     <div className="link">
       <span className="link__rule" aria-hidden="true" />
@@ -108,6 +120,8 @@ function Segment({ legs }) {
           trajet à préciser
         </span>
       )}
+
+      {extra}
 
       <span className="link__rule" aria-hidden="true" />
     </div>

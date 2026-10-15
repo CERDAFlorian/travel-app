@@ -11,6 +11,7 @@ import TrashIcon from './TrashIcon.jsx';
 import PhotoStrip from './PhotoStrip.jsx';
 import CategoryAccordion from './CategoryAccordion.jsx';
 import LoveNote from './LoveNote.jsx';
+import StepTimes from './StepTimes.jsx';
 import './StepCard.scss';
 
 // Une étape : rail à gauche, contenu à droite.
@@ -33,6 +34,8 @@ export default function StepCard({
   onChanged,
 }) {
   const [asking, setAsking] = useState(false);
+  // Les catégories vides ouvertes à la demande, depuis les raccourcis.
+  const [opened, setOpened] = useState([]);
   const [nightsAdded, setNightsAdded] = useState(0);
   const [removing, setRemoving] = useState(false);
   // Vrai au montage de l'étape qu'on vient d'ajouter : elle cherche sa
@@ -192,6 +195,10 @@ export default function StepCard({
           )}
         </div>
 
+        {/* L'heure d'arrivée et de départ (0016) : elles bornent le premier et
+            le dernier jour dans la ville. */}
+        <StepTimes key={`${step.arrival_time}-${step.departure_time}`} step={step} readOnly={readOnly} onChanged={onChanged} />
+
         <p className="step__lodging" data-empty={lodging ? undefined : true}>
           <span className="step__lodging-dot" data-cat="hotel" aria-hidden="true" />
           {lodging ? (
@@ -257,18 +264,43 @@ export default function StepCard({
         {/* La ville, c'est le garde-manger : ce qu'on aimerait y faire, rangé
             par catégorie. Le menu — quel jour, à quel moment — se compose
             dans la vue Jour par jour du voyage. */}
+        {/* SEULES LES CATÉGORIES REMPLIES S'AFFICHENT (passe UX du 15 octobre
+            2026). Six accordéons dont quatre à « 0 » par ville noyaient ce qui
+            compte. Les vides se résument à une ligne de raccourcis ; on en
+            ouvre une pour y ajouter quelque chose. */}
         <div className="step__cats">
-          {CATEGORIES.map((category) => (
+          {CATEGORIES.filter(
+            (category) => itemsByCategory.get(category.key).length > 0 || opened.includes(category.key),
+          ).map((category) => (
             <CategoryAccordion
               key={category.key}
               category={category}
               items={itemsByCategory.get(category.key)}
               step={city}
+              defaultOpen={opened.includes(category.key)}
               readOnly={readOnly}
               onChanged={onChanged}
             />
           ))}
         </div>
+
+        {!readOnly && (
+          <p className="step__add-cats" onClick={(event) => event.stopPropagation()}>
+            {CATEGORIES.filter(
+              (category) => itemsByCategory.get(category.key).length === 0 && !opened.includes(category.key),
+            ).map((category) => (
+              <button
+                key={category.key}
+                type="button"
+                className="step__add-cat"
+                title={`Ajouter dans ${category.label}`}
+                onClick={() => setOpened((keys) => [...keys, category.key])}
+              >
+                <span className="step__add-cat-dot" data-cat={category.key} aria-hidden="true" />+ {category.label}
+              </button>
+            ))}
+          </p>
+        )}
 
         {/* Le trajet vers l'étape suivante, en pied de carte : il appartient à
             l'intervalle, pas à l'étape d'arrivée. */}

@@ -9,7 +9,7 @@
 
   // D'où l'on vient, au-dessus des transports qui mènent à l'arrêt.
   &__route {
-    margin: 0 0 1px 30px;
+    margin: 0 0 1px;
     color: var(--text-soft);
     font-size: var(--fs-xs);
     font-weight: 500;
@@ -41,19 +41,8 @@
   }
 
   &__act {
+    @include mixins.button-ghost;
     margin-left: auto;
-    min-height: var(--hit-dense);
-    padding: 1px 7px;
-    border: 1px solid transparent;
-    border-radius: var(--radius-pill);
-    background: none;
-    color: var(--muted);
-    font: inherit;
-    font-size: var(--fs-xs);
-    cursor: pointer;
-
-    &:hover { border-color: var(--border-strong); color: var(--accent); }
-    &:focus-visible { @include mixins.focus-ring; }
   }
 
   // La réserve d'un arrêt est plus discrète que celle d'une ville : elle vit

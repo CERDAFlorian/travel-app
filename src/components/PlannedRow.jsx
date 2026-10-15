@@ -23,6 +23,12 @@ import './PlannedRow.scss';
 // (vue partagée, hors ligne) elle perd ses commandes et garde l'heure, la
 // marque « réservé » et la distance au précédent — ce qu'on vient lire sur
 // place.
+//
+// LES COMMANDES SONT REPLIÉES (passe UX du 15 octobre 2026). Sept boutons sur
+// chaque ligne — ▲▼, heure, réserver, trajet, jour, refaire, retirer —
+// faisaient du programme un tableau de bord : on ne lisait plus la journée. La
+// ligne montre ce qu'on vient lire ; un « ⋯ », ou un clic sur le nom, déplie
+// ce qu'on peut en faire.
 export default function PlannedRow({
   item,
   step,
@@ -44,6 +50,8 @@ export default function PlannedRow({
   // le clic, pas après.
   const [panel, setPanel] = useState(null);
   const [busy, setBusy] = useState(false);
+  // La barre des commandes, repliée par défaut.
+  const [open, setOpen] = useState(false);
 
   async function run(action) {
     setBusy(true);
@@ -90,7 +98,59 @@ export default function PlannedRow({
       />
 
       <div className="planned__line">
+        {/* L'heure en tête de ligne : c'est ce qui se lit en premier quand
+            quelque chose ne peut pas se rater. */}
+        {clock && (
+          <span className="planned__time" data-on="true">
+            {clock}
+          </span>
+        )}
+
+        <PlaceThumb place={item} size="xs" />
+        <span className="planned__dot" data-cat={item.category} aria-hidden="true" />
+
+        {readOnly ? (
+          <span className="planned__name">{item.title}</span>
+        ) : (
+          // Le nom déplie les commandes : c'est là que le doigt se pose.
+          <button
+            type="button"
+            className="planned__name"
+            aria-expanded={open}
+            title="Afficher les commandes"
+            onClick={() => setOpen((value) => !value)}
+          >
+            {item.title}
+          </button>
+        )}
+        {item.notes && <span className="planned__meta">{item.notes}</span>}
+
+        {/* Réservé : la marque qui dit « ne rate pas ça ». */}
+        {item.booked && (
+          <span className="planned__booked" data-on="true">
+            réservé
+          </span>
+        )}
+
         {!readOnly && (
+          <button
+            type="button"
+            className="planned__more"
+            data-on={open || undefined}
+            aria-expanded={open}
+            title={open ? 'Replier les commandes' : 'Heure, réservation, trajet, déplacer…'}
+            onClick={() => setOpen((value) => !value)}
+          >
+            ⋯<span className="sr-only"> Commandes de {item.title}</span>
+          </button>
+        )}
+      </div>
+
+      {/* Les commandes, repliées. Rendues mais masquées (`hidden`) plutôt que
+          démontées : la ligne garde sa structure, et la barre réapparaît
+          telle qu'on l'a laissée. */}
+      {!readOnly && (
+        <div className="planned__bar" hidden={!open}>
           <span className="planned__order">
             <button
               type="button"
@@ -111,51 +171,20 @@ export default function PlannedRow({
               ▼<span className="sr-only">Descendre {item.title}</span>
             </button>
           </span>
-        )}
 
-        {/* L'heure en tête de ligne : c'est ce qui se lit en premier quand
-            quelque chose ne peut pas se rater. */}
-        {clock ? (
-          readOnly ? (
-            <span className="planned__time" data-on="true">{clock}</span>
-          ) : (
-            <button
-              type="button"
-              className="planned__time"
-              data-on="true"
-              disabled={busy}
-              title="Changer l'heure"
-              onClick={() => toggle('time')}
-            >
-              {clock}
-            </button>
-          )
-        ) : (
-          !readOnly && (
-            <button
-              type="button"
-              className="planned__time"
-              disabled={busy}
-              title="Une heure ferme : musée, visite guidée, table réservée"
-              onClick={() => toggle('time')}
-            >
-              +h<span className="sr-only">Ajouter une heure à {item.title}</span>
-            </button>
-          )
-        )}
-
-        <PlaceThumb place={item} size="xs" />
-        <span className="planned__dot" data-cat={item.category} aria-hidden="true" />
-        <span className="planned__name">{item.title}</span>
-        {item.notes && <span className="planned__meta">{item.notes}</span>}
-
-        {/* Réservé : en lecture, c'est la marque qui dit « ne rate pas ça ». */}
-        {readOnly ? (
-          item.booked && <span className="planned__booked" data-on="true">réservé</span>
-        ) : (
           <button
             type="button"
-            className="planned__booked"
+            className="planned__act"
+            disabled={busy}
+            title="Une heure ferme : musée, visite guidée, table réservée"
+            onClick={() => toggle('time')}
+          >
+            {clock ? 'heure' : '+ heure'}
+          </button>
+
+          <button
+            type="button"
+            className="planned__act"
             data-on={item.booked || undefined}
             aria-pressed={item.booked}
             disabled={busy}
@@ -164,58 +193,55 @@ export default function PlannedRow({
           >
             {item.booked ? '✓ réservé' : 'réserver'}
           </button>
-        )}
 
-        {!readOnly && (
-          <span className="planned__tools">
+          <button
+            type="button"
+            className="planned__act"
+            disabled={busy}
+            title="Ajouter un transport pour y aller ou en revenir : train, ferry, bus…"
+            onClick={() => toggle('transport')}
+          >
+            + trajet
+          </button>
+
+          {/* Dans un arrêt (F5), le jour est celui de l'arrêt : on ne change
+              que de moment, et on ne « refait » pas un autre jour ce qui
+              n'existe qu'en passant par là. */}
+          <button
+            type="button"
+            className="planned__act"
+            disabled={busy}
+            title={container ? 'Changer de moment' : 'Déplacer vers un autre jour ou un autre moment'}
+            onClick={() => toggle('move')}
+          >
+            {container ? 'Moment' : 'Jour'}
+          </button>
+          {!container && (
             <button
               type="button"
               className="planned__act"
               disabled={busy}
-              title="Ajouter un transport pour y aller ou en revenir : train, ferry, bus…"
-              onClick={() => toggle('transport')}
+              title="Refaire un autre jour : une copie, avec son prix et son adresse"
+              onClick={() => toggle('copy')}
             >
-              + trajet
+              Refaire
             </button>
-            {/* Dans un arrêt (F5), le jour est celui de l'arrêt : on ne change
-                que de moment, et on ne « refait » pas un autre jour ce qui
-                n'existe qu'en passant par là. */}
-            <button
-              type="button"
-              className="planned__act"
-              disabled={busy}
-              title={container ? 'Changer de moment' : 'Déplacer vers un autre jour ou un autre moment'}
-              onClick={() => toggle('move')}
-            >
-              {container ? 'Moment' : 'Jour'}
-            </button>
-            {!container && (
-              <button
-                type="button"
-                className="planned__act"
-                disabled={busy}
-                title="Refaire un autre jour : une copie, avec son prix et son adresse"
-                onClick={() => toggle('copy')}
-              >
-                Refaire
-              </button>
-            )}
-            <button
-              type="button"
-              className="planned__act"
-              disabled={busy}
-              title={
-                container
-                  ? `Renvoyer dans la réserve de ${container.title}`
-                  : "Renvoyer en réserve — l'item reste dans sa catégorie"
-              }
-              onClick={() => run(() => (container ? setChildSlot(step, item.id, null) : unplaceItem(item.id)))}
-            >
-              ✕<span className="sr-only">Renvoyer {item.title} en réserve</span>
-            </button>
-          </span>
-        )}
-      </div>
+          )}
+          <button
+            type="button"
+            className="planned__act"
+            disabled={busy}
+            title={
+              container
+                ? `Renvoyer dans la réserve de ${container.title}`
+                : "Renvoyer en réserve — l'item reste dans sa catégorie"
+            }
+            onClick={() => run(() => (container ? setChildSlot(step, item.id, null) : unplaceItem(item.id)))}
+          >
+            ✕<span className="sr-only">Renvoyer {item.title} en réserve</span>
+          </button>
+        </div>
+      )}
 
       {/* Le retour, en dessous : le dernier ferry qu'il ne faut pas rater. */}
       <ItemTransports

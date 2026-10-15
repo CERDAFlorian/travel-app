@@ -63,41 +63,12 @@
   }
 
   &__submit {
-    padding: var(--sp-3) var(--sp-4);
-    border: 0;
-    border-radius: var(--radius-md);
-    background: var(--accent);
-    color: var(--accent-contrast);
-    font: inherit;
+    @include mixins.button-primary('md');
     font-weight: 600;
-    cursor: pointer;
-    transition: background var(--dur-fast) var(--ease-out);
-
-    &:hover:not(:disabled) {
-      background: var(--accent-hover);
-    }
-
-    &:focus-visible {
-      @include mixins.focus-ring;
-    }
-
-    &:disabled {
-      opacity: 0.6;
-      cursor: progress;
-    }
   }
 
   &__dismiss {
-    padding: 0;
-    border: 0;
-    background: none;
-    color: var(--muted);
-    font: inherit;
-    font-size: var(--fs-sm);
-    text-decoration: underline;
-    cursor: pointer;
-
-    &:focus-visible { @include mixins.focus-ring; }
+    @include mixins.button-link;
   }
 }
 

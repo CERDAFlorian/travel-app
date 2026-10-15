@@ -12,7 +12,9 @@ import './ItemTransports.scss';
 // Ce sont des lignes de trajet, pas des activités : plus fines, sans pastille
 // de catégorie, avec la durée en avant — c'est elle qui dit ce que le
 // déplacement prend à la journée.
-export default function ItemTransports({ item, legs, clashes, tripId, readOnly, onChanged }) {
+// `sync` : les transports d'un arrêt en chemin, qui règlent l'heure de départ
+// de la ville quittée (0016).
+export default function ItemTransports({ item, legs, clashes, sync = null, tripId, readOnly, onChanged }) {
   if (!legs || legs.length === 0) return null;
 
   return (
@@ -23,6 +25,7 @@ export default function ItemTransports({ item, legs, clashes, tripId, readOnly, 
           item={item}
           leg={leg}
           clashes={clashes?.get(leg.id)}
+          sync={sync}
           tripId={tripId}
           readOnly={readOnly}
           onChanged={onChanged}
@@ -32,7 +35,7 @@ export default function ItemTransports({ item, legs, clashes, tripId, readOnly, 
   );
 }
 
-function TransportRow({ item, leg, clashes, tripId, readOnly, onChanged }) {
+function TransportRow({ item, leg, clashes, sync, tripId, readOnly, onChanged }) {
   const [editing, setEditing] = useState(false);
 
   const content = (
@@ -78,6 +81,7 @@ function TransportRow({ item, leg, clashes, tripId, readOnly, onChanged }) {
           tripId={tripId}
           item={item}
           leg={leg}
+          sync={sync}
           onClose={() => setEditing(false)}
           onChanged={onChanged}
         />

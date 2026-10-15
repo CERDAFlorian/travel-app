@@ -129,8 +129,28 @@ describe('TripProgram — construire le programme', () => {
 
   // Une journée remplie montre aussi ses moments vides : un après-midi libre
   // est une place à prendre.
-  it('garde les moments vides visibles en construction', () => {
-    expect(render()).toContain('Après-midi');
+  // Passe UX du 15 octobre 2026 : seuls les moments remplis s'affichent, en
+  // construction comme en lecture. Fushimi est le matin du 11 : pas d'« Après-
+  // midi — » vide à côté.
+  it('tait les moments vides, même en construction', () => {
+    const html = render();
+    expect(html).toContain('>Matin<');
+    expect(html).not.toContain('Après-midi');
+  });
+
+  // Les commandes d'un item sont repliées derrière un « ⋯ » : présentes, mais
+  // masquées tant qu'on ne les déplie pas.
+  it('replie les commandes d’un item derrière « ⋯ »', () => {
+    const html = render();
+    expect(html).toContain('class="planned__more"');
+    expect(html).toMatch(/class="planned__bar" hidden=""/);
+  });
+
+  // La réserve tient sur une ligne avec son compteur, et se déplie au clic.
+  it('replie la réserve d’une ville', () => {
+    const html = render();
+    expect(html).toMatch(/class="reserve__toggle" aria-expanded="false"/);
+    expect(html).toMatch(/class="reserve__items" hidden=""/);
   });
 });
 
@@ -224,11 +244,14 @@ describe('TripProgram — le jour du départ (F2)', () => {
   });
 
   // En construction, une partie vide reste une place à prendre.
-  it('garde visibles les parties vides en construction', () => {
+  // Passe UX du 15 octobre 2026 : une partie vide ne dit rien, en
+  // construction non plus. On place le matin du départ depuis la réserve.
+  it('tait les parties vides, même en construction', () => {
     const html = render();
 
-    expect(html).toContain('Rien de prévu avant de partir.');
-    expect(html).toContain('Rien de prévu en arrivant.');
+    expect(html).not.toContain('avant de partir');
+    expect(html).not.toContain('Rien de prévu en arrivant');
+    expect(html).toContain('Kyoto → Osaka');
   });
 
   // En lecture, on suit la route : rien à dire d'une partie vide.
@@ -262,7 +285,7 @@ describe('TripProgram — le transport d’une activité (F4)', () => {
     const html = render({ trip: withTransports });
 
     const aller = html.indexOf('JR Nara');
-    const activity = html.indexOf('class="planned__name">Fushimi Inari');
+    const activity = html.search(/class="planned__name"[^>]*>Fushimi Inari/);
     const retour = html.indexOf('>retour<');
 
     expect(aller).toBeGreaterThan(-1);
@@ -408,5 +431,52 @@ describe('TripProgram — les arrêts en chemin (F5)', () => {
     expect(html).toContain('Fushimi');
     expect(html).not.toContain('À placer à Fushimi');
     expect(html).not.toContain('+ trajet');
+  });
+});
+
+describe('TripProgram — les heures de la ville (0016)', () => {
+  // On quitte Kyoto le 13 à 10 h, on arrive à Osaka à 15 h 40. Nishiki est
+  // posé l'après-midi du 13 à Kyoto : après le départ.
+  const timed = () => {
+    const t = trip();
+    t.steps[0].departure_time = '10:00:00';
+    t.steps[1].arrival_time = '15:40:00';
+    t.steps[0].items.push(item('Nishiki', { day_offset: 2, day_slot: 'apres-midi', day_position: 1 }));
+    t.steps[1].items.push(item('Dōtonbori', { day_offset: 0, day_slot: 'soir', day_position: 1 }));
+    return t;
+  };
+
+  const shared = (html) => html.slice(html.indexOf('ven. 13 nov.'), html.indexOf('sam. 14 nov.'));
+
+  // Les heures se lisent à côté des villes, dans l'en-tête du jour :
+  // « Kyoto 10:00 → Osaka 15:40 ».
+  it('affiche l’heure de départ et l’heure d’arrivée à côté des villes', () => {
+    const day = shared(render({ trip: timed() }));
+    const head = day.slice(0, day.indexOf('</header>'));
+    expect(head).toMatch(/Kyoto<\/button><span class="pday__clock">10:00/);
+    expect(head).toMatch(/Osaka<\/button><span class="pday__clock">15:40/);
+  });
+
+  // Un item placé après le départ ne disparaît pas : il se signale.
+  it('signale un item placé après le départ', () => {
+    expect(shared(render({ trip: timed() }))).toContain('après le départ');
+  });
+
+  // Un moment rempli dans la fenêtre ne se signale pas : Dōtonbori le soir,
+  // après l'arrivée de 15 h 40.
+  it('ne signale pas un moment rempli dans la fenêtre', () => {
+    const day = shared(render({ trip: timed() }));
+    const osaka = day.slice(day.indexOf('À Osaka'));
+    expect(osaka).toContain('>Soir<');
+    expect(osaka).not.toContain('avant l’arrivée');
+  });
+
+  it('ne signale rien sans heure', () => {
+    const t = timed();
+    t.steps[0].departure_time = null;
+    t.steps[1].arrival_time = null;
+    const day = shared(render({ trip: t }));
+    expect(day).not.toContain('pday__clock');
+    expect(day).not.toContain('après le départ');
   });
 });

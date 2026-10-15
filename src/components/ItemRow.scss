@@ -60,22 +60,12 @@
   }
 
   // Assez haute pour être touchée : la pilule était large mais plate.
+  // Un lien vers Google Maps, à l'allure d'un bouton secondaire : il ouvre
+  // quelque chose, comme eux.
   &__map {
-    display: inline-flex;
-    align-items: center;
-    min-height: var(--hit-dense);
-    padding: 1px 8px;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-pill);
+    @include mixins.button-secondary;
+    background: none;
     color: var(--text-soft);
-    font-size: clamp(12px, 1.05vw, 12.5px);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    text-decoration: none;
-    white-space: nowrap;
-
-    &:hover { border-color: var(--accent); color: var(--accent); }
-    &:focus-visible { @include mixins.focus-ring; }
   }
 
   // Coordonnées incohérentes avec l'étape : presque toujours un homonyme
@@ -96,42 +86,22 @@
   // Même cible que la corbeille voisine : l'étoile se touche autant, et elle
   // ne faisait que quelques pixels de haut.
   &__star {
-    display: grid;
-    place-items: center;
-    width: var(--hit-dense);
-    height: var(--hit-dense);
-    padding: 0;
-    border: 0;
-    border-radius: var(--radius-pill);
-    background: none;
+    @include mixins.button-icon;
     color: var(--muted);
-    font: inherit;
     font-size: var(--fs-md);
-    line-height: 1;
-    cursor: pointer;
 
     &[data-on] { color: var(--accent); }
-    &:focus-visible { @include mixins.focus-ring; }
-    &:disabled { opacity: 0.5; }
   }
 
   // Pilule bleutée, distincte des tons chauds de la page : localiser est une
   // action technique, pas une décision de voyage.
+  // Le lien avec Google : tireté tant qu'il reste à faire, plein une fois fait.
   &__locate {
-    display: inline-flex;
-    align-items: center;
-    min-height: var(--hit-dense);
-    padding: 1px 8px;
-    border: 1px dashed var(--info);
-    border-radius: var(--radius-pill);
+    @include mixins.button-secondary;
+    border-style: dashed;
+    border-color: var(--info);
     background: none;
     color: var(--info);
-    font: inherit;
-    font-size: clamp(12px, 1.05vw, 12.5px);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    white-space: nowrap;
-    cursor: pointer;
 
     &[data-on] {
       border-style: solid;
@@ -145,36 +115,12 @@
       border-color: var(--ok);
       color: var(--ok);
     }
-
-    &:focus-visible { @include mixins.focus-ring; }
-    &:disabled { opacity: 0.5; cursor: progress; }
   }
 
   // Réserver : pilule sobre tant que le geste n'est pas fait. Il scelle ET il
   // supprime — il ne doit pas appeler le clic comme une action de confort.
   &__seal {
-    display: inline-flex;
-    align-items: center;
-    min-height: var(--hit-dense);
-    padding: 1px 8px;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-pill);
-    background: none;
-    color: var(--text-soft);
-    font: inherit;
-    font-size: clamp(12px, 1.05vw, 12.5px);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    white-space: nowrap;
-    cursor: pointer;
-
-    &:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    &:focus-visible { @include mixins.focus-ring; }
-    &:disabled { opacity: 0.5; cursor: progress; }
+    @include mixins.button-secondary;
   }
 
   // Réservé : un état atteint, pas une invitation — même vert que « Localisé »,
@@ -214,6 +160,13 @@
     &:focus-visible { @include mixins.focus-ring; }
   }
 
+  // Pas de prix : une invitation discrète, de la largeur d'un mot. Elle tient
+  // la place du champ sans en avoir l'air.
+  &__price-add {
+    @include mixins.button-ghost;
+    padding: 0 var(--sp-2);
+  }
+
   &__price-read {
     font-size: clamp(12px, 1.2vw, 14px);
     font-style: italic;
@@ -224,21 +177,8 @@
   // Cible carrée : une icône n'a pas la boîte d'un glyphe texte, et un
   // bouton de 3 px de large se rate au doigt.
   &__delete {
-    display: grid;
-    place-items: center;
-    width: var(--hit-dense);
-    height: var(--hit-dense);
-    padding: 0;
-    border: 0;
-    border-radius: var(--radius-sm);
-    background: none;
+    @include mixins.button-icon('danger');
     color: var(--muted);
-    font: inherit;
-    font-size: var(--fs-sm);
-    cursor: pointer;
-
-    &:hover { color: var(--danger); }
-    &:focus-visible { @include mixins.focus-ring; }
   }
 
   &__error {

@@ -63,6 +63,26 @@ describe('daysOf', () => {
   });
 });
 
+describe('daysOf — les heures de la ville (0016)', () => {
+  const timed = { ...kyoto(), arrival_time: '15:40:00', departure_time: '10:00:00' };
+
+  it('borne le premier jour à l’heure d’arrivée', () => {
+    expect(daysOf(timed)[0]).toMatchObject({ from: '15:40:00', until: null });
+  });
+
+  it('borne le jour du départ à l’heure de départ', () => {
+    expect(daysOf(timed).at(-1)).toMatchObject({ from: null, until: '10:00:00', departure: true });
+  });
+
+  it('laisse ouverts les jours du milieu', () => {
+    expect(daysOf(timed)[2]).toMatchObject({ from: null, until: null });
+  });
+
+  it('laisse tout ouvert sans heure', () => {
+    expect(daysOf(kyoto()).every((day) => day.from === null && day.until === null)).toBe(true);
+  });
+});
+
 describe('scheduleOf', () => {
   it('range chaque item dans son jour', () => {
     const step = kyoto([

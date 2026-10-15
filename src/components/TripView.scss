@@ -190,31 +190,18 @@
   }
 
   &__mode-btn {
-    display: inline-flex;
-    align-items: center;
+    @include mixins.button-ghost;
     gap: 5px;
-    min-height: var(--hit-dense);
-    padding: 2px 8px;
-    border: 0;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--muted);
-    font: inherit;
-    font-size: var(--fs-xs);
-    letter-spacing: 0.04em;
-    cursor: pointer;
-
-    &:hover { color: var(--accent); }
+    padding: 0 var(--sp-3);
 
     // La lecture courante : l'accent et un fond à peine posé suffisent à la
     // désigner. Pas de pilule pleine — elle repasserait devant le contenu.
     &[data-on] {
+      border-color: transparent;
       background: var(--accent-soft);
       color: var(--accent-deep);
       cursor: default;
     }
-
-    &:focus-visible { @include mixins.focus-ring; }
   }
 
   // Sous 380px, les pictogrammes parlent seuls : deux libellés plus deux

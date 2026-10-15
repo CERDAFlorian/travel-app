@@ -19,6 +19,8 @@ const STOP_CATEGORIES = CATEGORIES.filter((category) => category.key !== 'hotel'
 
 export default function RouteStop({ stop, from, to, autoLocate, readOnly, onChanged }) {
   const [open, setOpen] = useState(false);
+  // Les catégories vides ouvertes à la demande, comme sur une carte de ville.
+  const [opened, setOpened] = useState([]);
   const children = childrenOf(from, stop.id);
   const asCard = children.length > 0 || open;
 
@@ -53,17 +55,39 @@ export default function RouteStop({ stop, from, to, autoLocate, readOnly, onChan
 
       {asCard ? (
         <div className="rstop__cats">
-          {STOP_CATEGORIES.map((category) => (
+          {/* Comme une ville : les catégories remplies en accordéon, les
+              vides en raccourcis (passe UX du 15 octobre 2026). */}
+          {STOP_CATEGORIES.filter(
+            (category) => byCategory.get(category.key).length > 0 || opened.includes(category.key),
+          ).map((category) => (
             <CategoryAccordion
               key={category.key}
               category={category}
               items={byCategory.get(category.key)}
               step={asPlace}
               parentId={stop.id}
+              defaultOpen={opened.includes(category.key)}
               readOnly={readOnly}
               onChanged={onChanged}
             />
           ))}
+
+          {!readOnly && (
+            <p className="rstop__add-cats">
+              {STOP_CATEGORIES.filter(
+                (category) => byCategory.get(category.key).length === 0 && !opened.includes(category.key),
+              ).map((category) => (
+                <button
+                  key={category.key}
+                  type="button"
+                  className="rstop__add-cat"
+                  onClick={() => setOpened((keys) => [...keys, category.key])}
+                >
+                  + {category.label}
+                </button>
+              ))}
+            </p>
+          )}
         </div>
       ) : (
         !readOnly && (

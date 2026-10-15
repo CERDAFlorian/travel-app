@@ -454,7 +454,7 @@ async function realignTripStart(trip, flights) {
 // Ses dates sont déterministes : elle commence là où le voyage s'arrêtait.
 // Les coordonnées restent NULL — la ville n'apparaîtra sur la carte qu'une
 // fois localisée, et le bouton du rail sert à ça.
-export async function addStep(trip, { name, nights }) {
+export async function addStep(trip, { name, nights, arrivalTime = null, departureTime = null }) {
   const start = plannedEndDate(trip.startDate, trip.steps);
 
   const { data, error } = await supabase
@@ -466,6 +466,10 @@ export async function addStep(trip, { name, nights }) {
       nights,
       date_start: start,
       date_end: addDays(start, nights),
+      // Facultatives (0016) : on les connaît rarement en ajoutant la ville, et
+      // le trajet les réglera dès qu'il aura un horaire.
+      arrival_time: arrivalTime || null,
+      departure_time: departureTime || null,
     })
     .select('id')
     .single();
@@ -476,6 +480,57 @@ export async function addStep(trip, { name, nights }) {
   // à l'utilisateur d'arbitrer, pas à l'app de déplacer sa date de retour.
 
   return data.id;
+}
+
+// L'heure d'arrivée et l'heure de départ d'une ville (0016), saisies à la main.
+// Vide vaut NULL : « pas d'heure connue », la journée reste ouverte.
+export async function setStepTimes(stepId, { arrivalTime, departureTime }) {
+  const patch = {};
+  if (arrivalTime !== undefined) patch.arrival_time = arrivalTime || null;
+  if (departureTime !== undefined) patch.departure_time = departureTime || null;
+
+  const { error } = await supabase.from('steps').update(patch).eq('id', stepId);
+  if (error) fail(error, 'Enregistrement des heures de la ville');
+}
+
+// LE TRAJET PRIME SUR LES HEURES DE LA VILLE (Florian, 15 octobre 2026).
+//
+// Après l'enregistrement d'un trajet de la route Tokyo → Matsumoto :
+//
+// · l'ARRIVÉE à Matsumoto est celle du trajet entre les deux villes — le
+//   dernier tronçon, quand il y a des arrêts ;
+// · le DÉPART de Tokyo est celui du PREMIER tronçon : le trajet entre les deux
+//   villes s'il n'y a pas d'arrêt, sinon le premier transport vers le premier
+//   arrêt (le plus tôt, si on en a saisi plusieurs : le train PUIS le bus).
+//
+// Relu en base plutôt que déduit de l'écran : c'est l'état après écriture qui
+// compte. Un trajet sans horaire ne touche à rien — l'heure saisie sur la
+// ville reste ce qu'on sait de mieux.
+export async function syncRouteTimes({ fromStepId, toStepId, firstStopId = null }) {
+  const { data: cityLeg, error } = await supabase
+    .from('legs')
+    .select('dep, arr')
+    .eq('from_step', fromStepId)
+    .eq('to_step', toStepId)
+    .maybeSingle();
+  if (error) fail(error, 'Lecture du trajet');
+
+  let departure = cityLeg?.dep ?? null;
+  if (firstStopId) {
+    const { data, error: stopError } = await supabase
+      .from('legs')
+      .select('dep')
+      .eq('item_id', firstStopId)
+      .eq('direction', 'aller')
+      .not('dep', 'is', null)
+      .order('dep', { ascending: true })
+      .limit(1);
+    if (stopError) fail(stopError, "Lecture du trajet vers l'arrêt");
+    departure = data?.[0]?.dep ?? null;
+  }
+
+  if (departure) await setStepTimes(fromStepId, { departureTime: departure });
+  if (cityLeg?.arr) await setStepTimes(toStepId, { arrivalTime: cityLeg.arr });
 }
 
 // Change le nombre de nuits d'une étape, et décale tout ce qui suit.

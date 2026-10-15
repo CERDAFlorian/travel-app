@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { SLOTS } from '@/lib/days.js';
+import { slotFits } from '@/lib/slots.js';
 import { formatDayFull, formatDayShort } from '@/lib/dates.js';
 import './DayPicker.scss';
 
@@ -83,7 +84,9 @@ export default function DayPicker({ days, slots = SLOTS, current, currentSlot, l
       </span>
 
       <span className="daypick__chips">
-        {slots.map((slot) => (
+        {/* Seulement les moments possibles ce jour-là : pas d'après-midi à
+            Tokyo le jour où l'on en part à 10 h (heures de ville, 0016). */}
+        {slots.filter((slot) => slotFits(slot.key, target ?? {})).map((slot) => (
           <button
             key={slot.key}
             type="button"

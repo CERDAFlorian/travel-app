@@ -20,3 +20,38 @@ export const SLOTS = [
 // Il ne disparaît pas dans un moment arbitraire : il reste visible en pied de
 // journée, à caler. Se vide tout seul à mesure qu'on range.
 export const UNSLOTTED = { key: null, label: 'À caler' };
+
+// LES HEURES DES MOMENTS — pour savoir ce qui tient avant un départ ou après
+// une arrivée (heures de ville, 0016). Des bornes larges et rondes : un moment
+// reste un moment, pas un créneau ; elles servent seulement à dire qu'on ne
+// fera pas « l'après-midi à Tokyo » en partant à 10 h.
+const SLOT_HOURS = {
+  matin: [6, 12],
+  midi: [12, 14],
+  'apres-midi': [14, 18],
+  soir: [18, 24],
+};
+
+const minutes = (time) => {
+  const [hours, mins] = String(time).split(':').map(Number);
+  return hours * 60 + mins;
+};
+
+// Le moment tient-il dans la fenêtre du jour ? `from` : l'heure d'arrivée,
+// le premier jour dans une ville. `until` : l'heure de départ, le jour où on
+// la quitte. Sans borne, tout tient — c'est le cas de presque tous les jours.
+//
+// Un moment tient s'il en reste un bout : partir à 10 h laisse le matin,
+// arriver à 15 h 40 laisse l'après-midi. La journée entière ne tient que si
+// la journée l'est : un jour d'arrivée ou de départ n'en a pas une.
+export function slotFits(key, { from = null, until = null } = {}) {
+  if (!from && !until) return true;
+  if (key === 'journee') return false;
+  const hours = SLOT_HOURS[key];
+  if (!hours) return true;
+
+  const [start, end] = hours.map((hour) => hour * 60);
+  if (until && start >= minutes(until)) return false;
+  if (from && end <= minutes(from)) return false;
+  return true;
+}

@@ -34,6 +34,12 @@
 
   // Même gabarit que le prix d'un item : deux champs de prix qui ne se
   // ressemblent pas donneraient l'impression de deux natures de montant.
+  // Le prix est facultatif : un trajet du JR Pass n'en a pas.
+  &__price-open {
+    @include mixins.button-ghost;
+    padding: 0 var(--sp-2);
+  }
+
   &__price {
     width: 78px;
     padding: 2px 6px;
@@ -78,37 +84,16 @@
   }
 
   &__save {
-    @include mixins.action-button;
+    @include mixins.button-primary('sm');
   }
 
   &__cancel {
-    padding: 0 var(--sp-2);
-    border: 0;
-    background: none;
-    color: var(--muted);
-    font: inherit;
-    font-size: var(--fs-sm);
-    text-decoration: underline;
-    cursor: pointer;
+    @include mixins.button-link;
   }
 
   &__delete {
-    display: grid;
-    place-items: center;
+    @include mixins.button-icon('danger');
     margin-left: auto;
-    width: var(--hit-dense);
-    height: var(--hit-dense);
-    padding: 0;
-    border: 0;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--border-strong);
-    font: inherit;
-    font-size: var(--fs-sm);
-    cursor: pointer;
-
-    &:hover { color: var(--danger); }
-    &:focus-visible { @include mixins.focus-ring; }
   }
 
   &__error {

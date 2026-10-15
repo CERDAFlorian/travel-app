@@ -1,4 +1,5 @@
 import PlannedRow from './PlannedRow.jsx';
+import { slotFits } from '@/lib/slots.js';
 import './DayPlan.scss';
 
 // Les moments d'un jour du programme, et leurs items.
@@ -27,13 +28,17 @@ export default function DayPlan({ day, days, transports, clashes, container, tri
   return (
     <div className="dayplan">
       {day.groups.map((group) => {
-        // En lecture, on suit le programme : seuls les moments remplis
-        // comptent. En construction, les quatre vrais moments restent visibles
-        // — un après-midi libre est une place à prendre. « Journée entière » et
-        // « À caler » ne sont pas des moments : vides, ils n'occupent pas de
-        // ligne.
-        const optional = readOnly || group.full || group.key === null;
-        if (optional && group.items.length === 0) return null;
+        // SEULS LES MOMENTS REMPLIS S'AFFICHENT, en construction comme en
+        // lecture (passe UX du 15 octobre 2026). Les « Midi — », « Soir — »
+        // de chaque journée doublaient sa hauteur pour ne rien dire : on place
+        // un item depuis la réserve, et le sélecteur propose de toute façon
+        // tous les moments.
+        if (group.items.length === 0) return null;
+
+        // Hors de la fenêtre du jour (heures de ville, 0016) : partir à 10 h
+        // ferme l'après-midi. Un item déjà posé là reste — on ne cache pas une
+        // activité — mais le moment se signale.
+        const outside = group.key !== null && !slotFits(group.key, day);
 
         return (
           <section
@@ -41,37 +46,40 @@ export default function DayPlan({ day, days, transports, clashes, container, tri
             key={group.key ?? 'unslotted'}
             data-full={group.full || undefined}
             data-loose={group.key === null || undefined}
-            data-empty={group.items.length === 0 || undefined}
+            data-outside={outside || undefined}
           >
-            <h4 className="slot__name">{group.label}</h4>
+            <h4 className="slot__name">
+              {group.label}
+              {outside && (
+                <span className="slot__outside" title="Ce moment tombe hors de la présence dans la ville ce jour-là">
+                  {' '}⚠ {day.until ? 'après le départ' : 'avant l’arrivée'}
+                </span>
+              )}
+            </h4>
 
-            {group.items.length === 0 ? (
-              <p className="slot__empty">—</p>
-            ) : (
-              <ul className="slot__items">
-                {group.items.map((item, index) => (
-                  <PlannedRow
-                    key={item.id}
-                    item={item}
-                    step={day.step}
-                    days={days}
-                    // Les flèches réordonnent DANS le moment : monter une
-                    // activité du soir ne doit pas la faire passer l'après-midi
-                    // sans qu'on l'ait demandé.
-                    slotItems={group.items}
-                    previous={before.get(item.id)}
-                    canMoveUp={index > 0}
-                    canMoveDown={index < group.items.length - 1}
-                    transports={transports?.get(item.id)}
-                    clashes={clashes}
-                    container={container}
-                    tripId={tripId}
-                    readOnly={readOnly}
-                    onChanged={onChanged}
-                  />
-                ))}
-              </ul>
-            )}
+            <ul className="slot__items">
+              {group.items.map((item, index) => (
+                <PlannedRow
+                  key={item.id}
+                  item={item}
+                  step={day.step}
+                  days={days}
+                  // Les flèches réordonnent DANS le moment : monter une
+                  // activité du soir ne doit pas la faire passer l'après-midi
+                  // sans qu'on l'ait demandé.
+                  slotItems={group.items}
+                  previous={before.get(item.id)}
+                  canMoveUp={index > 0}
+                  canMoveDown={index < group.items.length - 1}
+                  transports={transports?.get(item.id)}
+                  clashes={clashes}
+                  container={container}
+                  tripId={tripId}
+                  readOnly={readOnly}
+                  onChanged={onChanged}
+                />
+              ))}
+            </ul>
           </section>
         );
       })}

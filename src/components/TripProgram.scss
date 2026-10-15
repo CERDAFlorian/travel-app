@@ -15,6 +15,12 @@
 
 // Un jour du voyage.
 .pday {
+  // Le jour se mesure à SA largeur, pas à celle de l'écran : la colonne du
+  // programme est étroite sur un téléphone, mais aussi à côté de la carte sur
+  // un écran moyen. Ses lignes s'y adaptent (PlannedRow.scss) — et la
+  // contrainte de taille empêche une ligne trop longue d'élargir le jour
+  // au-delà de l'écran, ce qui coupait aussi la ligne du trajet.
+  container: day / inline-size;
   padding: var(--sp-3);
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-md);
@@ -69,6 +75,13 @@
     &:focus-visible { @include mixins.focus-ring; }
   }
 
+  &__place {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    white-space: nowrap;
+  }
+
   &__arrow {
     color: var(--muted);
     font-size: var(--fs-sm);
@@ -88,6 +101,15 @@
     color: var(--text-soft);
     font-size: var(--fs-xs);
     font-style: italic;
+  }
+
+  // L'heure d'arrivée ou de départ (0016) : elle borne ce que la journée peut
+  // contenir dans la ville.
+  &__clock {
+    color: var(--accent-deep);
+    font-size: var(--fs-xs);
+    font-style: normal;
+    font-variant-numeric: tabular-nums;
   }
 
   &__rank {

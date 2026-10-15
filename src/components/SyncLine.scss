@@ -27,15 +27,9 @@
   }
 
   &__action {
-    padding: 0;
-    border: 0;
-    background: none;
+    @include mixins.button-link;
+    min-height: auto;
     color: inherit;
-    font: inherit;
     font-size: var(--fs-xs);
-    text-decoration: underline;
-    cursor: pointer;
-
-    &:focus-visible { @include mixins.focus-ring; }
   }
 }

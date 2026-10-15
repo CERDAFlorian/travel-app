@@ -102,18 +102,7 @@
 
   &__submit,
   &__confirm {
-    flex: none;
-    padding: var(--sp-2) var(--sp-3);
-    border: 0;
-    border-radius: var(--radius-sm);
-    background: var(--accent);
-    color: var(--accent-contrast);
-    font: inherit;
-    font-size: var(--fs-sm);
-    cursor: pointer;
-
-    &:focus-visible { @include mixins.focus-ring; }
-    &:disabled { opacity: 0.6; cursor: progress; }
+    @include mixins.button-primary('sm');
   }
 
   &__confirm {
@@ -121,17 +110,7 @@
   }
 
   &__cancel {
-    flex: none;
-    padding: 0 var(--sp-2);
-    border: 0;
-    background: none;
-    color: var(--muted);
-    font: inherit;
-    font-size: var(--fs-sm);
-    text-decoration: underline;
-    cursor: pointer;
-
-    &:focus-visible { @include mixins.focus-ring; }
+    @include mixins.button-link;
   }
 
   &__actions {
