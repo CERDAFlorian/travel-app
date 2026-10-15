@@ -18,22 +18,43 @@ import { SLOTS, UNSLOTTED } from './slots.js';
 import { categoryOf } from './categories.js';
 
 export const STOP = 'arret';
+export const EXCURSION = 'excursion';
 
 export const isStop = (item) => item?.kind === STOP;
+export const isExcursion = (item) => item?.kind === EXCURSION;
+export const isContainer = (item) => item?.kind != null;
 export const isContained = (item) => item?.parent_id != null;
+
+// Une excursion qui prend la journée entière : la journée DEVIENT l'excursion
+// (Florian, 15 octobre 2026) — ses moments sont ceux du jour. Posée sur un
+// seul moment, c'est une demi-journée : une liste dans ce moment.
+export const isFullDayExcursion = (item) => isExcursion(item) && item.day_slot === 'journee';
 
 // Les moments d'un lieu. Pas de « journée entière » : un arrêt de deux heures
 // ne mange pas la journée, et un lieu ne contient pas un autre lieu.
 export const CONTAINER_SLOTS = SLOTS.filter((slot) => !slot.full);
 
-// Les items de la ville elle-même : ni ses arrêts, ni ce qu'ils contiennent.
+// Les items de la ville elle-même, tels que ses CATÉGORIES les rangent : ni
+// ses arrêts, ni ses excursions, ni ce qu'ils contiennent. Arrêts et
+// excursions ont leur propre place dans la vue Villes — la route, la section
+// Excursions.
+//
+// (Les JOURS de la ville, eux, gardent l'excursion : elle se place sur un jour
+// comme une activité. Voir `ofCity` dans days.js.)
 export function ownItems(step) {
-  return (step.items ?? []).filter((item) => !isStop(item) && !isContained(item));
+  return (step.items ?? []).filter((item) => !isContainer(item) && !isContained(item));
 }
 
-// La ville telle que ses catégories, ses jours et sa réserve la voient.
+// La ville telle que ses catégories et son bandeau photo la voient.
 export function cityOnly(step) {
   return { ...step, items: ownItems(step) };
+}
+
+// Les excursions au départ de cette ville, dans l'ordre de saisie.
+export function excursionsOf(step) {
+  return (step.items ?? [])
+    .filter(isExcursion)
+    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
 }
 
 // Les arrêts sur la route qui part de cette ville, dans l'ordre où on les
@@ -78,11 +99,19 @@ export function containerPlan(step, container) {
     { ...UNSLOTTED, items: placed.filter((item) => !SLOT_RANK.has(item.day_slot)) },
   ];
 
+  // LA LISTE D'UNE DEMI-JOURNÉE (Florian, 15 octobre 2026). Nara l'après-midi
+  // ne se découpe pas en sous-moments : ce qu'on y fait se lit dans l'ordre où
+  // on l'a rangé, `day_position` d'abord, quel que soit le moment noté.
+  const list = [...placed].sort(
+    (a, b) => (a.day_position ?? 0) - (b.day_position ?? 0) || (a.position ?? 0) - (b.position ?? 0),
+  );
+
   return {
     container,
     step,
     items: placed,
     groups,
+    list,
     reserve: children.filter((item) => item.day_slot == null && categoryOf(item.category)?.planifiable),
     // Notes et logements contenus : ils se lisent dans la carte du lieu, pas
     // dans son programme.

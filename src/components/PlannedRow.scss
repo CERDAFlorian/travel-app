@@ -9,6 +9,9 @@
 
   padding: 4px 0;
 
+  // En édition, les flèches ▲▼ ouvrent la ligne : le bord du nom recule d'autant.
+  &[data-edit] { --planned-indent: calc(18px + 44px + 8px + var(--sp-2) * 3); }
+
   & + & { border-top: 1px solid var(--border-soft); }
 
   // Réservé : la ligne qu'on ne peut pas rater porte un filet d'accent.
@@ -44,14 +47,20 @@
     display: inline-flex;
     flex-direction: column;
     flex: none;
-    line-height: 0.8;
+    width: 18px;
   }
 
+  // Petites mais lisibles : grisées seulement quand elles ne peuvent rien.
   &__arrow {
     @include mixins.button-icon;
-    min-width: 22px;
-    min-height: 22px;
-    font-size: 10px;
+    min-width: 18px;
+    min-height: 18px;
+    padding: 0;
+    color: var(--text);
+    font-size: 11px;
+    line-height: 1;
+
+    &:disabled { opacity: 0.25; }
   }
 
   &__dot {

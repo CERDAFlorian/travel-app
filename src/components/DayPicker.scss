@@ -54,4 +54,27 @@
     margin-left: auto;
     font-size: var(--fs-xs);
   }
+
+  // Le jour d'une excursion : une rangée par famille, son nom devant — « À
+  // Hiroshima », « ◆ Miyajima ».
+  &__family {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px var(--sp-2);
+    flex-basis: 100%;
+  }
+
+  &__family-name {
+    min-width: 7em;
+    color: var(--text-soft);
+    font-size: var(--fs-xs);
+    font-weight: 500;
+  }
+
+  &__none {
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    font-style: italic;
+  }
 }

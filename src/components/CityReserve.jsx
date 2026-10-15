@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { placeItem, setChildSlot } from '@/lib/mutations.js';
+import { moveIntoContainer, placeItem, setChildSlot } from '@/lib/mutations.js';
 import { CONTAINER_SLOTS } from '@/lib/containers.js';
+import { CATEGORIES } from '@/lib/categories.js';
 import DayPicker from './DayPicker.jsx';
 import PlaceThumb from './PlaceThumb.jsx';
 import './PlannedRow.scss';
@@ -23,7 +24,10 @@ import './CityReserve.scss';
 // REPLIÉE PAR DÉFAUT (passe UX du 15 octobre 2026) : vingt lieux à placer à
 // Tokyo s'étalaient entre deux jours et coupaient la lecture du programme. Une
 // ligne avec son compteur ; on la déplie quand on vient placer.
-export default function CityReserve({ step, days, items, container = null, readOnly, onChanged }) {
+//
+// `slots` restreint les moments proposés : le contenu d'une demi-journée ne se
+// place que dans son moment (F6).
+export default function CityReserve({ step, days, items, container = null, slots = null, readOnly, onChanged }) {
   const [open, setOpen] = useState(false);
   if (readOnly || items.length === 0) return null;
 
@@ -49,24 +53,45 @@ export default function CityReserve({ step, days, items, container = null, readO
         </button>
       </h3>
 
-      <ul className="reserve__items" hidden={!open}>
-        {items.map((item) => (
-          <ReserveRow
-            key={item.id}
-            item={item}
-            step={step}
-            days={days}
-            container={container}
-            onChanged={onChanged}
-          />
-        ))}
-      </ul>
+      {/* RANGÉE PAR CATÉGORIE (15 octobre 2026) : vingt lieux à placer à
+          Tokyo, mêlés, ne disaient pas où l'on mangerait. On cherche « un
+          resto pour ce soir », pas un nom dans une liste. Même ordre que les
+          catégories de la carte de ville. */}
+      <div className="reserve__groups" hidden={!open}>
+        {CATEGORIES.map((category) => {
+          const inCategory = items.filter((item) => item.category === category.key);
+          if (inCategory.length === 0) return null;
+
+          return (
+            <section className="reserve__group" key={category.key}>
+              <h4 className="reserve__cat">
+                <span className="reserve__cat-dot" data-cat={category.key} aria-hidden="true" />
+                {category.label}
+                <span className="reserve__cat-count">{inCategory.length}</span>
+              </h4>
+              <ul className="reserve__items">
+                {inCategory.map((item) => (
+                  <ReserveRow
+                    key={item.id}
+                    item={item}
+                    step={step}
+                    days={days}
+                    container={container}
+                    slots={slots}
+                    onChanged={onChanged}
+                  />
+                ))}
+              </ul>
+            </section>
+          );
+        })}
+      </div>
     </section>
   );
 }
 
 // Un item de la réserve : voulu, pas encore daté.
-function ReserveRow({ item, step, days, container, onChanged }) {
+function ReserveRow({ item, step, days, container, slots, onChanged }) {
   const [picking, setPicking] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -91,16 +116,23 @@ function ReserveRow({ item, step, days, container, onChanged }) {
       {picking && (
         <DayPicker
           days={days}
-          slots={container ? CONTAINER_SLOTS : undefined}
+          slots={slots ?? (container ? CONTAINER_SLOTS : undefined)}
           current={null}
           currentSlot={null}
+          cityName={step.name}
+          // Le contenu d'un lieu se range dans ses moments, pas ailleurs.
+          withExcursions={!container}
           busy={busy}
           label="Placer le"
           onCancel={() => setPicking(false)}
-          onPick={async (offset, slot) => {
+          onPick={async (offset, slot, parentId) => {
             setBusy(true);
             try {
-              await (container ? setChildSlot(step, item.id, slot) : placeItem(step, item.id, offset, slot));
+              await (container
+                ? setChildSlot(step, item.id, slot)
+                : parentId
+                  ? moveIntoContainer(step, item.id, parentId, slot)
+                  : placeItem(step, item.id, offset, slot));
               await onChanged();
               setPicking(false);
             } finally {

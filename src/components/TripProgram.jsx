@@ -8,6 +8,8 @@ import CityReserve from './CityReserve.jsx';
 import LegEditor from './LegEditor.jsx';
 import ClashMark from './ClashMark.jsx';
 import StopPlan from './StopPlan.jsx';
+import { excursionsOn } from '@/lib/excursions.js';
+import { childrenOf, isExcursion, isFullDayExcursion } from '@/lib/containers.js';
 import './TripProgram.scss';
 
 // Le voyage jour par jour — la colonne de gauche, à la place des étapes.
@@ -31,19 +33,28 @@ import './TripProgram.scss';
 export default function TripProgram({ trip, readOnly, onChanged, selectedStepId, onSelectStep }) {
   const days = useMemo(() => tripSchedule(trip), [trip]);
 
-  // Par ville : ses jours, parmi lesquels un item se place ou se déplace, et
-  // sa réserve. Calculés une fois par étape, pas une fois par jour affiché.
-  const cities = useMemo(
-    () =>
-      new Map(
-        (trip.steps ?? []).map((step) => [step.id, { days: daysOf(step), reserve: unplacedOf(step) }]),
-      ),
-    [trip],
-  );
-
   // Les transports de chaque activité : le ferry de Miyajima, le bus de
   // Kōyasan (F4). Rangés une fois pour tout le voyage.
   const transports = useMemo(() => transportsByItem(trip.legs), [trip.legs]);
+
+  // Par ville : ses jours, parmi lesquels un item se place ou se déplace, et
+  // sa réserve. Calculés une fois par étape, pas une fois par jour affiché.
+  //
+  // Chaque jour connaît ses excursions et leur plage (F6) : le sélecteur
+  // propose alors la ville — avant ou après — ou l'excursion elle-même.
+  const cities = useMemo(
+    () =>
+      new Map(
+        (trip.steps ?? []).map((step) => [
+          step.id,
+          {
+            days: daysOf(step).map((day) => ({ ...day, excursions: excursionsOn(step, day.offset, transports) })),
+            reserve: unplacedOf(step),
+          },
+        ]),
+      ),
+    [trip, transports],
+  );
 
   const today = todayIso();
   const current = useRef(null);
@@ -68,6 +79,9 @@ export default function TripProgram({ trip, readOnly, onChanged, selectedStepId,
       {days.map((day) => {
         const isToday = day.date === today;
         const [first] = day.parts;
+        // Une excursion de la journée entière : la journée devient
+        // l'excursion, et son en-tête l'annonce (F6).
+        const excursion = day.transfer ? null : first.items.find(isFullDayExcursion);
         const clashes = clashesOf(day, transports);
         // L'ancre que la frise et la carte visent : le premier jour d'une
         // ville. Le jour d'un changement de ville est celui où la suivante
@@ -114,6 +128,13 @@ export default function TripProgram({ trip, readOnly, onChanged, selectedStepId,
                     </span>
                   </Fragment>
                 ))}
+
+                {excursion && (
+                  <>
+                    <span className="pday__arrow" aria-hidden="true">→</span>
+                    <span className="pday__excursion">◆ {excursion.title}</span>
+                  </>
+                )}
 
                 {/* La date suffit à situer le jour : « J2 » obligeait à
                     recompter depuis l'arrivée. Seul le vol retour se signale —
@@ -382,9 +403,14 @@ function clashesOf(day, transports) {
   // contient.
   const stops = day.transfer?.stops ?? [];
 
+  // Et ce que contient une excursion (F6) : le téléphérique du mont Misen.
+  const insideExcursions = (part) =>
+    part.items.filter(isExcursion).flatMap((excursion) => childrenOf(part.step, excursion.id));
+
   const legs = [
     day.transfer?.leg,
     ...day.parts.flatMap((part) => ofItems(part.items)),
+    ...day.parts.flatMap((part) => ofItems(insideExcursions(part))),
     ...ofItems(stops.map((plan) => plan.container)),
     ...stops.flatMap((plan) => ofItems(plan.items)),
   ].filter(Boolean);

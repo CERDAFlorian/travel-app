@@ -545,6 +545,46 @@ describe('tripSchedule', () => {
     });
   });
 
+  // F6 : une excursion se place sur un jour de la ville comme une activité ;
+  // ce qu'elle contient la suit, hors des jours de la ville.
+  describe('les excursions', () => {
+    const withExcursion = (placed = true) => {
+      const t = trip();
+      t.steps[0].items.push(
+        {
+          id: 'nara',
+          category: 'lieu',
+          title: 'Nara',
+          kind: 'excursion',
+          day_offset: placed ? 1 : null,
+          day_slot: placed ? 'apres-midi' : null,
+        },
+        { id: 'todaiji', category: 'lieu', title: 'Tōdai-ji', parent_id: 'nara', day_slot: 'apres-midi' },
+      );
+      return t;
+    };
+
+    it('pose l’excursion sur son jour, en demi-journée', () => {
+      const day = on(tripSchedule(withExcursion()), '2026-11-12');
+      const afternoon = day.parts[0].groups.find((group) => group.key === 'apres-midi');
+      expect(afternoon.items.map((i) => i.id)).toEqual(['nara']);
+    });
+
+    it('garde son contenu hors des jours de la ville', () => {
+      const ids = tripSchedule(withExcursion()).flatMap((day) => day.parts.flatMap((part) => part.items.map((i) => i.id)));
+      expect(ids).not.toContain('todaiji');
+    });
+
+    // Pas encore placée, elle attend dans la réserve de la ville — sans son
+    // contenu, qui attend avec elle.
+    it('attend dans la réserve de la ville, sans son contenu', () => {
+      const kyoto = withExcursion(false).steps[0];
+      const ids = unplacedOf(kyoto).map((i) => i.id);
+      expect(ids).toContain('nara');
+      expect(ids).not.toContain('todaiji');
+    });
+  });
+
   it('ne rend rien pour un voyage sans étape', () => {
     expect(tripSchedule({ steps: [], flights: [], legs: [] })).toEqual([]);
   });

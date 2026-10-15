@@ -30,3 +30,35 @@ describe('DayPicker — les heures de la ville', () => {
     expect(html).toContain('Après-midi');
   });
 });
+
+describe('DayPicker — le jour d’une excursion (F6)', () => {
+  const miyajima = { id: 'miyajima', title: 'Miyajima', kind: 'excursion', day_slot: 'journee' };
+  const day = {
+    offset: 1,
+    date: '2026-11-18',
+    excursions: [{ item: miyajima, window: { from: '09:10', until: '17:40' } }],
+  };
+  const render = (props = {}) =>
+    renderToString(
+      <DayPicker days={[day]} current={null} currentSlot={null} cityName="Hiroshima" label="Placer le" onPick={() => {}} onCancel={() => {}} {...props} />,
+    ).replaceAll('<!-- -->', '');
+
+  it('propose la ville et l’excursion', () => {
+    const html = render();
+    expect(html).toContain('À Hiroshima');
+    expect(html).toContain('◆ Miyajima');
+  });
+
+  // En ville, seulement avant ou après : le matin (avant 9 h 10), le soir.
+  it('ne propose en ville que les moments hors de l’excursion', () => {
+    const html = render();
+    const city = html.slice(html.indexOf('À Hiroshima'), html.indexOf('◆ Miyajima'));
+    expect(city).toContain('Matin');
+    expect(city).toContain('Soir');
+    expect(city).not.toContain('Midi');
+  });
+
+  it('s’en tient à la ville sur demande', () => {
+    expect(render({ withExcursions: false })).not.toContain('Miyajima');
+  });
+});

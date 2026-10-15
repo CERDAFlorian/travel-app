@@ -41,7 +41,7 @@
 
   // Même marge de défilement que les cartes d'étape : sans elle, la frise
   // collante mangerait le haut du jour visé.
-  scroll-margin-top: calc(var(--timeline-h, 53px) + var(--sp-3));
+  scroll-margin-top: calc(var(--sticky-h, 53px) + var(--sp-3));
 
   &__head {
     display: flex;
@@ -80,6 +80,14 @@
     align-items: baseline;
     gap: 5px;
     white-space: nowrap;
+  }
+
+  // L'excursion d'une journée entière, dans l'en-tête : on n'est pas à
+  // Hiroshima ce jour-là, on est à Miyajima.
+  &__excursion {
+    color: var(--accent-2);
+    font-size: var(--fs-sm);
+    font-weight: 600;
   }
 
   &__arrow {

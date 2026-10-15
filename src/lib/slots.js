@@ -26,13 +26,28 @@ export const UNSLOTTED = { key: null, label: 'À caler' };
 // reste un moment, pas un créneau ; elles servent seulement à dire qu'on ne
 // fera pas « l'après-midi à Tokyo » en partant à 10 h.
 const SLOT_HOURS = {
+  journee: [6, 24],
   matin: [6, 12],
   midi: [12, 14],
   'apres-midi': [14, 18],
   soir: [18, 24],
 };
 
-const minutes = (time) => {
+// Les bornes d'un moment, en minutes depuis minuit. NULL pour « à caler ».
+export function slotRange(key) {
+  const hours = SLOT_HOURS[key];
+  return hours ? hours.map((hour) => hour * 60) : null;
+}
+
+const pad = (n) => String(n).padStart(2, '0');
+
+// Des minutes à « HH:MM » — la forme que slotFits lit.
+export function clockOf(totalMinutes) {
+  return `${pad(Math.floor(totalMinutes / 60))}:${pad(totalMinutes % 60)}`;
+}
+
+// « HH:MM » ou « HH:MM:SS » en minutes depuis minuit.
+export const minutes = (time) => {
   const [hours, mins] = String(time).split(':').map(Number);
   return hours * 60 + mins;
 };
@@ -47,7 +62,7 @@ const minutes = (time) => {
 export function slotFits(key, { from = null, until = null } = {}) {
   if (!from && !until) return true;
   if (key === 'journee') return false;
-  const hours = SLOT_HOURS[key];
+  const hours = key ? SLOT_HOURS[key] : null;
   if (!hours) return true;
 
   const [start, end] = hours.map((hour) => hour * 60);

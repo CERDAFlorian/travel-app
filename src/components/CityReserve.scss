@@ -53,12 +53,50 @@
     font-variant-numeric: tabular-nums;
   }
 
-  &__items {
-    margin: 4px 0 0;
-    padding: 0;
-    list-style: none;
+  &__groups {
+    margin-top: 4px;
 
     &[hidden] { display: none; }
+  }
+
+  &__group + &__group { margin-top: var(--sp-2); }
+
+  // Le nom de la catégorie, avec sa couleur : la même pastille que partout.
+  &__cat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 2px;
+    color: var(--text-soft);
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  &__cat-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--cat-hotel);
+
+    &[data-cat='activite'] { background: var(--cat-activite); }
+    &[data-cat='restaurant'] { background: var(--cat-restaurant); }
+    &[data-cat='shopping'] { background: var(--cat-shopping); }
+    &[data-cat='lieu'] { background: var(--cat-lieu); }
+    &[data-cat='note'] { background: var(--cat-note); }
+  }
+
+  &__cat-count {
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
+  }
+
+  &__items {
+    margin: 0;
+    padding: 0;
+    list-style: none;
   }
 }
 

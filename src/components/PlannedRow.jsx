@@ -6,11 +6,13 @@ import {
   moveItemInDay,
   placeItem,
   setBooked,
+  moveIntoContainer,
+  moveOutOfContainer,
   setChildSlot,
   setStartTime,
   unplaceItem,
 } from '@/lib/mutations.js';
-import { CONTAINER_SLOTS } from '@/lib/containers.js';
+import { CONTAINER_SLOTS, isExcursion } from '@/lib/containers.js';
 import DayPicker from './DayPicker.jsx';
 import PlaceThumb from './PlaceThumb.jsx';
 import ItemTransports from './ItemTransports.jsx';
@@ -28,7 +30,7 @@ import './PlannedRow.scss';
 // chaque ligne — ▲▼, heure, réserver, trajet, jour, refaire, retirer —
 // faisaient du programme un tableau de bord : on ne lisait plus la journée. La
 // ligne montre ce qu'on vient lire ; un « ⋯ », ou un clic sur le nom, déplie
-// ce qu'on peut en faire.
+// ce qu'on peut en faire. Seules les flèches ▲▼ sont revenues sur la ligne.
 export default function PlannedRow({
   item,
   step,
@@ -40,6 +42,13 @@ export default function PlannedRow({
   transports,
   clashes,
   container = null,
+  // Les moments où l'item peut aller. Un seul : il n'a pas à en changer — le
+  // contenu d'une demi-journée vit dans le moment de l'excursion (F6).
+  slots = null,
+  // Les jours de la ville, quand l'item est dans une excursion : il peut en
+  // sortir — revenir à Hiroshima, avant ou après (F6).
+  cityDays = null,
+  nested = null,
   tripId,
   readOnly,
   onChanged,
@@ -66,6 +75,29 @@ export default function PlannedRow({
 
   const toggle = (name) => setPanel((current) => (current === name ? null : name));
 
+  // DANS UNE EXCURSION, on change de moment ou on en sort ; EN VILLE, on
+  // change de jour, ou l'on entre dans une excursion du jour choisi (F6). Une
+  // excursion n'entre dans aucune autre, et ne se gêne pas elle-même : on la
+  // retire des excursions du jour quand c'est elle qu'on déplace.
+  const inExcursion = Boolean(container && isExcursion(container) && cityDays);
+  const moveDays = inExcursion
+    ? cityDays
+    : days?.map((day) => ({
+        ...day,
+        excursions: (day.excursions ?? []).filter((entry) => entry.item.id !== item.id),
+      }));
+
+  function move(offset, slot, parentId) {
+    if (inExcursion) {
+      if (parentId === container.id) return setChildSlot(step, item.id, slot);
+      if (parentId) return moveIntoContainer(step, item.id, parentId, slot);
+      return moveOutOfContainer(step, item.id, offset, slot);
+    }
+    if (container) return setChildSlot(step, item.id, slot);
+    if (parentId) return moveIntoContainer(step, item.id, parentId, slot);
+    return placeItem(step, item.id, offset, slot);
+  }
+
   // Deux points géolocalisés qui se suivent dans la même journée : la distance
   // à vol d'oiseau suffit à voir qu'on a mis Fushimi le matin et Arashiyama
   // l'après-midi, aux deux bouts de Kyoto.
@@ -80,7 +112,7 @@ export default function PlannedRow({
   const clock = formatClock(item.start_time);
 
   return (
-    <li className="planned" data-booked={item.booked || undefined}>
+    <li className="planned" data-edit={!readOnly || undefined} data-booked={item.booked || undefined} data-kind={item.kind ?? undefined}>
       {hop != null && (
         <span className="planned__hop" aria-label={`À ${formatDistance(hop)} du précédent`}>
           {formatDistance(hop)}
@@ -98,6 +130,32 @@ export default function PlannedRow({
       />
 
       <div className="planned__line">
+        {/* L'ordre dans le moment, en tête de ligne et hors du « ⋯ » : on
+            réorganise une journée d'un coup d'œil (Florian, 15 oct. 2026).
+            Toujours là, même grisé, pour que les noms restent alignés. */}
+        {!readOnly && (
+          <span className="planned__order">
+            <button
+              type="button"
+              className="planned__arrow"
+              disabled={busy || !canMoveUp}
+              title={canMoveUp ? 'Plus tôt dans ce moment' : 'Déjà en premier'}
+              onClick={() => run(() => moveItemInDay(slotItems, item.id, -1))}
+            >
+              ▲<span className="sr-only">Monter {item.title}</span>
+            </button>
+            <button
+              type="button"
+              className="planned__arrow"
+              disabled={busy || !canMoveDown}
+              title={canMoveDown ? 'Plus tard dans ce moment' : 'Déjà en dernier'}
+              onClick={() => run(() => moveItemInDay(slotItems, item.id, 1))}
+            >
+              ▼<span className="sr-only">Descendre {item.title}</span>
+            </button>
+          </span>
+        )}
+
         {/* L'heure en tête de ligne : c'est ce qui se lit en premier quand
             quelque chose ne peut pas se rater. */}
         {clock && (
@@ -151,27 +209,6 @@ export default function PlannedRow({
           telle qu'on l'a laissée. */}
       {!readOnly && (
         <div className="planned__bar" hidden={!open}>
-          <span className="planned__order">
-            <button
-              type="button"
-              className="planned__arrow"
-              disabled={busy || !canMoveUp}
-              title={canMoveUp ? 'Plus tôt dans ce moment' : 'Déjà en premier'}
-              onClick={() => run(() => moveItemInDay(slotItems, item.id, -1))}
-            >
-              ▲<span className="sr-only">Monter {item.title}</span>
-            </button>
-            <button
-              type="button"
-              className="planned__arrow"
-              disabled={busy || !canMoveDown}
-              title={canMoveDown ? 'Plus tard dans ce moment' : 'Déjà en dernier'}
-              onClick={() => run(() => moveItemInDay(slotItems, item.id, 1))}
-            >
-              ▼<span className="sr-only">Descendre {item.title}</span>
-            </button>
-          </span>
-
           <button
             type="button"
             className="planned__act"
@@ -207,16 +244,26 @@ export default function PlannedRow({
           {/* Dans un arrêt (F5), le jour est celui de l'arrêt : on ne change
               que de moment, et on ne « refait » pas un autre jour ce qui
               n'existe qu'en passant par là. */}
-          <button
-            type="button"
-            className="planned__act"
-            disabled={busy}
-            title={container ? 'Changer de moment' : 'Déplacer vers un autre jour ou un autre moment'}
-            onClick={() => toggle('move')}
-          >
-            {container ? 'Moment' : 'Jour'}
-          </button>
-          {!container && (
+          {(slots?.length !== 1 || inExcursion) && (
+            <button
+              type="button"
+              className="planned__act"
+              disabled={busy}
+              title={
+                inExcursion
+                  ? `Changer de moment, ou revenir à ${step.name}`
+                  : container
+                    ? 'Changer de moment'
+                    : 'Déplacer vers un autre jour, un autre moment, ou dans une excursion'
+              }
+              onClick={() => toggle('move')}
+            >
+              {inExcursion ? 'Déplacer' : container ? 'Moment' : 'Jour'}
+            </button>
+          )}
+          {/* Une excursion ne se « refait » pas : sa copie partirait sans ce
+              qu'elle contient. On la déplace. */}
+          {!container && !nested && (
             <button
               type="button"
               className="planned__act"
@@ -242,6 +289,10 @@ export default function PlannedRow({
           </button>
         </div>
       )}
+
+      {/* Ce qu'une excursion contient (F6), entre l'aller et le retour :
+          on prend le ferry, on visite, on reprend le ferry. */}
+      {nested}
 
       {/* Le retour, en dessous : le dernier ferry qu'il ne faut pas rater. */}
       <ItemTransports
@@ -274,23 +325,26 @@ export default function PlannedRow({
 
       {(panel === 'move' || panel === 'copy') && (
         <DayPicker
-          days={days}
-          slots={container ? CONTAINER_SLOTS : undefined}
+          days={panel === 'move' ? moveDays : days}
+          // Hors excursion, les moments d'un arrêt ou d'une demi-journée ;
+          // depuis une excursion, la ville propose les siens.
+          slots={inExcursion && panel === 'move' ? undefined : (slots ?? (container ? CONTAINER_SLOTS : undefined))}
           // Sur une copie, aucun créneau n'est « l'actuel » : refaire la même
           // chose deux fois dans la journée est un cas réel — un café le
           // matin, le même bar le soir.
-          current={panel === 'move' ? item.day_offset : null}
+          current={panel === 'move' ? (inExcursion ? container.day_offset : item.day_offset) : null}
           currentSlot={panel === 'move' ? (item.day_slot ?? null) : null}
+          currentParent={panel === 'move' && inExcursion ? container.id : null}
+          cityName={step.name}
+          // On refait un autre jour en ville seulement ; une excursion n'entre
+          // dans aucune autre ; le contenu d'un arrêt reste dans l'arrêt.
+          withExcursions={panel === 'move' && !isExcursion(item) && (!container || inExcursion)}
           busy={busy}
           label={panel === 'move' ? 'Déplacer vers' : 'Refaire le'}
           onCancel={() => setPanel(null)}
-          onPick={(offset, slot) =>
+          onPick={(offset, slot, parentId) =>
             run(() =>
-              container
-                ? setChildSlot(step, item.id, slot)
-                : panel === 'move'
-                  ? placeItem(step, item.id, offset, slot)
-                  : duplicateItemOnDay(step, item, offset, slot),
+              panel === 'move' ? move(offset, slot, parentId) : duplicateItemOnDay(step, item, offset, slot),
             )
           }
         />

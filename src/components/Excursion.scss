@@ -1,0 +1,59 @@
+// L'excursion dans le jour par jour (F6).
+
+// La journée entière : pas de boîte autour, la journée EST l'excursion. Ses
+// transports se lisent au bord gauche du jour, comme le trajet d'un jour de
+// changement de ville.
+.xday {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  &__head {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .reserve { margin-top: 4px; }
+}
+
+// La demi-journée : la liste se range sous le nom de l'excursion, rattachée
+// par un filet.
+.xlist {
+  margin: 2px 0 4px var(--planned-indent);
+  padding-left: var(--sp-2);
+  border-left: 2px solid var(--accent-2-soft);
+
+  &__items {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .reserve {
+    margin-top: 4px;
+    padding: 4px var(--sp-2) var(--sp-2);
+  }
+}
+
+// La ligne de l'excursion elle-même : le losange des lieux qui en contiennent
+// d'autres, et le nom en gras. Le losange remplace la pastille de catégorie —
+// les deux à la suite disaient deux fois la même chose.
+.planned[data-kind='excursion'] > .planned__line .planned__dot { display: none; }
+
+.planned[data-kind='excursion'] > .planned__line .planned__name {
+  font-weight: 600;
+
+  &::before {
+    content: '◆ ';
+    color: var(--accent-2);
+  }
+}
+
+// Après une journée d'excursion, ce qui reste dans la ville.
+.dayplan__back {
+  margin: var(--sp-2) 0 2px;
+  color: var(--text-soft);
+  font-size: var(--fs-xs);
+  font-style: italic;
+}

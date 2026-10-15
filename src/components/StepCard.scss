@@ -5,13 +5,11 @@
   // Marge de défilement : on arrive ici depuis la carte ou la frise. Elle doit
   // dégager la hauteur de la frise collante, sinon l'étape sélectionnée
   // atterrit DERRIÈRE elle — c'est ce qui se passait avec une valeur en dur
-  // légèrement sous-estimée. `--timeline-h` est mesurée au rendu (TripView),
-  // et l'espacement ajouté évite que le titre ne colle au filet.
-  scroll-margin-top: calc(var(--timeline-h, 53px) + var(--sp-3));
-
-  @include mixins.from('md') {
-    scroll-margin-top: var(--sp-4);
-  }
+  // légèrement sous-estimée. `--sticky-h` (frise + bascule) est mesurée au
+  // rendu (TripView), et l'espacement ajouté évite que le titre ne colle au
+  // filet. À toutes les largeurs : la frise colle partout depuis longtemps, et
+  // l'ancienne exception au-delà de 768 px faisait passer le titre dessous.
+  scroll-margin-top: calc(var(--sticky-h, 53px) + var(--sp-3));
   display: grid;
   grid-template-columns: auto 1fr;
   gap: clamp(10px, 1.2vw, 16px);

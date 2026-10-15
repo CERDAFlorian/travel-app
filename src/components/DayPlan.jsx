@@ -1,5 +1,9 @@
 import PlannedRow from './PlannedRow.jsx';
 import { slotFits } from '@/lib/slots.js';
+import ExcursionDay from './ExcursionDay.jsx';
+import ExcursionList from './ExcursionList.jsx';
+import { containerPlan, isExcursion, isFullDayExcursion } from '@/lib/containers.js';
+import { excursionWindow, fitsAround, sideOf } from '@/lib/excursions.js';
 import './DayPlan.scss';
 
 // Les moments d'un jour du programme, et leurs items.
@@ -14,11 +18,85 @@ import './DayPlan.scss';
 //
 // `container` : le programme d'un arrêt en chemin (F5). Ses items ne changent
 // que de moment, le jour étant celui de l'arrêt.
-export default function DayPlan({ day, days, transports, clashes, container, tripId, readOnly, onChanged, emptyText }) {
+export default function DayPlan({
+  day,
+  days,
+  cityDays = null,
+  transports,
+  clashes,
+  container,
+  tripId,
+  readOnly,
+  onChanged,
+  emptyText,
+}) {
   // Le message d'un jour vide dépend de ce qui l'entoure — journée libre,
   // matin d'un départ, soir d'une arrivée : c'est le programme qui le sait.
   // Sans message, rien : un arrêt vide EST la visite, il n'a rien à annoncer.
   if (day.items.length === 0) return emptyText ? <p className="dayplan__empty">{emptyText}</p> : null;
+
+  // Les excursions de ce jour, avec leur plage (F6) — connues des jours de la
+  // ville. Dans un lieu (arrêt, excursion), on ne les cherche pas.
+  const excursions = (!container && days?.find((entry) => entry.offset === day.offset)?.excursions) || [];
+
+  // UNE EXCURSION D'UNE JOURNÉE ENTIÈRE PREND LA JOURNÉE : ses moments sont
+  // ceux du jour. Ce qui reste en ville se fait AVANT de partir ou APRÈS être
+  // revenu — jamais pendant —, et se lit de part et d'autre de l'excursion.
+  const excursion = !container && day.items.find(isFullDayExcursion);
+  if (excursion) {
+    const window =
+      excursions.find((entry) => entry.item.id === excursion.id)?.window ?? excursionWindow(excursion);
+    const side = (wanted) => {
+      const groups = day.groups.map((group) => ({
+        ...group,
+        items: group.items.filter(
+          (item) => item !== excursion && (group.key === null ? 'after' : sideOf(group.key, window)) === wanted,
+        ),
+      }));
+      return { ...day, groups, items: groups.flatMap((group) => group.items) };
+    };
+    const before = side('before');
+    const after = side('after');
+    const cityPart = (part) => (
+      <DayPlan
+        day={part}
+        days={days}
+        transports={transports}
+        clashes={clashes}
+        tripId={tripId}
+        readOnly={readOnly}
+        onChanged={onChanged}
+        emptyText={null}
+      />
+    );
+
+    return (
+      <>
+        {before.items.length > 0 && (
+          <>
+            <p className="dayplan__back">Avant de partir à {excursion.title}</p>
+            {cityPart(before)}
+          </>
+        )}
+        <ExcursionDay
+          excursion={excursion}
+          day={day}
+          days={days}
+          transports={transports}
+          clashes={clashes}
+          tripId={tripId}
+          readOnly={readOnly}
+          onChanged={onChanged}
+        />
+        {after.items.length > 0 && (
+          <>
+            <p className="dayplan__back">De retour à {day.step.name}</p>
+            {cityPart(after)}
+          </>
+        )}
+      </>
+    );
+  }
 
   // Le précédent dans l'ordre RÉEL de la journée, moments confondus : c'est
   // entre le dernier lieu du matin et le premier de l'après-midi que la
@@ -40,19 +118,31 @@ export default function DayPlan({ day, days, transports, clashes, container, tri
         // activité — mais le moment se signale.
         const outside = group.key !== null && !slotFits(group.key, day);
 
+        // Pendant une excursion (F6) : un lieu de la ville posé à un moment
+        // où l'on est à Miyajima. On ne le cache pas, on le signale.
+        const during =
+          group.key !== null &&
+          group.items.some((item) => !isExcursion(item)) &&
+          excursions.find((entry) => !fitsAround(group.key, entry.window));
+
         return (
           <section
             className="slot"
             key={group.key ?? 'unslotted'}
             data-full={group.full || undefined}
             data-loose={group.key === null || undefined}
-            data-outside={outside || undefined}
+            data-outside={outside || during || undefined}
           >
             <h4 className="slot__name">
               {group.label}
               {outside && (
                 <span className="slot__outside" title="Ce moment tombe hors de la présence dans la ville ce jour-là">
                   {' '}⚠ {day.until ? 'après le départ' : 'avant l’arrivée'}
+                </span>
+              )}
+              {during && (
+                <span className="slot__outside" title={`Ce moment tombe pendant l'excursion à ${during.item.title}`}>
+                  {' '}⚠ pendant l’excursion
                 </span>
               )}
             </h4>
@@ -74,6 +164,23 @@ export default function DayPlan({ day, days, transports, clashes, container, tri
                   transports={transports?.get(item.id)}
                   clashes={clashes}
                   container={container}
+                  cityDays={cityDays}
+                  // Une excursion d'une demi-journée déroule ce qu'elle contient
+                  // sous sa ligne, en liste (F6).
+                  nested={
+                    isExcursion(item) ? (
+                      <ExcursionList
+                        plan={containerPlan(day.step, item)}
+                        cityDays={days}
+                        date={day.date}
+                        transports={transports}
+                        clashes={clashes}
+                        tripId={tripId}
+                        readOnly={readOnly}
+                        onChanged={onChanged}
+                      />
+                    ) : null
+                  }
                   tripId={tripId}
                   readOnly={readOnly}
                   onChanged={onChanged}

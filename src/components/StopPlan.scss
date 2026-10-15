@@ -44,11 +44,4 @@
     @include mixins.button-ghost;
     margin-left: auto;
   }
-
-  // La réserve d'un arrêt est plus discrète que celle d'une ville : elle vit
-  // au milieu d'une journée, pas entre deux villes.
-  &__body .reserve {
-    margin-top: 4px;
-    padding: 4px var(--sp-2) var(--sp-2);
-  }
 }

@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { childrenOf, cityOnly, containerPlan, ownItems, stopsOf } from './containers.js';
+import {
+  childrenOf,
+  cityOnly,
+  containerPlan,
+  excursionsOf,
+  isFullDayExcursion,
+  ownItems,
+  stopsOf,
+} from './containers.js';
 
 // Tokyo, avec un item à elle, et deux arrêts sur la route de Matsumoto :
 // Hakushu (vide — l'arrêt EST la visite) puis Suwa (un lac, un déjeuner).
@@ -101,5 +109,58 @@ describe('containerPlan', () => {
     expect(plan.items).toEqual([]);
     expect(plan.reserve).toEqual([]);
     expect(plan.count).toBe(0);
+  });
+});
+
+describe('les excursions (F6)', () => {
+  const hiroshima = {
+    id: 'hiroshima',
+    items: [
+      item('dome', { day_offset: 0, day_slot: 'matin' }),
+      item('miyajima', { kind: 'excursion', day_offset: 1, day_slot: 'journee', position: 1 }),
+      item('nara', { kind: 'excursion', position: 2 }),
+      item('otorii', { parent_id: 'miyajima', day_slot: 'matin' }),
+    ],
+  };
+
+  // Les excursions ont leur propre section dans la vue Villes : elles sortent
+  // des catégories, et leur contenu aussi.
+  it('sort des catégories de la ville', () => {
+    expect(ids(ownItems(hiroshima))).toEqual(['dome']);
+  });
+
+  it('rend les excursions dans l’ordre de saisie', () => {
+    expect(ids(excursionsOf(hiroshima))).toEqual(['miyajima', 'nara']);
+  });
+
+  it('ne confond pas excursion et arrêt', () => {
+    expect(stopsOf(hiroshima)).toEqual([]);
+  });
+
+  it('range le contenu d’une excursion comme celui d’un arrêt', () => {
+    const miyajima = hiroshima.items[1];
+    expect(ids(containerPlan(hiroshima, miyajima).items)).toEqual(['otorii']);
+  });
+});
+
+describe('les excursions — journée ou demi-journée', () => {
+  it('reconnaît une excursion de toute la journée', () => {
+    expect(isFullDayExcursion(item('miyajima', { kind: 'excursion', day_slot: 'journee' }))).toBe(true);
+    expect(isFullDayExcursion(item('nara', { kind: 'excursion', day_slot: 'apres-midi' }))).toBe(false);
+    expect(isFullDayExcursion(item('kinkaku', { day_slot: 'journee' }))).toBe(false);
+  });
+
+  // Une demi-journée se lit dans l'ordre qu'on a rangé, sans sous-moments :
+  // le moment noté ne réordonne pas la liste.
+  it('rend la liste d’une demi-journée dans l’ordre rangé', () => {
+    const nara = item('nara', { kind: 'excursion', day_offset: 1, day_slot: 'apres-midi' });
+    const step = {
+      items: [
+        nara,
+        item('parc', { parent_id: 'nara', day_slot: 'matin', day_position: 2 }),
+        item('todaiji', { parent_id: 'nara', day_slot: 'soir', day_position: 1 }),
+      ],
+    };
+    expect(ids(containerPlan(step, nara).list)).toEqual(['todaiji', 'parc']);
   });
 });

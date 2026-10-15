@@ -10,6 +10,7 @@ import ConfirmDialog from './ConfirmDialog.jsx';
 import TrashIcon from './TrashIcon.jsx';
 import PhotoStrip from './PhotoStrip.jsx';
 import CategoryAccordion from './CategoryAccordion.jsx';
+import CityExcursions from './CityExcursions.jsx';
 import LoveNote from './LoveNote.jsx';
 import StepTimes from './StepTimes.jsx';
 import './StepCard.scss';
@@ -301,6 +302,11 @@ export default function StepCard({
             ))}
           </p>
         )}
+
+        {/* Les excursions au départ de la ville (F6) : on les saisit ici, on
+            les place dans le jour par jour. La ville entière, pas `city` :
+            elles et leur contenu en ont été retirés. */}
+        <CityExcursions step={step} readOnly={readOnly} onChanged={onChanged} />
 
         {/* Le trajet vers l'étape suivante, en pied de carte : il appartient à
             l'intervalle, pas à l'étape d'arrivée. */}

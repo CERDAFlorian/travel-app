@@ -60,13 +60,24 @@ describe('StepLink — la route entre deux villes', () => {
 });
 
 describe('StepLink — les arrêts en chemin (F5)', () => {
-  // Hakushu, vide : l'arrêt EST la visite. Une ligne, pas une carte.
-  it('montre un arrêt vide sur une ligne', () => {
+  // Une petite carte d'emblée, avec ses raccourcis de catégories : plus
+  // d'étape « + y ajouter quelque chose » (15 octobre 2026).
+  it('montre un arrêt vide en carte, avec ses raccourcis', () => {
     const html = render({ from: tokyo([stop('Hakushu')]) });
 
     expect(html).toContain('Hakushu');
+    expect(html).toContain('data-card');
+    expect(html).toContain('+ Activités');
+    expect(html).not.toContain('y ajouter quelque chose');
+  });
+
+  // En lecture seule, il n'y a rien à y ajouter : un arrêt vide reste une
+  // ligne.
+  it('laisse un arrêt vide sur une ligne en lecture', () => {
+    const html = render({ from: tokyo([stop('Hakushu')]), readOnly: true });
+
+    expect(html).toContain('Hakushu');
     expect(html).not.toContain('data-card');
-    expect(html).toContain('+ y ajouter quelque chose');
   });
 
   // Shirakawa-gō contient un temple : il s'ouvre en petite carte, avec les

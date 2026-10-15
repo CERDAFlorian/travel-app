@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import DayPlan from './DayPlan.jsx';
-import CityReserve from './CityReserve.jsx';
+import ContainerBody from './ContainerBody.jsx';
 import ItemTransports from './ItemTransports.jsx';
 import LegEditor from './LegEditor.jsx';
 import PlaceThumb from './PlaceThumb.jsx';
@@ -19,12 +18,8 @@ import './StopPlan.scss';
 // `origin` : d'où l'on vient — la ville quittée le matin, ou l'arrêt précédent.
 export default function StopPlan({ plan, origin, sync, date, transports, clashes, tripId, readOnly, onChanged }) {
   const [adding, setAdding] = useState(false);
-  const { container: stop, step } = plan;
+  const { container: stop } = plan;
   const own = transports.get(stop.id);
-
-  // Le contenu d'un arrêt vit le jour de l'arrêt : un seul jour possible, on
-  // ne choisit que le moment.
-  const days = [{ offset: 0, date, departure: false }];
 
   const toStop = own?.aller ?? [];
 
@@ -108,28 +103,15 @@ export default function StopPlan({ plan, origin, sync, date, transports, clashes
         />
       )}
 
-      <div className="stopplan__body">
-        <DayPlan
-          day={plan}
-          days={days}
-          transports={transports}
-          clashes={clashes}
-          container={stop}
-          tripId={tripId}
-          readOnly={readOnly}
-          onChanged={onChanged}
-          emptyText={null}
-        />
-
-        <CityReserve
-          step={step}
-          days={days}
-          items={plan.reserve}
-          container={stop}
-          readOnly={readOnly}
-          onChanged={onChanged}
-        />
-      </div>
+      <ContainerBody
+        plan={plan}
+        date={date}
+        transports={transports}
+        clashes={clashes}
+        tripId={tripId}
+        readOnly={readOnly}
+        onChanged={onChanged}
+      />
 
       <ItemTransports
         item={stop}

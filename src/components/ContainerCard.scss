@@ -1,8 +1,9 @@
 @use '../theme/mixins';
 
-// Un arrêt sur la route, entre deux cartes de ville. Plus étroit qu'une ville
-// et décalé : on passe, on ne s'installe pas.
-.rstop {
+// Un lieu qui en contient d'autres. Sur la route (arrêt), plus étroit qu'une
+// ville et décalé : on passe, on ne s'installe pas. Dans une ville
+// (excursion), il s'aligne sur la carte qui le porte.
+.ccard {
   margin: 2px clamp(16px, 4vw, 48px);
   padding: 2px var(--sp-2);
   border-left: 2px dashed var(--accent-2);
@@ -26,15 +27,9 @@
     margin-top: 6px;
     border-top: 1px solid var(--border-soft);
   }
-
-  &__open {
-    @include mixins.button-ghost;
-    margin: 2px 0 0;
-    padding: 0 var(--sp-2);
-  }
 }
 
-.rstop__add-cats {
+.ccard__add-cats {
   display: flex;
   flex-wrap: wrap;
   gap: 0 2px;
@@ -43,7 +38,13 @@
   &:empty { display: none; }
 }
 
-.rstop__add-cat {
+.ccard__add-cat {
   @include mixins.button-ghost;
   padding: 0 var(--sp-2);
+}
+
+// Une excursion vit DANS la carte de sa ville : pas de décalage, pas de
+// filet pointillé — elle part de là.
+.ccard[data-kind='excursion'] {
+  margin: 4px 0;
 }

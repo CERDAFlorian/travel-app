@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { SLOTS } from '@/lib/days.js';
-import { slotFits } from '@/lib/slots.js';
+import { citySlotsFor, insideSlotsFor } from '@/lib/excursions.js';
 import { formatDayFull, formatDayShort } from '@/lib/dates.js';
 import './DayPicker.scss';
 
@@ -26,7 +26,27 @@ const dayLabel = (entry) => (entry.date ? formatDayShort(entry.date) : `Jour ${e
 // « journée entière ». Avec un seul jour possible — le contenu d'un arrêt vit
 // le jour de l'arrêt —, la question du jour ne se pose pas : on passe
 // directement aux moments.
-export default function DayPicker({ days, slots = SLOTS, current, currentSlot, label, busy, onPick, onCancel }) {
+//
+// LE JOUR D'UNE EXCURSION, DEUX FAMILLES (F6, Florian, 15 octobre 2026) : en
+// ville — avant ou après l'excursion, jamais pendant —, ou DANS l'excursion.
+// `onPick(offset, slot, parentId)` : parentId est l'excursion choisie, ou
+// null pour la ville. `cityName` nomme la première famille ; `withExcursions`
+// à false s'en tient à la ville (refaire un autre jour, contenu d'un arrêt).
+// `currentParent` : l'excursion où l'item se trouve déjà, pour marquer son
+// moment actuel.
+export default function DayPicker({
+  days,
+  slots = SLOTS,
+  current,
+  currentSlot,
+  currentParent = null,
+  cityName = null,
+  withExcursions = true,
+  label,
+  busy,
+  onPick,
+  onCancel,
+}) {
   const single = days.length === 1;
   const [day, setDay] = useState(single ? days[0].offset : null);
   const chosen = day ?? null;
@@ -61,6 +81,7 @@ export default function DayPicker({ days, slots = SLOTS, current, currentSlot, l
   }
 
   const target = days.find((entry) => entry.offset === chosen);
+  const excursions = withExcursions ? (target?.excursions ?? []) : [];
 
   return (
     <div className="daypick" role="group" aria-label={`${label} — moment de la journée`}>
@@ -83,27 +104,81 @@ export default function DayPicker({ days, slots = SLOTS, current, currentSlot, l
         {target?.departure && ' · départ'}
       </span>
 
-      <span className="daypick__chips">
-        {/* Seulement les moments possibles ce jour-là : pas d'après-midi à
-            Tokyo le jour où l'on en part à 10 h (heures de ville, 0016). */}
-        {slots.filter((slot) => slotFits(slot.key, target ?? {})).map((slot) => (
-          <button
-            key={slot.key}
-            type="button"
-            className="daypick__chip"
-            data-on={(chosen === current && slot.key === currentSlot) || undefined}
-            data-full={slot.full || undefined}
-            disabled={busy}
-            onClick={() => onPick(chosen, slot.key)}
-          >
-            {slot.label}
-          </button>
-        ))}
-      </span>
+      {/* En ville : seulement les moments possibles ce jour-là — pas
+          d'après-midi à Tokyo le jour où l'on en part à 10 h (0016), rien
+          pendant une excursion (F6). */}
+      <Family
+        name={excursions.length > 0 ? `À ${cityName ?? 'la ville'}` : null}
+        slots={citySlotsFor(target ?? {}, slots)}
+        isOn={(key) => chosen === current && !currentParent && key === currentSlot}
+        busy={busy}
+        onPick={(key) => onPick(chosen, key, null)}
+      />
+
+      {/* Dans chaque excursion du jour : Miyajima, ses moments. */}
+      {excursions.map((entry) => (
+        <Family
+          key={entry.item.id}
+          name={`◆ ${entry.item.title}`}
+          slots={insideSlotsFor(entry)}
+          isOn={(key) => currentParent === entry.item.id && key === currentSlot}
+          busy={busy}
+          onPick={(key) => onPick(chosen, key, entry.item.id)}
+        />
+      ))}
 
       <button type="button" className="daypick__cancel" disabled={busy} onClick={onCancel}>
         Annuler
       </button>
     </div>
+  );
+}
+
+// Une famille de moments : en ville, ou dans une excursion. Sans nom, une
+// simple rangée — un jour sans excursion n'a qu'une famille.
+function Family({ name, slots, isOn, busy, onPick }) {
+  if (!name) {
+    return (
+      <span className="daypick__chips">
+        {slots.map((slot) => (
+          <Chip key={slot.key} slot={slot} on={isOn(slot.key)} busy={busy} onPick={onPick} />
+        ))}
+      </span>
+    );
+  }
+
+  if (slots.length === 0) {
+    return (
+      <span className="daypick__family">
+        <span className="daypick__family-name">{name}</span>
+        <span className="daypick__none">rien de possible ce jour-là</span>
+      </span>
+    );
+  }
+
+  return (
+    <span className="daypick__family">
+      <span className="daypick__family-name">{name}</span>
+      <span className="daypick__chips">
+        {slots.map((slot) => (
+          <Chip key={slot.key} slot={slot} on={isOn(slot.key)} busy={busy} onPick={onPick} />
+        ))}
+      </span>
+    </span>
+  );
+}
+
+function Chip({ slot, on, busy, onPick }) {
+  return (
+    <button
+      type="button"
+      className="daypick__chip"
+      data-on={on || undefined}
+      data-full={slot.full || undefined}
+      disabled={busy}
+      onClick={() => onPick(slot.key)}
+    >
+      {slot.label}
+    </button>
   );
 }

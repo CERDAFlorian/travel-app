@@ -43,3 +43,13 @@ export function DaysIcon() {
     </svg>
   );
 }
+
+// La carte : un plan plié en trois volets.
+export function MapIcon() {
+  return (
+    <svg {...base}>
+      <path d="M2 4.2l3.8-1.6 4.4 1.6 3.8-1.6v9.2l-3.8 1.6-4.4-1.6L2 13.4z" />
+      <path d="M5.8 2.6v9.2M10.2 4.2v9.2" />
+    </svg>
+  );
+}

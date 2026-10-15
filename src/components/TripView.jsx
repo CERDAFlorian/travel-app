@@ -14,7 +14,7 @@ import ShareLink from '@/components/ShareLink.jsx';
 import NightsGap from '@/components/NightsGap.jsx';
 import AddStep from '@/components/AddStep.jsx';
 import TripProgram from '@/components/TripProgram.jsx';
-import { CitiesIcon, DaysIcon } from '@/components/ViewIcons.jsx';
+import { CitiesIcon, DaysIcon, MapIcon } from '@/components/ViewIcons.jsx';
 import StepLink from '@/components/StepLink.jsx';
 import LoveNote from '@/components/LoveNote.jsx';
 import { addStep, moveStep, removeStep, setStepNights } from '@/lib/mutations.js';
@@ -53,6 +53,16 @@ export default function TripView({
   // route : changer d'URL remonterait le composant, donc la carte, et on
   // perdrait son zoom et sa position au moment précis où l'on s'en sert.
   const [byDay, setByDay] = useState(false);
+  // La carte peut se masquer : la colonne prend alors toute la place. Un
+  // réglage de lecture, propre à cet appareil — on le garde d'une visite à
+  // l'autre, sans en faire une donnée du voyage.
+  const [showMap, setShowMap] = useState(readMapPreference);
+  const toggleMap = useCallback(() => {
+    setShowMap((value) => {
+      writeMapPreference(!value);
+      return !value;
+    });
+  }, []);
   const [justAddedStep, setJustAddedStep] = useState(null);
 
   // La règle des 30 jours : les lieux Google qui vont expirer sont redemandés
@@ -78,20 +88,30 @@ export default function TripView({
   // ne peut que MONTER une hauteur, jamais la baisser — lui donner sa propre
   // hauteur mesurée ne change donc rien, et l'observateur se tait au premier
   // tour.
+  //
+  // LA BASCULE AUSSI : elle colle sous la frise (`--mode-h`), et tout ce qui
+  // se cale en haut de l'écran — la carte collante, une ville ou un jour
+  // qu'on rejoint — doit dégager les deux.
   const timelineRef = useRef(null);
+  const modeRef = useRef(null);
 
   useEffect(() => {
-    const bar = timelineRef.current;
-    if (!bar || typeof ResizeObserver === 'undefined') return undefined;
+    const bars = [
+      [timelineRef.current, '--timeline-h'],
+      [modeRef.current, '--mode-h'],
+    ].filter(([bar]) => bar);
+    if (bars.length === 0 || typeof ResizeObserver === 'undefined') return undefined;
 
     const apply = () => {
-      const height = Math.round(bar.getBoundingClientRect().height);
-      if (height > 0) bar.closest('.trip')?.style.setProperty('--timeline-h', `${height}px`);
+      for (const [bar, name] of bars) {
+        const height = Math.round(bar.getBoundingClientRect().height);
+        if (height > 0) bar.closest('.trip')?.style.setProperty(name, `${height}px`);
+      }
     };
 
     apply();
     const observer = new ResizeObserver(apply);
-    observer.observe(bar);
+    for (const [bar] of bars) observer.observe(bar);
     return () => observer.disconnect();
   }, []);
 
@@ -242,7 +262,11 @@ export default function TripView({
             Discrète et alignée à gauche : c'est un réglage d'affichage, pas une
             action du voyage. Elle ne doit pas peser autant que « Ajouter une
             ville ». */}
-        <div className="trip__mode">
+        {/* COLLANTE SOUS LA FRISE : elle reste à sa place en haut de la
+            colonne, puis, quand on fait défiler, se colle sous la frise et ne
+            quitte plus l'écran — on change de lecture sans remonter tout le
+            voyage. */}
+        <div className="trip__mode" ref={modeRef}>
           <div className="trip__mode-group" role="group" aria-label="Lecture de l'itinéraire">
             <button
               type="button"
@@ -268,9 +292,23 @@ export default function TripView({
               <span className="trip__mode-label">Jour par jour</span>
             </button>
           </div>
+
+          {/* Masquer la carte : la colonne prend toute la place. À droite,
+              loin de la bascule — c'est un autre réglage. */}
+          <button
+            type="button"
+            className="trip__mode-btn trip__map-toggle"
+            data-on={!showMap || undefined}
+            aria-pressed={!showMap}
+            title={showMap ? 'Masquer la carte : la colonne prend toute la place' : 'Afficher la carte du voyage'}
+            onClick={toggleMap}
+          >
+            <MapIcon />
+            <span className="trip__mode-label">{showMap ? 'Masquer la carte' : 'Afficher la carte'}</span>
+          </button>
         </div>
 
-        <main className="trip__main">
+        <main className="trip__main" data-solo={!showMap || undefined}>
           <section className="trip__steps">
             {byDay ? (
               <TripProgram
@@ -298,15 +336,17 @@ export default function TripView({
             )}
           </section>
 
-          <aside className="trip__aside">
-            <div className="trip__map-card">
-              <div className="trip__map-head">
-                <h2 className="trip__map-title">La carte du voyage</h2>
+          {showMap && (
+            <aside className="trip__aside">
+              <div className="trip__map-card">
+                <div className="trip__map-head">
+                  <h2 className="trip__map-title">La carte du voyage</h2>
+                </div>
+                <TripMap trip={view} selectedStepId={selectedStepId} onSelectStep={selectStep} onDemand={shared} />
+                <TravelTimes steps={view.steps} legs={cityLegs(view.legs)} />
               </div>
-              <TripMap trip={view} selectedStepId={selectedStepId} onSelectStep={selectStep} onDemand={shared} />
-              <TravelTimes steps={view.steps} legs={cityLegs(view.legs)} />
-            </div>
-          </aside>
+            </aside>
+          )}
         </main>
 
         <HeroBanner steps={view.steps} startDate={view.startDate} />
@@ -400,4 +440,26 @@ function StepsColumn({
       {!readOnly && <AddStep onAdd={handleAddStep} />}
     </>
   );
+}
+
+// La préférence « carte masquée », propre à cet appareil. Le stockage peut
+// manquer — navigation privée, données effacées : la carte s'affiche alors,
+// comme par défaut.
+const MAP_KEY = 'travel-app:carte-masquee';
+
+function readMapPreference() {
+  try {
+    return window.localStorage.getItem(MAP_KEY) !== '1';
+  } catch {
+    return true;
+  }
+}
+
+function writeMapPreference(show) {
+  try {
+    if (show) window.localStorage.removeItem(MAP_KEY);
+    else window.localStorage.setItem(MAP_KEY, '1');
+  } catch {
+    // Pas de stockage : le réglage vaut pour cette visite seulement.
+  }
 }

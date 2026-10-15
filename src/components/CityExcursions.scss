@@ -1,0 +1,51 @@
+@use '../theme/mixins';
+
+// Les excursions, sous les catégories de la ville. Discrètes tant qu'il n'y en
+// a pas : un « + excursion » de pied de carte, pas une section vide.
+.excursions {
+  margin-top: 6px;
+
+  &__title {
+    margin: var(--sp-2) 0 2px;
+    color: var(--text-soft);
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  // Le texte s'aligne sur le bord du contenu : le décalage négatif rattrape
+  // le rembourrage du bouton.
+  &__add {
+    @include mixins.button-ghost;
+    margin-left: calc(var(--sp-2) * -1);
+    padding: 0 var(--sp-2);
+  }
+
+  &__form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__input {
+    flex: 1 1 220px;
+    padding: 4px 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: 7px;
+    background: var(--surface-raised);
+    color: var(--text);
+    font: inherit;
+    // 16 px minimum : en dessous, Safari iOS zoome au focus.
+    font-size: var(--fs-md);
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  &__submit { @include mixins.button-primary('sm'); }
+
+  &__cancel {
+    @include mixins.button-link;
+  }
+}

@@ -1,8 +1,8 @@
 import { Fragment, useState } from 'react';
 import { legSummary } from '@/lib/transport.js';
 import { stopsOf } from '@/lib/containers.js';
-import { addStop } from '@/lib/mutations.js';
-import RouteStop from './RouteStop.jsx';
+import { addContainer } from '@/lib/mutations.js';
+import ContainerCard from './ContainerCard.jsx';
 import './StepLink.scss';
 
 // La route entre deux villes, dans la vue Villes.
@@ -30,7 +30,7 @@ export default function StepLink({ from, to, leg, transports, readOnly, onChange
     if (!title.trim() || busy) return;
     setBusy(true);
     try {
-      const id = await addStop(from, title);
+      const id = await addContainer(from, title, 'arret');
       setJustAdded(id);
       await onChanged();
       setTitle('');
@@ -45,9 +45,9 @@ export default function StepLink({ from, to, leg, transports, readOnly, onChange
       {stops.map((stop) => (
         <Fragment key={stop.id}>
           <Segment legs={transports?.get(stop.id)?.aller ?? []} />
-          <RouteStop
-            stop={stop}
-            from={from}
+          <ContainerCard
+            container={stop}
+            home={from}
             to={to}
             autoLocate={stop.id === justAdded}
             readOnly={readOnly}

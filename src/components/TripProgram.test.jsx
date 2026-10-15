@@ -150,7 +150,7 @@ describe('TripProgram — construire le programme', () => {
   it('replie la réserve d’une ville', () => {
     const html = render();
     expect(html).toMatch(/class="reserve__toggle" aria-expanded="false"/);
-    expect(html).toMatch(/class="reserve__items" hidden=""/);
+    expect(html).toMatch(/class="reserve__groups" hidden=""/);
   });
 });
 
@@ -478,5 +478,197 @@ describe('TripProgram — les heures de la ville (0016)', () => {
     const day = shared(render({ trip: t }));
     expect(day).not.toContain('pday__clock');
     expect(day).not.toContain('après le départ');
+  });
+});
+
+describe('TripProgram — les excursions (F6)', () => {
+  // Le 12, l'après-midi à Nara depuis Kyoto : Tōdai-ji, puis le parc, et le
+  // Kasuga-taisha encore à placer.
+  const withExcursion = () => {
+    const t = trip();
+    t.steps[0].items.push(
+      item('Nara', { kind: 'excursion', day_offset: 1, day_slot: 'apres-midi', day_position: 1 }),
+      item('Tōdai-ji', { parent_id: 'Nara', day_slot: 'apres-midi', day_position: 1 }),
+      item('Parc aux daims', { parent_id: 'Nara', day_slot: 'soir', day_position: 1 }),
+      item('Kasuga-taisha', { parent_id: 'Nara' }),
+    );
+    t.legs.push(
+      { id: 'kintetsu', item_id: 'Nara', direction: 'aller', position: 1, mode: 'train', duration_min: 45 },
+      { id: 'kintetsu-retour', item_id: 'Nara', direction: 'retour', position: 1, mode: 'train', duration_min: 46 },
+    );
+    return t;
+  };
+
+  // L'aller, l'excursion, ce qu'on y fait, le retour : dans l'ordre où on le vit.
+  it('déroule le contenu de l’excursion entre l’aller et le retour', () => {
+    const html = render({ trip: withExcursion() });
+
+    const aller = html.indexOf('45 min');
+    const nara = html.search(/class="planned__name"[^>]*>Nara/);
+    const todaiji = html.indexOf('Tōdai-ji');
+    const parc = html.indexOf('Parc aux daims');
+    const retour = html.indexOf('46 min');
+
+    expect(aller).toBeGreaterThan(-1);
+    expect(nara).toBeGreaterThan(aller);
+    expect(todaiji).toBeGreaterThan(nara);
+    expect(parc).toBeGreaterThan(todaiji);
+    expect(retour).toBeGreaterThan(parc);
+  });
+
+  it('montre la réserve de l’excursion', () => {
+    const html = render({ trip: withExcursion() });
+    expect(html).toContain('À placer à Nara');
+    expect(html).toContain('Kasuga-taisha');
+  });
+
+  // Une copie partirait sans son contenu : une excursion se déplace, elle ne
+  // se refait pas.
+  it('ne propose pas de refaire une excursion', () => {
+    const html = render({ trip: withExcursion() });
+    const row = html.slice(html.indexOf('data-kind="excursion"'), html.indexOf('Tōdai-ji'));
+    expect(row).toContain('>Jour<');
+    expect(row).not.toContain('Refaire');
+  });
+
+  it('se lit sans commande en lecture', () => {
+    const html = render({ trip: withExcursion(), readOnly: true });
+    expect(html).toContain('Tōdai-ji');
+    expect(html).not.toContain('À placer à Nara');
+  });
+});
+
+describe('TripProgram — l’excursion d’une journée entière (F6)', () => {
+  // Le 12 à Miyajima depuis Kyoto : le ferry, le torii le matin, le mont Misen
+  // l'après-midi, le dernier ferry, puis un dîner de retour en ville.
+  const fullDay = () => {
+    const t = trip();
+    t.steps[0].items.push(
+      item('Miyajima', { kind: 'excursion', day_offset: 1, day_slot: 'journee', day_position: 1 }),
+      item('Otorii', { parent_id: 'Miyajima', day_slot: 'matin', day_position: 1 }),
+      item('Mont Misen', { parent_id: 'Miyajima', day_slot: 'apres-midi', day_position: 1 }),
+      item('Henjo Cave', { parent_id: 'Miyajima' }),
+      item('Okonomiyaki', { category: 'restaurant', day_offset: 1, day_slot: 'soir', day_position: 1 }),
+    );
+    t.legs.push(
+      { id: 'ferry', item_id: 'Miyajima', direction: 'aller', position: 1, mode: 'ferry', duration_min: 10, note: 'JR Pass' },
+      { id: 'ferry-r', item_id: 'Miyajima', direction: 'retour', position: 1, mode: 'ferry', duration_min: 11, note: 'dernier ferry' },
+    );
+    return t;
+  };
+
+  const day12 = (html) => html.slice(html.indexOf('jeu. 12 nov.'), html.indexOf('ven. 13 nov.'));
+
+  it('annonce l’excursion dans l’en-tête du jour', () => {
+    const day = day12(render({ trip: fullDay() }));
+    const head = day.slice(0, day.indexOf('</header>'));
+    expect(head).toContain('◆ Miyajima');
+  });
+
+  // La journée se lit comme on la vivra.
+  it('lit la journée dans l’ordre : aller, matin, après-midi, retour, ville', () => {
+    const day = day12(render({ trip: fullDay() }));
+    const order = ['JR Pass', 'Otorii', 'Mont Misen', 'dernier ferry', 'De retour à Kyoto', 'Okonomiyaki'].map((text) =>
+      day.indexOf(text),
+    );
+    expect(order.every((at) => at > -1)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+  });
+
+  // Plus de « Journée entière » qui contient l'excursion qui contient ses
+  // moments : ses moments sont ceux du jour.
+  it('n’emboîte plus les moments dans « Journée entière »', () => {
+    const day = day12(render({ trip: fullDay() }));
+    expect(day).not.toContain('Journée entière');
+    expect(day).toContain('>Matin<');
+  });
+
+  it('garde la réserve de l’excursion', () => {
+    expect(day12(render({ trip: fullDay() }))).toContain('À placer à Miyajima');
+  });
+});
+
+describe('TripProgram — l’excursion d’une demi-journée (F6)', () => {
+  const halfDay = () => {
+    const t = trip();
+    t.steps[0].items.push(
+      item('Nara', { kind: 'excursion', day_offset: 1, day_slot: 'apres-midi', day_position: 1 }),
+      item('Tōdai-ji', { parent_id: 'Nara', day_slot: 'apres-midi', day_position: 1 }),
+    );
+    return t;
+  };
+
+  // Le contenu d'une demi-journée vit dans son moment : pas de bouton
+  // « Moment » pour en changer.
+  it('ne propose pas de changer le moment d’un lieu de la demi-journée', () => {
+    const html = render({ trip: halfDay() });
+    const inside = html.slice(html.indexOf('class="xlist"'));
+    expect(inside).toContain('Tōdai-ji');
+    expect(inside).not.toContain('>Moment<');
+  });
+});
+
+describe('TripProgram — la ville autour d’une excursion (F6)', () => {
+  // Le 12 à Miyajima, ferry 09:10, retour 17:40. En ville : un café le matin
+  // (avant), un déjeuner à midi (pendant !), un dîner le soir (après).
+  const around = () => {
+    const t = trip();
+    t.steps[0].items.push(
+      item('Miyajima', { kind: 'excursion', day_offset: 1, day_slot: 'journee', day_position: 1 }),
+      item('Otorii', { parent_id: 'Miyajima', day_slot: 'matin', day_position: 1 }),
+      item('Café', { category: 'restaurant', day_offset: 1, day_slot: 'matin', day_position: 1 }),
+      item('Déjeuner', { category: 'restaurant', day_offset: 1, day_slot: 'midi', day_position: 1 }),
+      item('Dîner', { category: 'restaurant', day_offset: 1, day_slot: 'soir', day_position: 1 }),
+    );
+    t.legs.push(
+      { id: 'ferry', item_id: 'Miyajima', direction: 'aller', position: 1, mode: 'ferry', dep: '09:10:00', arr: '09:20:00', duration_min: 10 },
+      { id: 'ferry-r', item_id: 'Miyajima', direction: 'retour', position: 1, mode: 'ferry', dep: '17:30:00', arr: '17:40:00', duration_min: 10 },
+    );
+    return t;
+  };
+  const day12 = (html) => html.slice(html.indexOf('jeu. 12 nov.'), html.indexOf('ven. 13 nov.'));
+
+  it('lit la ville avant et après l’excursion', () => {
+    const day = day12(render({ trip: around() }));
+    const order = ['Avant de partir à Miyajima', 'Café', 'Otorii', 'De retour à Kyoto', 'Dîner'].map((t) => day.indexOf(t));
+    expect(order.every((at) => at > -1)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+  });
+
+  it('signale un lieu de la ville posé pendant l’excursion', () => {
+    const day = day12(render({ trip: around() }));
+    expect(day).toContain('pendant l’excursion');
+    expect(day.indexOf('pendant l’excursion')).toBeLessThan(day.indexOf('Déjeuner'));
+  });
+
+  // Une demi-journée l'après-midi : un lieu de la ville le même après-midi
+  // se signale, le matin non.
+  it('signale un lieu posé pendant une demi-journée, pas autour', () => {
+    const t = trip();
+    t.steps[0].items.push(
+      item('Nara', { kind: 'excursion', day_offset: 1, day_slot: 'apres-midi', day_position: 1 }),
+      item('Kinkaku-ji', { day_offset: 1, day_slot: 'apres-midi', day_position: 2 }),
+      item('Ginkaku-ji', { day_offset: 1, day_slot: 'matin', day_position: 1 }),
+    );
+    const day = day12(render({ trip: t }));
+    expect(day.match(/pendant l’excursion/g)).toHaveLength(1);
+    expect(day.indexOf('pendant l’excursion')).toBeGreaterThan(day.indexOf('Ginkaku-ji'));
+  });
+});
+
+describe('TripProgram — la réserve rangée par catégorie', () => {
+  it('range ce qui reste à placer par catégorie, dans l’ordre des catégories', () => {
+    const t = trip();
+    t.steps[0].items.push(
+      item('Ramen', { category: 'restaurant' }),
+      item('Atelier matcha', { category: 'activite' }),
+    );
+    const html = render({ trip: t });
+    const reserve = html.slice(html.indexOf('À placer à Kyoto'));
+    const order = ['Activités', 'Atelier matcha', 'Restaurants', 'Ramen', 'Lieux touristiques', 'Arashiyama'].map((x) =>
+      reserve.indexOf(x),
+    );
+    expect(order.every((at) => at > -1)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
   });
 });

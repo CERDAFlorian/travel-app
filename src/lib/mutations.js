@@ -183,24 +183,28 @@ export async function unplaceItem(id) {
   if (error) fail(error, "Retrait de l'item du programme");
 }
 
-// UN ARRÊT EN CHEMIN (L11, F5) : Hakushu entre Tokyo et Matsumoto.
+// UN LIEU QUI EN CONTIENT D'AUTRES (L11, F5 et F6, 0015_arrets_excursions.sql).
 //
-// Il appartient à la ville qu'on QUITTE et n'a ni jour ni moment à lui : sa
-// date est celle du départ, déduite des nuits (0015_arrets_excursions.sql). Il
-// se range après les arrêts déjà posés sur cette route — on les saisit dans
+// · 'arret' : Hakushu entre Tokyo et Matsumoto. Il appartient à la ville qu'on
+//   QUITTE et n'a ni jour ni moment à lui : sa date est celle du départ.
+// · 'excursion' : Miyajima depuis Hiroshima. Elle appartient à la ville d'où
+//   l'on part, et se place sur un de ses jours comme une activité — elle
+//   arrive donc dans la réserve de la ville.
+//
+// Il se range après les lieux du même genre déjà posés : on les saisit dans
 // l'ordre où on les rencontre. Catégorie « lieu » : on le relie ensuite à
 // Google comme n'importe quel lieu, et il gagne sa photo et son épingle.
-export async function addStop(step, title) {
+export async function addContainer(step, title, kind) {
   const last = (step.items ?? [])
-    .filter((item) => item.kind === 'arret')
+    .filter((item) => item.kind === kind)
     .reduce((max, item) => Math.max(max, item.position ?? 0), 0);
 
   const { data, error } = await supabase
     .from('items')
-    .insert({ step_id: step.id, kind: 'arret', category: 'lieu', title: title.trim(), position: last + 1 })
+    .insert({ step_id: step.id, kind, category: 'lieu', title: title.trim(), position: last + 1 })
     .select('id')
     .single();
-  if (error) fail(error, "Ajout de l'arrêt");
+  if (error) fail(error, kind === 'arret' ? "Ajout de l'arrêt" : "Ajout de l'excursion");
   return data.id;
 }
 
@@ -227,6 +231,40 @@ export async function setChildSlot(step, id, slot) {
     .update({ day_slot: slot, day_position: last + 1 })
     .eq('id', id);
   if (error) fail(error, "Placement de l'item dans le lieu");
+}
+
+// RANGER UN ITEM DANS UNE EXCURSION — ou l'en sortir (F6, Florian, 15
+// octobre 2026). Tes « Otorii : miyajima », saisis avant que les excursions
+// n'existent, étaient des lieux d'Hiroshima sans moyen d'aller à Miyajima.
+//
+// Dedans : il prend le jour de l'excursion (plus de day_offset à lui) et un
+// moment, en fin de moment. Dehors : il retrouve un jour et un moment de la
+// ville, en fin de moment lui aussi.
+export async function moveIntoContainer(step, id, parentId, slot) {
+  const last = (step.items ?? [])
+    .filter((other) => other.parent_id === parentId && other.day_slot === slot && other.id !== id)
+    .reduce((max, other) => Math.max(max, other.day_position ?? 0), 0);
+
+  const { error } = await supabase
+    .from('items')
+    .update({ parent_id: parentId, day_offset: null, day_slot: slot, day_position: last + 1 })
+    .eq('id', id);
+  if (error) fail(error, "Rangement de l'item dans l'excursion");
+}
+
+export async function moveOutOfContainer(step, id, dayOffset, slot) {
+  const last = (step.items ?? [])
+    .filter(
+      (other) =>
+        other.parent_id == null && other.day_offset === dayOffset && (other.day_slot ?? null) === slot,
+    )
+    .reduce((max, other) => Math.max(max, other.day_position ?? 0), 0);
+
+  const { error } = await supabase
+    .from('items')
+    .update({ parent_id: null, day_offset: dayOffset, day_slot: slot, day_position: last + 1 })
+    .eq('id', id);
+  if (error) fail(error, "Retour de l'item en ville");
 }
 
 // Déplace un item d'un cran dans sa journée. `items` est la liste du jour,
