@@ -11,17 +11,7 @@
 
   &__button,
   &__again {
-    padding: var(--sp-2) var(--sp-4);
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-pill);
-    background: var(--surface-warm);
-    color: var(--accent);
-    font: inherit;
-    font-size: var(--fs-sm);
-    cursor: pointer;
-
-    &:hover { border-color: var(--accent); }
-    &:focus-visible { @include mixins.focus-ring; }
+    @include mixins.button-secondary('md');
   }
 
   &__hint,

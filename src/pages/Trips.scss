@@ -48,18 +48,7 @@
   }
 
   &__signout {
-    flex: none;
-    padding: var(--sp-1) var(--sp-2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--text);
-    font: inherit;
-    font-size: var(--fs-sm);
-    cursor: pointer;
-
-    &:hover { border-color: var(--border-strong); }
-    &:focus-visible { @include mixins.focus-ring; }
+    @include mixins.button-secondary;
   }
 }
 

@@ -1,0 +1,68 @@
+@use '../theme/mixins';
+
+// Les transports d'une activité : des lignes de trajet, plus fines que les
+// activités qu'elles desservent. Le filet à gauche les rattache à la ligne
+// qu'elles encadrent.
+.itrans {
+  // Le retrait vient du contexte : le nom d'une activité (PlannedRow), le bord
+  // d'un arrêt (StopPlan).
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  &__row + &__row { margin-top: 1px; }
+
+  &__line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 1px 6px;
+    border: 1px solid transparent;
+    border-left: 2px solid var(--accent-2-soft);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    background: none;
+    color: var(--text-soft);
+    font: inherit;
+    font-size: var(--fs-xs);
+    text-align: left;
+  }
+
+  button#{&}__line {
+    cursor: pointer;
+
+    &:hover,
+    &[data-open] { border-color: var(--accent-2); }
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  &__kind {
+    flex: none;
+    padding: 0 6px;
+    border-radius: var(--radius-pill);
+    background: var(--accent-2-soft);
+    color: var(--accent-2);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  // Le retour se signale : c'est le dernier ferry qu'il ne faut pas rater.
+  &__way {
+    color: var(--accent-2);
+    font-style: italic;
+  }
+
+  &__time {
+    font-weight: 600;
+    color: var(--accent-deep);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__when { font-variant-numeric: tabular-nums; }
+
+  &__note {
+    color: var(--muted);
+    font-style: italic;
+  }
+}

@@ -1,205 +1,129 @@
-import { useState } from 'react';
-import { TRANSPORT_MODES, durationBetween, formatClock, formatDuration, modeLabel } from '@/lib/transport.js';
-import { deleteLeg, saveLeg } from '@/lib/mutations.js';
-import { eurosInput, priceInEuros } from '@/lib/currency.js';
-import ConfirmDialog from './ConfirmDialog.jsx';
-import TrashIcon from './TrashIcon.jsx';
+import { Fragment, useState } from 'react';
+import { legSummary } from '@/lib/transport.js';
+import { stopsOf } from '@/lib/containers.js';
+import { addContainer } from '@/lib/mutations.js';
+import ContainerCard from './ContainerCard.jsx';
 import './StepLink.scss';
 
-// Un prix saisi au clavier français s'écrit « 110 » ou « 12,50 ». Vide vaut
-// « pas de prix » — pas zéro : un trajet inclus dans le JR Pass et un trajet
-// dont on ignore le prix ne sont pas la même chose.
-function parsePrice(raw) {
-  const cleaned = String(raw).replace(/\s/g, '').replace(',', '.');
-  if (cleaned === '') return null;
-  const value = Number(cleaned);
-  return Number.isFinite(value) && value >= 0 ? value : null;
-}
-
-// Le trajet entre deux étapes.
+// La route entre deux villes, dans la vue Villes.
 //
-// Il vit ENTRE les deux cartes, pas au pied de la première : un trajet
-// appartient à l'intervalle, pas à la ville qu'on quitte. La ligne fine tient
-// le fil de l'itinéraire d'une étape à l'autre, et le libellé s'y pose au
-// milieu.
-export default function StepLink({ trip, fromStep, toStep, leg, readOnly, onChanged }) {
-  const [editing, setEditing] = useState(false);
-  const [asking, setAsking] = useState(false);
+// LA VUE VILLES SERT À SAISIR, LE JOUR PAR JOUR À ORGANISER (Florian, 12
+// octobre 2026). Les trajets s'y lisent sans s'y modifier — ils se règlent
+// dans le jour par jour, sur le jour où l'on change de ville (L11, F3). Les
+// ARRÊTS EN CHEMIN, eux, se saisissent ici (F5) : Hakushu entre Tokyo et
+// Matsumoto, Shirakawa-gō entre Takayama et Kyoto.
+//
+// Chaque point de la route porte le trajet qui y MÈNE : l'arrêt, le tronçon
+// qui l'amène (F4) ; la ville d'arrivée, le trajet entre les deux villes —
+// devenu, avec des arrêts, le dernier tronçon.
+export default function StepLink({ from, to, leg, transports, readOnly, onChanged }) {
+  const [adding, setAdding] = useState(false);
+  const [title, setTitle] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(null);
+  // L'arrêt tout juste créé ouvre sa recherche Google, comme un item.
+  const [justAdded, setJustAdded] = useState(null);
 
-  const [mode, setMode] = useState(leg?.mode ?? 'train');
-  const [dep, setDep] = useState(formatClock(leg?.dep) ?? '');
-  const [arr, setArr] = useState(formatClock(leg?.arr) ?? '');
-  const [price, setPrice] = useState(eurosInput(leg?.price, leg?.currency) ?? '');
+  const stops = stopsOf(from);
 
-  async function run(action) {
+  async function submit(event) {
+    event.preventDefault();
+    if (!title.trim() || busy) return;
     setBusy(true);
-    setError(null);
     try {
-      await action();
+      const id = await addContainer(from, title, 'arret');
+      setJustAdded(id);
       await onChanged();
-      setEditing(false);
-      setAsking(false);
-    } catch (failure) {
-      setError(failure.message);
+      setTitle('');
+      setAdding(false);
     } finally {
       setBusy(false);
     }
   }
 
-  // Ce qui s'affiche quand le trajet est connu : « Shinkansen · 09:12 → 11:52
-  // · 2 h 40 ». La durée reste affichée même sans horaire, pour les trajets
-  // dont on ne connaît que ça.
-  const summary = leg
-    ? [
-        modeLabel(leg.mode),
-        formatClock(leg.dep) && `${formatClock(leg.dep)} → ${formatClock(leg.arr)}`,
-        formatDuration(leg.duration_min),
-        // Le prix se lit ici, là où l'œil passe déjà. Six trajets pèsent
-        // lourd, et les chercher un par un dans le budget ne dit pas lequel
-        // coûte cher.
-        priceInEuros(leg.price, leg.currency),
-      ]
-        .filter(Boolean)
-        .join(' · ')
-    : null;
-
-  if (editing) {
-    const preview = formatDuration(durationBetween(dep, arr));
-
-    return (
-      <div className="link link--editing">
-        <form
-          className="link__form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            run(() =>
-              saveLeg({
-                id: leg?.id,
-                tripId: trip.id,
-                fromStep: fromStep.id,
-                toStep: toStep.id,
-                mode,
-                dep,
-                arr,
-                price: parsePrice(price),
-              }),
-            );
-          }}
-        >
-          <select
-            className="link__field"
-            value={mode}
-            aria-label="Type de transport"
-            onChange={(event) => setMode(event.target.value)}
-          >
-            {TRANSPORT_MODES.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-
-          <input
-            className="link__time"
-            type="time"
-            value={dep}
-            aria-label="Heure de départ"
-            onChange={(event) => setDep(event.target.value)}
+  return (
+    <div className="route">
+      {stops.map((stop) => (
+        <Fragment key={stop.id}>
+          <Segment legs={transports?.get(stop.id)?.aller ?? []} />
+          <ContainerCard
+            container={stop}
+            home={from}
+            to={to}
+            autoLocate={stop.id === justAdded}
+            readOnly={readOnly}
+            onChanged={onChanged}
           />
-          <span className="link__arrow" aria-hidden="true">→</span>
-          <input
-            className="link__time"
-            type="time"
-            value={arr}
-            aria-label="Heure d'arrivée"
-            onChange={(event) => setArr(event.target.value)}
-          />
+        </Fragment>
+      ))}
 
+      {/* Le dernier tronçon porte aussi « + arrêt » : une seule ligne entre
+          deux villes au lieu de deux (passe UX du 15 octobre 2026). */}
+      <Segment
+        legs={leg ? [leg] : []}
+        extra={
+          !readOnly &&
+          !adding && (
+            <button
+              type="button"
+              className="route__add"
+              title={`Un arrêt en chemin entre ${from.name} et ${to.name}`}
+              onClick={() => setAdding(true)}
+            >
+              + arrêt
+            </button>
+          )
+        }
+      />
+
+      {!readOnly && adding && (
+        <form className="route__add-form" onSubmit={submit}>
           <input
-            className="link__price"
+            className="route__add-title"
             type="text"
-            inputMode="numeric"
-            value={price}
-            placeholder="prix €"
-            aria-label="Prix du trajet, en euros"
-            onChange={(event) => setPrice(event.target.value)}
+            value={title}
+            autoFocus
+            placeholder="Un arrêt en chemin : une distillerie, un village…"
+            aria-label={`Ajouter un arrêt entre ${from.name} et ${to.name}`}
+            onChange={(event) => setTitle(event.target.value)}
           />
-
-          {/* La durée se calcule sous les yeux : on voit tout de suite qu'un
-              bus de nuit fait 7 h 20 et non moins seize heures. */}
-          {preview && <span className="link__preview">{preview}</span>}
-
-          <button className="link__save" type="submit" disabled={busy}>
-            {busy ? '…' : 'Enregistrer'}
+          <button className="route__add-submit" type="submit" disabled={busy}>
+            Ajouter
           </button>
-          <button className="link__cancel" type="button" onClick={() => setEditing(false)}>
+          <button className="route__add-cancel" type="button" onClick={() => setAdding(false)}>
             Annuler
           </button>
-
-          {error && (
-            <p className="link__error" role="alert">
-              {error}
-            </p>
-          )}
         </form>
-      </div>
-    );
-  }
+      )}
+    </div>
+  );
+}
 
+// Un tronçon de la route : le résumé de son trajet, ou « à préciser ». En
+// lecture seule — il se règle dans le jour par jour.
+function Segment({ legs, extra = null }) {
   return (
     <div className="link">
       <span className="link__rule" aria-hidden="true" />
 
-      {leg ? (
-        <span className="link__summary">
-          <button
-            type="button"
-            className="link__label"
-            disabled={readOnly}
-            title={readOnly ? undefined : 'Modifier ce trajet'}
-            onClick={() => setEditing(true)}
-          >
-            {summary}
-          </button>
-          {!readOnly && (
-            <button
-              type="button"
-              className="link__delete"
-              title="Supprimer ce trajet"
-              onClick={() => setAsking(true)}
-            >
-              <TrashIcon />
-              <span className="sr-only">Supprimer le trajet</span>
-            </button>
-          )}
-        </span>
+      {legs.length > 0 ? (
+        legs.map((leg) => (
+          <span className="link__label" key={leg.id}>
+            {legSummary(leg)}
+            {leg.note && <span className="link__note"> · {leg.note}</span>}
+          </span>
+        ))
       ) : (
-        !readOnly && (
-          <button type="button" className="link__add" onClick={() => setEditing(true)}>
-            + Ajouter un transport
-          </button>
-        )
+        // Un trajet manquant reste visible : c'est une chose à faire — vers
+        // une ville comme vers un arrêt. Mais il se saisit ailleurs, et la
+        // ligne le dit.
+        <span className="link__todo" title="Le trajet se saisit dans la vue Jour par jour">
+          trajet à préciser
+        </span>
       )}
 
-      <span className="link__rule" aria-hidden="true" />
+      {extra}
 
-      <ConfirmDialog
-        open={asking}
-        title="Supprimer ce trajet ?"
-        busy={busy}
-        onCancel={() => setAsking(false)}
-        onConfirm={() => run(() => deleteLeg(leg.id))}
-      >
-        <p>
-          <strong>
-            {fromStep.name} → {toStep.name}
-          </strong>
-          {summary ? ` · ${summary}` : ''}.
-        </p>
-        <p>Les étapes ne bougent pas : seul le trajet entre elles est effacé.</p>
-      </ConfirmDialog>
+      <span className="link__rule" aria-hidden="true" />
     </div>
   );
 }

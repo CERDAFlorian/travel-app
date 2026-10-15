@@ -162,21 +162,8 @@
 
 .flight {
   &__delete {
-    display: grid;
-    place-items: center;
+    @include mixins.button-icon('danger');
     margin-left: auto;
-    width: var(--hit-dense);
-    height: var(--hit-dense);
-    padding: 0;
-    border: 0;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--border-strong);
-    font: inherit;
-    font-size: var(--fs-sm);
-    cursor: pointer;
-
-    &:hover { color: var(--danger); }
   }
 
   &__price {
@@ -254,7 +241,7 @@
   }
 
   &__submit {
-    @include mixins.action-button;
+    @include mixins.button-primary('sm');
     flex: none;
   }
 
@@ -271,15 +258,7 @@
   }
 
   &__cancel {
-    flex: none;
-    padding: 0 var(--sp-2);
-    border: 0;
-    background: none;
-    color: var(--muted);
-    font: inherit;
-    font-size: var(--fs-sm);
-    text-decoration: underline;
-    cursor: pointer;
+    @include mixins.button-link;
   }
 
   &__error {

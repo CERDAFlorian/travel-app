@@ -30,11 +30,13 @@ import {
 // d'un item remonte à son étape puis au voyage, dont on est déjà membre au
 // moment de l'insertion. Sur `trips`, c'est le trigger AFTER qui crée
 // l'appartenance, donc trop tard pour un RETURNING — voir 0002_rls.sql.
-export async function addItem({ stepId, category, title, price, position, currency }) {
+export async function addItem({ stepId, category, title, price, position, currency, parentId = null }) {
   const { data, error } = await supabase
     .from('items')
     .insert({
       step_id: stepId,
+      // Rangé dans un arrêt ou une excursion (L11, F5) : même étape que lui.
+      parent_id: parentId,
       category,
       title: title.trim(),
       price: price ?? null,
@@ -181,6 +183,90 @@ export async function unplaceItem(id) {
   if (error) fail(error, "Retrait de l'item du programme");
 }
 
+// UN LIEU QUI EN CONTIENT D'AUTRES (L11, F5 et F6, 0015_arrets_excursions.sql).
+//
+// · 'arret' : Hakushu entre Tokyo et Matsumoto. Il appartient à la ville qu'on
+//   QUITTE et n'a ni jour ni moment à lui : sa date est celle du départ.
+// · 'excursion' : Miyajima depuis Hiroshima. Elle appartient à la ville d'où
+//   l'on part, et se place sur un de ses jours comme une activité — elle
+//   arrive donc dans la réserve de la ville.
+//
+// Il se range après les lieux du même genre déjà posés : on les saisit dans
+// l'ordre où on les rencontre. Catégorie « lieu » : on le relie ensuite à
+// Google comme n'importe quel lieu, et il gagne sa photo et son épingle.
+export async function addContainer(step, title, kind) {
+  const last = (step.items ?? [])
+    .filter((item) => item.kind === kind)
+    .reduce((max, item) => Math.max(max, item.position ?? 0), 0);
+
+  const { data, error } = await supabase
+    .from('items')
+    .insert({ step_id: step.id, kind, category: 'lieu', title: title.trim(), position: last + 1 })
+    .select('id')
+    .single();
+  if (error) fail(error, kind === 'arret' ? "Ajout de l'arrêt" : "Ajout de l'excursion");
+  return data.id;
+}
+
+// Range un item contenu dans un moment de son lieu — ou le renvoie dans la
+// réserve du lieu (`slot` vide). Pas de jour : c'est celui du lieu. Il se
+// range en fin de moment, comme placeItem le fait dans une journée.
+export async function setChildSlot(step, id, slot) {
+  if (!slot) {
+    const { error } = await supabase
+      .from('items')
+      .update({ day_slot: null, day_position: 0 })
+      .eq('id', id);
+    if (error) fail(error, "Retrait de l'item du programme du lieu");
+    return;
+  }
+
+  const item = (step.items ?? []).find((candidate) => candidate.id === id);
+  const last = (step.items ?? [])
+    .filter((other) => other.parent_id === item?.parent_id && other.day_slot === slot && other.id !== id)
+    .reduce((max, other) => Math.max(max, other.day_position ?? 0), 0);
+
+  const { error } = await supabase
+    .from('items')
+    .update({ day_slot: slot, day_position: last + 1 })
+    .eq('id', id);
+  if (error) fail(error, "Placement de l'item dans le lieu");
+}
+
+// RANGER UN ITEM DANS UNE EXCURSION — ou l'en sortir (F6, Florian, 15
+// octobre 2026). Tes « Otorii : miyajima », saisis avant que les excursions
+// n'existent, étaient des lieux d'Hiroshima sans moyen d'aller à Miyajima.
+//
+// Dedans : il prend le jour de l'excursion (plus de day_offset à lui) et un
+// moment, en fin de moment. Dehors : il retrouve un jour et un moment de la
+// ville, en fin de moment lui aussi.
+export async function moveIntoContainer(step, id, parentId, slot) {
+  const last = (step.items ?? [])
+    .filter((other) => other.parent_id === parentId && other.day_slot === slot && other.id !== id)
+    .reduce((max, other) => Math.max(max, other.day_position ?? 0), 0);
+
+  const { error } = await supabase
+    .from('items')
+    .update({ parent_id: parentId, day_offset: null, day_slot: slot, day_position: last + 1 })
+    .eq('id', id);
+  if (error) fail(error, "Rangement de l'item dans l'excursion");
+}
+
+export async function moveOutOfContainer(step, id, dayOffset, slot) {
+  const last = (step.items ?? [])
+    .filter(
+      (other) =>
+        other.parent_id == null && other.day_offset === dayOffset && (other.day_slot ?? null) === slot,
+    )
+    .reduce((max, other) => Math.max(max, other.day_position ?? 0), 0);
+
+  const { error } = await supabase
+    .from('items')
+    .update({ parent_id: null, day_offset: dayOffset, day_slot: slot, day_position: last + 1 })
+    .eq('id', id);
+  if (error) fail(error, "Retour de l'item en ville");
+}
+
 // Déplace un item d'un cran dans sa journée. `items` est la liste du jour,
 // déjà ordonnée par `scheduleOf`.
 export async function moveItemInDay(items, itemId, delta) {
@@ -288,12 +374,14 @@ function placeColumns({ lat, lng, placeId }) {
 
 // `table` : 'items' ou 'steps'. Deux écritures : la position, puis — sauf
 // rafraîchissement — l'oubli de la photo, seulement si elle n'est pas collée.
+// Une étape n'a plus de photo depuis le 29 septembre 2026 : la seconde
+// écriture ne la concerne pas.
 async function relocate(table, id, point, { keepPhoto = false } = {}) {
   const columns = placeColumns(point);
   if (table === 'steps') delete columns.geocoded_at;
   const { error } = await supabase.from(table).update(columns).eq('id', id);
   if (error) fail(error, 'Enregistrement des coordonnées');
-  if (keepPhoto) return;
+  if (keepPhoto || table === 'steps') return;
   const { error: photoError } = await supabase
     .from(table)
     .update(NO_PHOTO)
@@ -304,14 +392,6 @@ async function relocate(table, id, point, { keepPhoto = false } = {}) {
 
 export async function setCoordinates(id, point, options) {
   await relocate('items', id, point, options);
-}
-
-export async function clearCoordinates(id) {
-  const { error } = await supabase
-    .from('items')
-    .update({ lat: null, lng: null, geocoded_at: null, place_id: null, place_synced_at: null, ...NO_PHOTO })
-    .eq('id', id);
-  if (error) fail(error, 'Effacement des coordonnées');
 }
 
 // La photo d'un lieu (0012_photos.sql, 0013_photos_collees.sql).
@@ -412,7 +492,7 @@ async function realignTripStart(trip, flights) {
 // Ses dates sont déterministes : elle commence là où le voyage s'arrêtait.
 // Les coordonnées restent NULL — la ville n'apparaîtra sur la carte qu'une
 // fois localisée, et le bouton du rail sert à ça.
-export async function addStep(trip, { name, nights }) {
+export async function addStep(trip, { name, nights, arrivalTime = null, departureTime = null }) {
   const start = plannedEndDate(trip.startDate, trip.steps);
 
   const { data, error } = await supabase
@@ -424,6 +504,10 @@ export async function addStep(trip, { name, nights }) {
       nights,
       date_start: start,
       date_end: addDays(start, nights),
+      // Facultatives (0016) : on les connaît rarement en ajoutant la ville, et
+      // le trajet les réglera dès qu'il aura un horaire.
+      arrival_time: arrivalTime || null,
+      departure_time: departureTime || null,
     })
     .select('id')
     .single();
@@ -436,6 +520,57 @@ export async function addStep(trip, { name, nights }) {
   return data.id;
 }
 
+// L'heure d'arrivée et l'heure de départ d'une ville (0016), saisies à la main.
+// Vide vaut NULL : « pas d'heure connue », la journée reste ouverte.
+export async function setStepTimes(stepId, { arrivalTime, departureTime }) {
+  const patch = {};
+  if (arrivalTime !== undefined) patch.arrival_time = arrivalTime || null;
+  if (departureTime !== undefined) patch.departure_time = departureTime || null;
+
+  const { error } = await supabase.from('steps').update(patch).eq('id', stepId);
+  if (error) fail(error, 'Enregistrement des heures de la ville');
+}
+
+// LE TRAJET PRIME SUR LES HEURES DE LA VILLE (Florian, 15 octobre 2026).
+//
+// Après l'enregistrement d'un trajet de la route Tokyo → Matsumoto :
+//
+// · l'ARRIVÉE à Matsumoto est celle du trajet entre les deux villes — le
+//   dernier tronçon, quand il y a des arrêts ;
+// · le DÉPART de Tokyo est celui du PREMIER tronçon : le trajet entre les deux
+//   villes s'il n'y a pas d'arrêt, sinon le premier transport vers le premier
+//   arrêt (le plus tôt, si on en a saisi plusieurs : le train PUIS le bus).
+//
+// Relu en base plutôt que déduit de l'écran : c'est l'état après écriture qui
+// compte. Un trajet sans horaire ne touche à rien — l'heure saisie sur la
+// ville reste ce qu'on sait de mieux.
+export async function syncRouteTimes({ fromStepId, toStepId, firstStopId = null }) {
+  const { data: cityLeg, error } = await supabase
+    .from('legs')
+    .select('dep, arr')
+    .eq('from_step', fromStepId)
+    .eq('to_step', toStepId)
+    .maybeSingle();
+  if (error) fail(error, 'Lecture du trajet');
+
+  let departure = cityLeg?.dep ?? null;
+  if (firstStopId) {
+    const { data, error: stopError } = await supabase
+      .from('legs')
+      .select('dep')
+      .eq('item_id', firstStopId)
+      .eq('direction', 'aller')
+      .not('dep', 'is', null)
+      .order('dep', { ascending: true })
+      .limit(1);
+    if (stopError) fail(stopError, "Lecture du trajet vers l'arrêt");
+    departure = data?.[0]?.dep ?? null;
+  }
+
+  if (departure) await setStepTimes(fromStepId, { departureTime: departure });
+  if (cityLeg?.arr) await setStepTimes(toStepId, { arrivalTime: cityLeg.arr });
+}
+
 // Change le nombre de nuits d'une étape, et décale tout ce qui suit.
 //
 // Une étape a au moins une nuit : c'est un changement de ville ET de logement,
@@ -445,13 +580,12 @@ export async function setStepNights(trip, stepId, nights) {
   if (nights < 1) return;
 
   const step = trip.steps.find((candidate) => candidate.id === stepId);
-  const isLast = trip.steps.at(-1)?.id === stepId;
 
   // LIBÉRER AVANT DE RACCOURCIR. Raccourcir un séjour fait perdre des jours,
   // pas des envies : les items qui y étaient posés repassent en réserve. Dans
   // l'autre ordre, un échec laisserait des items accrochés à des jours qui
   // n'existent plus.
-  const released = step ? releasedBy(step, nights, { isLast }) : [];
+  const released = step ? releasedBy(step, nights) : [];
   if (released.length > 0) {
     const { error } = await supabase
       .from('items')
@@ -590,11 +724,31 @@ export async function deleteFlight(trip, id) {
 // panneau des temps de trajet, et parce qu'un trajet peut n'avoir qu'une durée
 // connue, sans horaire.
 
-export async function saveLeg({ id, tripId, fromStep, toStep, mode, dep, arr, price }) {
+//
+// UN TRAJET RELIE DEUX VILLES, OU MÈNE À UNE ACTIVITÉ (L11, F4) : `fromStep` +
+// `toStep`, ou `itemId` — jamais les deux, le schéma le refuse
+// (legs_anchor_one). Pour une activité, `direction` dit si on y va ou si on en
+// revient.
+export async function saveLeg({
+  id,
+  tripId,
+  fromStep = null,
+  toStep = null,
+  itemId = null,
+  direction = 'aller',
+  mode,
+  dep,
+  arr,
+  price,
+  note,
+}) {
   const row = {
     trip_id: tripId,
-    from_step: fromStep,
-    to_step: toStep,
+    from_step: itemId ? null : fromStep,
+    to_step: itemId ? null : toStep,
+    item_id: itemId,
+    // Entre deux villes, on ne fait qu'aller : la contrainte legs_direction_city.
+    direction: itemId ? direction : 'aller',
     mode,
     dep: dep || null,
     arr: arr || null,
@@ -603,10 +757,25 @@ export async function saveLeg({ id, tripId, fromStep, toStep, mode, dep, arr, pr
     // Même choix que pour les items ajoutés depuis l'app.
     price: price ?? null,
     currency: 'EUR',
+    // « JR Pass », « réserver les places » : ce qu'on doit se rappeler au
+    // guichet. Vide vaut NULL, pas une chaîne vide qu'on afficherait.
+    note: note?.trim() || null,
   };
 
-  // Un trajet existe déjà entre ces deux étapes : on le remplace plutôt que
-  // d'échouer sur la contrainte unique (from_step, to_step).
+  // Un NOUVEAU transport d'activité se range après ceux qu'elle a déjà dans
+  // ce sens : on saisit le train, puis le ferry, dans l'ordre où on les prend.
+  if (!id && itemId) {
+    const { data, error } = await supabase
+      .from('legs')
+      .select('position')
+      .eq('item_id', itemId)
+      .eq('direction', row.direction)
+      .order('position', { ascending: false })
+      .limit(1);
+    if (error) fail(error, 'Lecture des transports de l’activité');
+    row.position = (data?.[0]?.position ?? 0) + 1;
+  }
+
   const query = id
     ? supabase.from('legs').update(row).eq('id', id)
     : supabase.from('legs').insert(row);

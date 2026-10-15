@@ -27,70 +27,54 @@
     gap: 4px;
   }
 
+  // Le jour du départ reste un jour comme les autres, mais il se signale :
+  // on n'y tient pas une journée de visites.
+  &__mark {
+    color: var(--muted);
+    font-size: var(--fs-xs);
+  }
+
   &__chip {
-    display: inline-flex;
-    align-items: center;
-    min-height: var(--hit);
-    padding: 2px 10px;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-pill);
-    background: var(--surface);
-    color: var(--text);
-    font: inherit;
-    font-size: clamp(12px, 1.1vw, 13px);
-    cursor: pointer;
-
-    &:hover:not(:disabled) {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    // Le créneau actuel : marqué, mais toujours choisissable — on vient
-    // souvent ici pour changer le moment sans changer le jour.
-    &[data-on] {
-      border-color: var(--accent);
-      background: var(--accent-soft);
-      color: var(--accent-deep);
-    }
+    @include mixins.button-chip('md');
 
     // La journée entière n'est pas un moment mais un mode : elle prend toute
     // la ligne pour qu'on ne la coche pas en croyant choisir un créneau.
     &[data-full] {
       flex-basis: 100%;
-      justify-content: center;
       border-style: dashed;
     }
-
-    &:focus-visible { @include mixins.focus-ring; }
-    &:disabled { opacity: 0.5; cursor: progress; }
   }
 
   &__back {
-    flex: none;
-    min-width: var(--hit-dense);
-    min-height: var(--hit-dense);
-    padding: 0 4px;
-    border: 0;
-    background: none;
-    color: var(--muted);
-    font: inherit;
-    cursor: pointer;
-
-    &:hover:not(:disabled) { color: var(--accent); }
-    &:focus-visible { @include mixins.focus-ring; }
+    @include mixins.button-icon;
   }
 
   &__cancel {
+    @include mixins.button-link;
     margin-left: auto;
-    padding: 0;
-    border: 0;
-    background: none;
-    color: var(--muted);
-    font: inherit;
     font-size: var(--fs-xs);
-    text-decoration: underline;
-    cursor: pointer;
+  }
 
-    &:focus-visible { @include mixins.focus-ring; }
+  // Le jour d'une excursion : une rangée par famille, son nom devant — « À
+  // Hiroshima », « ◆ Miyajima ».
+  &__family {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px var(--sp-2);
+    flex-basis: 100%;
+  }
+
+  &__family-name {
+    min-width: 7em;
+    color: var(--text-soft);
+    font-size: var(--fs-xs);
+    font-weight: 500;
+  }
+
+  &__none {
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    font-style: italic;
   }
 }

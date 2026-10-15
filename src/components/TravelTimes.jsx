@@ -16,10 +16,13 @@ function formatDuration(minutes) {
 }
 
 export default function TravelTimes({ steps, legs }) {
+  // Le hook AVANT toute sortie anticipée : les règles de React veulent les
+  // mêmes hooks à chaque rendu, et ajouter le premier trajet ferait sinon
+  // planter le composant (INCOHERENCES.md, corrigé en L11 F3).
+  const mots = useLoveNotes();
   if (legs.length === 0) return null;
 
   const nameOf = new Map(steps.map((step) => [step.id, step.name.split(' ')[0]]));
-  const mots = useLoveNotes();
   const ordered = steps
     .flatMap((step) => legs.filter((leg) => leg.from_step === step.id))
     .filter((leg) => nameOf.has(leg.from_step) && nameOf.has(leg.to_step));

@@ -1,0 +1,47 @@
+@use '../theme/mixins';
+
+// Les heures de la ville, sous ses dates : discrètes, elles ne servent qu'à
+// borner le premier et le dernier jour.
+.steptimes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin: 2px 0 4px;
+  color: var(--text-soft);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+
+  &__field {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--muted);
+
+    input {
+      padding: 1px 4px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text);
+      font: inherit;
+      font-variant-numeric: tabular-nums;
+
+      &:focus-visible { @include mixins.focus-ring; }
+      &:disabled { opacity: 0.5; }
+    }
+  }
+
+  // Le texte s'aligne sur le bord du contenu, sous les dates : le décalage
+  // négatif rattrape le rembourrage du bouton.
+  &__show {
+    @include mixins.button-ghost;
+    margin-left: calc(var(--sp-2) * -1);
+    padding: 0 var(--sp-2);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__done {
+    @include mixins.button-link;
+    font-size: var(--fs-xs);
+  }
+}

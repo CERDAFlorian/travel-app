@@ -5,13 +5,11 @@
   // Marge de défilement : on arrive ici depuis la carte ou la frise. Elle doit
   // dégager la hauteur de la frise collante, sinon l'étape sélectionnée
   // atterrit DERRIÈRE elle — c'est ce qui se passait avec une valeur en dur
-  // légèrement sous-estimée. `--timeline-h` est mesurée au rendu (TripView),
-  // et l'espacement ajouté évite que le titre ne colle au filet.
-  scroll-margin-top: calc(var(--timeline-h, 53px) + var(--sp-3));
-
-  @include mixins.from('md') {
-    scroll-margin-top: var(--sp-4);
-  }
+  // légèrement sous-estimée. `--sticky-h` (frise + bascule) est mesurée au
+  // rendu (TripView), et l'espacement ajouté évite que le titre ne colle au
+  // filet. À toutes les largeurs : la frise colle partout depuis longtemps, et
+  // l'ancienne exception au-delà de 768 px faisait passer le titre dessous.
+  scroll-margin-top: calc(var(--sticky-h, 53px) + var(--sp-3));
   display: grid;
   grid-template-columns: auto 1fr;
   gap: clamp(10px, 1.2vw, 16px);
@@ -162,54 +160,48 @@
     white-space: nowrap;
   }
 
-  // Bascule entre les deux lectures de l'étape. Deux onglets et pas un
-  // interrupteur : « Catégories | Jour par jour » se lit sans avoir à deviner
-  // ce que l'autre position contient.
-  &__tabs {
-    display: flex;
-    gap: 4px;
-    margin: var(--sp-3) 0 0;
-    padding: 3px;
-    border: 1px solid var(--border-soft);
-    border-radius: var(--radius-pill);
-    background: var(--surface-sunken);
-  }
-
-  &__tab {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    flex: 1;
-    justify-content: center;
-    min-height: var(--hit-dense);
-    padding: 2px var(--sp-3);
-    border: 0;
-    border-radius: var(--radius-pill);
-    background: none;
-    color: var(--text-soft);
-    font: inherit;
-    font-size: clamp(12px, 1.15vw, 13.5px);
-    letter-spacing: 0.04em;
-    cursor: pointer;
-
-    &[data-on] {
-      background: var(--surface);
-      color: var(--accent-deep);
-      box-shadow: var(--shadow-sm);
-    }
-
-    &:focus-visible { @include mixins.focus-ring; }
-  }
-
   // Ce qui reste à placer. En accent plutôt qu'en gris : c'est une chose à
   // faire, pas une statistique.
-  &__tab-count {
-    padding: 0 6px;
+  &__toplace {
+    flex: none;
+    padding: 0 8px;
     border-radius: var(--radius-pill);
     background: var(--accent-soft);
     color: var(--accent-deep);
     font-size: var(--fs-xs);
     font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  // Les catégories encore vides, en une ligne : de quoi en ouvrir une.
+  &__add-cats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 2px;
+    margin: 6px 0 0 calc(var(--sp-2) * -1);
+
+    &:empty { display: none; }
+  }
+
+  // Le texte des raccourcis s'aligne sur le bord du contenu : le décalage
+  // négatif rattrape le rembourrage du bouton (voir &__add-cats).
+  &__add-cat {
+    @include mixins.button-ghost;
+    gap: 5px;
+    padding: 0 var(--sp-2);
+  }
+
+  &__add-cat-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--cat-hotel);
+
+    &[data-cat='activite'] { background: var(--cat-activite); }
+    &[data-cat='restaurant'] { background: var(--cat-restaurant); }
+    &[data-cat='shopping'] { background: var(--cat-shopping); }
+    &[data-cat='lieu'] { background: var(--cat-lieu); }
+    &[data-cat='note'] { background: var(--cat-note); }
   }
 
   &__cats {
@@ -230,30 +222,11 @@
 
 .step__arrow,
 .step__remove {
-  display: grid;
-  place-items: center;
-  width: var(--hit);
-  height: var(--hit);
-  padding: 0;
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: none;
-  color: var(--border-strong);
-  font: inherit;
+  @include mixins.button-icon('accent', 'md');
   font-size: var(--fs-xs);
-  line-height: 1;
-  cursor: pointer;
-
-  &:hover:not(:disabled) {
-    background: var(--surface-tint);
-    color: var(--accent);
-  }
 
   // Grisée, pas masquée : la colonne garde sa hauteur d'une étape à l'autre.
-  &:disabled {
-    opacity: 0.3;
-    cursor: default;
-  }
+  &:disabled { opacity: 0.3; }
 }
 
 // Le retrait est le seul geste destructeur du rail : il vire au rouge.
@@ -269,10 +242,9 @@
   // tous les boutons d'action. Carrés plutôt que larges : ils ne portent
   // qu'un signe.
   &__nights-btn {
-    @include mixins.action-button;
+    @include mixins.button-secondary;
     width: var(--hit-dense);
     padding: 0;
-    border-radius: var(--radius-pill);
     font-size: var(--fs-md);
     line-height: 1;
   }
@@ -284,15 +256,9 @@
   // Bleuté comme la pilule LOCALISER des items : situer est une action
   // technique, pas une décision de voyage.
   &__locate {
-    padding: 2px 10px;
-    border: 1px dashed var(--info);
-    border-radius: var(--radius-pill);
-    background: none;
+    @include mixins.button-secondary;
+    border-style: dashed;
+    border-color: var(--info);
     color: var(--info);
-    font: inherit;
-    font-size: var(--fs-xs);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    cursor: pointer;
   }
 }

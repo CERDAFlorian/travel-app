@@ -34,8 +34,31 @@
   &__name { flex: 1; min-width: 150px; }
   &__nights { width: 66px; }
 
+  // Les heures, facultatives : une étiquette en petit, le champ natif du
+  // navigateur (clavier numérique sur mobile).
+  &__time {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--muted);
+    font-size: var(--fs-xs);
+
+    input {
+      padding: 4px 6px;
+      border: 1px solid var(--border-strong);
+      border-radius: 7px;
+      background: var(--surface-raised);
+      color: var(--text);
+      font: inherit;
+      font-size: var(--fs-md);
+      font-variant-numeric: tabular-nums;
+
+      &:focus-visible { @include mixins.focus-ring; }
+    }
+  }
+
   &__submit {
-    @include mixins.action-button;
+    @include mixins.button-primary('sm');
   }
 
   &__hint {

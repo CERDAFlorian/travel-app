@@ -38,7 +38,7 @@ function parsePrice(raw) {
 // Une ligne d'item, sur UNE ligne comme dans le design : vignette, pastille,
 // nom, note, pilule Plan, puis à droite l'étoile, LOCALISER, le prix et la
 // corbeille.
-export default function ItemRow({ item, step, readOnly, autoLocate, onChanged }) {
+export default function ItemRow({ item, step, readOnly, autoLocate, deleteNote, onChanged }) {
   // `autoLocate` n'est vrai qu'au montage de la ligne créée à l'instant : la
   // recherche part sans qu'on ait à cliquer « Localiser ».
   const [locating, setLocating] = useState(Boolean(autoLocate));
@@ -48,6 +48,10 @@ export default function ItemRow({ item, step, readOnly, autoLocate, onChanged })
   const [sealing, setSealing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+  // Le champ prix ne s'ouvre que sur demande, quand l'item n'en a pas : la
+  // plupart des lieux n'ont pas de prix, et un champ vide sur chaque ligne
+  // encombrait la liste pour rien.
+  const [pricing, setPricing] = useState(false);
   const titleRef = useRef(null);
 
   async function run(action) {
@@ -264,41 +268,58 @@ export default function ItemRow({ item, step, readOnly, autoLocate, onChanged })
                 {!located ? 'Localiser' : linked ? 'Localisé' : 'À relier'}
               </button>
 
-              <input
-                className="item__price"
-                type="text"
-                inputMode="numeric"
-                // Le champ parle la même langue que l'affichage : des euros.
-                // Taper des yens dans une interface qui montre des euros
-                // n'avait aucun sens.
-                defaultValue={eurosInput(item.price, item.currency)}
-                placeholder="prix €"
-                aria-label={`Prix de ${item.title}, en euros`}
-                onBlur={(event) => {
-                  const parsed = parsePrice(event.target.value);
-                  if (parsed.error) {
-                    setError('Prix invalide.');
-                    return;
-                  }
-                  // On compare EN EUROS, pas en devise d'origine : sinon
-                  // quitter un champ sans y toucher réécrirait la ligne, la
-                  // conversion aller-retour ne retombant pas au yen près.
-                  const current = item.price == null ? null : Math.round(toEuros(item.price, item.currency));
-                  if (parsed.value !== current) {
-                    run(() =>
-                      updateItem(item.id, {
-                        // La devise d'origine est préservée : un hôtel réservé
-                        // en yens reste en yens, c'est le montant qu'on
-                        // présentera au comptoir.
-                        price: parsed.value === null ? null : fromEuros(parsed.value, item.currency),
-                      }),
-                    );
-                  }
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') event.target.blur();
-                }}
-              />
+              {/* LE PRIX EST FACULTATIF. Sans prix, un simple « + prix » ; le
+                  champ apparaît au clic, et disparaît si on le quitte vide. */}
+              {item.price == null && !pricing ? (
+                <button
+                  type="button"
+                  className="item__price-add"
+                  disabled={busy}
+                  title={`Ajouter un prix à ${item.title}`}
+                  onClick={() => setPricing(true)}
+                >
+                  + prix
+                </button>
+              ) : (
+                <input
+                  className="item__price"
+                  type="text"
+                  inputMode="numeric"
+                  // Le champ parle la même langue que l'affichage : des euros.
+                  // Taper des yens dans une interface qui montre des euros
+                  // n'avait aucun sens.
+                  defaultValue={eurosInput(item.price, item.currency)}
+                  placeholder="prix €"
+                  aria-label={`Prix de ${item.title}, en euros`}
+                  // Ouvert à la demande : on vient pour taper.
+                  autoFocus={pricing && item.price == null}
+                  onBlur={(event) => {
+                    const parsed = parsePrice(event.target.value);
+                    if (parsed.error) {
+                      setError('Prix invalide.');
+                      return;
+                    }
+                    setPricing(false);
+                    // On compare EN EUROS, pas en devise d'origine : sinon
+                    // quitter un champ sans y toucher réécrirait la ligne, la
+                    // conversion aller-retour ne retombant pas au yen près.
+                    const current = item.price == null ? null : Math.round(toEuros(item.price, item.currency));
+                    if (parsed.value !== current) {
+                      run(() =>
+                        updateItem(item.id, {
+                          // La devise d'origine est préservée : un hôtel réservé
+                          // en yens reste en yens, c'est le montant qu'on
+                          // présentera au comptoir.
+                          price: parsed.value === null ? null : fromEuros(parsed.value, item.currency),
+                        }),
+                      );
+                    }
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') event.target.blur();
+                  }}
+                />
+              )}
 
               <button
                 type="button"
@@ -358,6 +379,8 @@ export default function ItemRow({ item, step, readOnly, autoLocate, onChanged })
         <p>
           <strong>{item.title}</strong> sera retiré de {step.name}.
         </p>
+        {/* Un arrêt emporte ce qu'il contient : ça doit se lire avant. */}
+        {deleteNote && <p>{deleteNote}</p>}
         <p>Cette action est définitive : il n'y a pas de corbeille.</p>
       </ConfirmDialog>
 

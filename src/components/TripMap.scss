@@ -30,17 +30,7 @@
   }
 
   &__demand {
-    padding: var(--sp-2) var(--sp-4);
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-pill);
-    background: var(--surface-raised);
-    color: var(--text-heading);
-    font: inherit;
-    font-size: var(--fs-sm);
-    cursor: pointer;
-
-    &:hover { border-color: var(--accent); }
-    &:focus-visible { @include mixins.focus-ring; }
+    @include mixins.button-secondary('md');
   }
 
   // Tout ce qu'on pose sur la carte part d'un point sans taille, posé sur sa
@@ -202,18 +192,12 @@
   // Légende du design : pastille de 11 px, pilule chaude. Éteinte, elle
   // s'atténue mais garde sa couleur — on voit ce qu'on a masqué, et de quelle
   // couleur il reviendra.
+  // Un filtre : une pastille à choisir, avec la couleur de sa catégorie.
   &__filter {
-    display: inline-flex;
+    @include mixins.button-chip;
     gap: 7px;
-    align-items: center;
-    padding: 3px 11px;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-pill);
     background: var(--surface-sunken);
     color: var(--text-heading);
-    font: inherit;
-    font-size: clamp(12px, 1.15vw, 14px);
-    cursor: pointer;
 
     &::before {
       content: '';
@@ -229,12 +213,18 @@
     &[data-cat='shopping']::before   { background: var(--cat-shopping); }
     &[data-cat='lieu']::before       { background: var(--cat-lieu); }
 
+    // Le filtre allumé garde sa couleur neutre : c'est la pastille de couleur
+    // qui dit la catégorie, pas le fond.
+    &[data-on] {
+      border-color: var(--border-strong);
+      background: var(--surface-sunken);
+      color: var(--text-heading);
+    }
+
     &:not([data-on]) {
       background: transparent;
       color: var(--muted);
       opacity: 0.55;
     }
-
-    &:focus-visible { @include mixins.focus-ring; }
   }
 }

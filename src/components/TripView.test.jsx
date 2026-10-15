@@ -39,7 +39,6 @@ const trip = {
       nights: 2,
       lat: 35.68,
       lng: 139.69,
-      images: null,
       items: [
         {
           id: 'item-1',
@@ -107,7 +106,6 @@ const trip = {
       nights: 2,
       lat: 35.01,
       lng: 135.77,
-      images: null,
       items: [],
     },
   ],
@@ -190,6 +188,22 @@ describe('TripView', () => {
   it('se rend en lecture seule et en partage', () => {
     const html = render({ readOnly: true, shared: true });
     expect(html).toContain('Vue partagée');
+  });
+
+  // La carte peut se masquer, depuis la barre de la bascule. Affichée par
+  // défaut — et quand le stockage du navigateur manque, comme ici.
+  it('affiche la carte et propose de la masquer', () => {
+    const html = render({ readOnly: false });
+    expect(html).toContain('trip__map-card');
+    expect(html).toContain('Masquer la carte');
+  });
+
+  // La bascule et l'interrupteur de la carte vivent dans la même barre, qui
+  // colle sous la frise.
+  it('range l’interrupteur de la carte dans la barre de la bascule', () => {
+    const html = render({ readOnly: true, shared: true });
+    const bar = html.slice(html.indexOf('class="trip__mode"'), html.indexOf('class="trip__main"'));
+    expect(bar).toContain('trip__map-toggle');
   });
 
   it('propose les deux lectures sous les vols', () => {

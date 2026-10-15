@@ -13,15 +13,6 @@
   --cat-lieu:       #1f6f74;
   --cat-note:       #8a6a2f;
 
-  // Variantes translucides, pour les fonds de puce et de badge. En rgba plutôt
-  // qu'en mélange avec le fond : elles restent justes sur n'importe quel thème.
-  --cat-hotel-soft:      rgba(44, 82, 113, 0.12);
-  --cat-activite-soft:   rgba(63, 107, 74, 0.12);
-  --cat-restaurant-soft: rgba(180, 98, 31, 0.12);
-  --cat-shopping-soft:   rgba(107, 63, 110, 0.12);
-  --cat-lieu-soft:       rgba(31, 111, 116, 0.12);
-  --cat-note-soft:       rgba(138, 106, 47, 0.12);
-
   // Espacement, base 4px.
   --sp-1: 4px;
   --sp-2: 8px;
@@ -46,8 +37,6 @@
   --lh-tight: 1.15;
   --lh-base:  1.6;
 
-  // Plans. La carte de L5 se superpose au contenu, le bandeau offline de L3
-  // doit rester au-dessus d'elle.
   // Cibles tactiles. Deux tailles, parce qu'une seule ne tient pas partout :
   // --hit          là où la place existe — rail d'étape, commandes isolées ;
   // --hit-dense    sur une ligne qui aligne déjà trois ou quatre contrôles.
@@ -59,12 +48,10 @@
   --hit:       36px;
   --hit-dense: 28px;
 
-  --z-base:    0;
-  --z-map:     10;
-  --z-sticky:  20;
-  --z-overlay: 30;
-  --z-modal:   40;
-  --z-toast:   50;
+  // Plans. Un seul : la barre collante du voyage et la ligne de l'en-tête
+  // passent au-dessus du contenu qui défile. Les dialogues s'ouvrent dans la
+  // couche supérieure du navigateur, qui n'a pas besoin de z-index.
+  --z-sticky: 20;
 
   // Mouvement.
   --dur-fast: 120ms;

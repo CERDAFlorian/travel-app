@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { formatDay, formatStepDates } from '@/lib/dates.js';
 import { flightArrival } from '@/lib/itinerary.js';
 import { priceInEuros } from '@/lib/currency.js';

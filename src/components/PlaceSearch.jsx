@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { hasGoogleMaps } from '@/lib/googleMaps.js';
 import { newSession, placeToSave, resolve, suggest } from '@/lib/places.js';
-import { parseCoordinates } from '@/lib/geocode.js';
-import { haversine, formatDistance, MAX_DISTANCE_FROM_STEP_KM } from '@/lib/geo.js';
+import { haversine, formatDistance, parseCoordinates, MAX_DISTANCE_FROM_STEP_KM } from '@/lib/geo.js';
 import { useOnline } from '@/hooks/useOnline.js';
 import './PlaceSearch.scss';
 

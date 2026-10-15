@@ -54,13 +54,12 @@ Trois scripts produisent des fichiers **commités**. Ils ne tournent jamais au
 build : `npm run build` n'a donc besoin ni de réseau ni d'outil externe.
 
 ```sh
-npm run map      # fond de carte du Japon → src/data/japan-geometry.js
 npm run icons    # icônes PWA et écran d'accueil → public/
-npm run fonts    # Playfair Display + EB Garamond → public/fonts/
+npm run fonts    # Lora, la police des titres → public/fonts/
 npm run img      # PNG de design/img/ → WebP de public/img/
 ```
 
-`map` et `fonts` téléchargent depuis le réseau ; `icons` encode les PNG à la
+`fonts` télécharge depuis le réseau ; `icons` encode les PNG à la
 main (aucune dépendance graphique) ; `img` a besoin de `cwebp`
 (`brew install webp`).
 
@@ -97,7 +96,7 @@ carte, budget. Si quelque chose manque, c'est maintenant qu'il faut le voir.
 | Lire l'itinéraire, les photos, la carte, le budget | ✅ |
 | Naviguer entre les écrans | ✅ |
 | Ajouter, modifier, supprimer | ❌ écriture bloquée |
-| Localiser un lieu (Nominatim) | ❌ et sans objet hors préparation |
+| Chercher un lieu (Google) | ❌ et sans objet hors préparation |
 | Se connecter | ❌ — mais inutile : l'affichage ne dépend pas de la session |
 
 Le jeton d'authentification expire en une heure et son renouvellement demande

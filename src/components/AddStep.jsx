@@ -8,10 +8,14 @@ import './AddStep.scss';
 // s'arrêtait. Le design propose une liste de villes prédéfinies — on ne la
 // reprend pas : ces 25 villes sont japonaises, et les figer dans l'app la
 // marquerait pour un seul pays. Une saisie libre, puis « Situer sur la carte »
-// via Nominatim, fonctionne partout.
+// par la recherche Google, fonctionne partout.
 export default function AddStep({ onAdd }) {
   const [name, setName] = useState('');
   const [nights, setNights] = useState(2);
+  // Facultatives (0016) : l'arrivée et le départ, s'ils sont déjà connus. Le
+  // trajet les réglera de toute façon dès qu'il aura un horaire.
+  const [arrivalTime, setArrivalTime] = useState('');
+  const [departureTime, setDepartureTime] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   // Ville tout juste posée : elle déclenche le mot doux et en choisit le
@@ -27,9 +31,11 @@ export default function AddStep({ onAdd }) {
     setBusy(true);
     setError(null);
     try {
-      await onAdd({ name: trimmed, nights });
+      await onAdd({ name: trimmed, nights, arrivalTime, departureTime });
       setName('');
       setNights(2);
+      setArrivalTime('');
+      setDepartureTime('');
       setAdded((last) => ({ count: last.count + 1, name: trimmed }));
     } catch (failure) {
       setError(failure.message);
@@ -65,13 +71,34 @@ export default function AddStep({ onAdd }) {
         onChange={(event) => setNights(Math.max(1, Number(event.target.value) || 1))}
       />
 
+      <label className="add-step__time">
+        <span>arrivée</span>
+        <input
+          type="time"
+          value={arrivalTime}
+          aria-label="Heure d'arrivée dans la ville (facultatif)"
+          onChange={(event) => setArrivalTime(event.target.value)}
+        />
+      </label>
+
+      <label className="add-step__time">
+        <span>départ</span>
+        <input
+          type="time"
+          value={departureTime}
+          aria-label="Heure de départ de la ville (facultatif)"
+          onChange={(event) => setDepartureTime(event.target.value)}
+        />
+      </label>
+
       <button className="add-step__submit" type="submit" disabled={busy}>
         {busy ? '…' : "+ Ajouter l'étape"}
       </button>
 
       <p className="add-step__hint">
         L'étape s'ajoute à la fin, et les dates s'enchaînent toutes seules.
-        Il reste à la situer sur la carte pour qu'elle y apparaisse.
+        Il reste à la situer sur la carte pour qu'elle y apparaisse. Les heures
+        sont facultatives : le trajet les réglera dès qu'il aura un horaire.
       </p>
 
       {error && (

@@ -1,0 +1,47 @@
+@use '../theme/mixins';
+
+// Un arrêt en chemin, au milieu du trajet. Le filet à gauche le rattache à la
+// route : on n'est ni dans la ville qu'on quitte, ni dans celle où l'on arrive.
+.stopplan {
+  margin: 4px 0 6px;
+  padding-left: var(--sp-2);
+  border-left: 2px dashed var(--accent-2);
+
+  // D'où l'on vient, au-dessus des transports qui mènent à l'arrêt.
+  &__route {
+    margin: 0 0 1px;
+    color: var(--text-soft);
+    font-size: var(--fs-xs);
+    font-weight: 500;
+  }
+
+  &__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2);
+    margin: 4px 0 2px;
+  }
+
+  &__mark {
+    color: var(--accent-2);
+    font-size: var(--fs-sm);
+  }
+
+  &__name {
+    font-weight: 600;
+    font-size: var(--fs-sm);
+    color: var(--text);
+  }
+
+  &__kind {
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    font-style: italic;
+  }
+
+  &__act {
+    @include mixins.button-ghost;
+    margin-left: auto;
+  }
+}

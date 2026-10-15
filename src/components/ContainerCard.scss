@@ -1,0 +1,50 @@
+@use '../theme/mixins';
+
+// Un lieu qui en contient d'autres. Sur la route (arrêt), plus étroit qu'une
+// ville et décalé : on passe, on ne s'installe pas. Dans une ville
+// (excursion), il s'aligne sur la carte qui le porte.
+.ccard {
+  margin: 2px clamp(16px, 4vw, 48px);
+  padding: 2px var(--sp-2);
+  border-left: 2px dashed var(--accent-2);
+
+  // Avec du contenu, il prend l'allure d'une petite carte.
+  &[data-card] {
+    padding: var(--sp-2) var(--sp-3);
+    border: 1px solid var(--border-soft);
+    border-left: 2px solid var(--accent-2);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+  }
+
+  &__line {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__cats {
+    margin-top: 6px;
+    border-top: 1px solid var(--border-soft);
+  }
+}
+
+.ccard__add-cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 2px;
+  margin: 4px 0 0 calc(var(--sp-2) * -1);
+
+  &:empty { display: none; }
+}
+
+.ccard__add-cat {
+  @include mixins.button-ghost;
+  padding: 0 var(--sp-2);
+}
+
+// Une excursion vit DANS la carte de sa ville : pas de décalage, pas de
+// filet pointillé — elle part de là.
+.ccard[data-kind='excursion'] {
+  margin: 4px 0;
+}

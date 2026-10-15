@@ -1,6 +1,6 @@
 # Supabase — schéma, RLS, seed
 
-Neuf fichiers, à exécuter **dans cet ordre**. Rien n'est appliqué
+Les fichiers, à exécuter **dans cet ordre**. Rien n'est appliqué
 automatiquement : ni le repo, ni la CI, ni le déploiement ne parlent à Supabase.
 
 > **Deux bases depuis le 23 septembre 2026.** Toute migration se pose d'abord
@@ -19,8 +19,15 @@ automatiquement : ni le repo, ni la CI, ni le déploiement ne parlent à Supabas
 | 7 | `migrations/0007_journees.sql` | le programme jour par jour ; une étape a au moins une nuit | oui |
 | 8 | `migrations/0008_prix_trajets.sql` | prix des trajets entre étapes | oui |
 | 9 | `migrations/0009_mots_doux.sql` | les mots d'amour deviennent une option du voyage | oui |
-| 10 | `seed.sql` | le voyage Japon de novembre | oui, **il écrase `japon-2026`** — garde-fou en tête de fichier |
-| 11 | `seed-japon-octobre.sql` | le voyage Japon d'octobre, second compte | oui, **il écrase `japon-octobre-2026`** |
+| 10 | `migrations/0010_google.sql` | lieux reliés à Google (`place_id`) | oui |
+| 11 | `migrations/0011_purge_google.sql` | purge nocturne des coordonnées Google (pg_cron) | oui |
+| 12 | `migrations/0012_photos.sql` | photos Wikimedia des lieux et des villes | oui |
+| 13 | `migrations/0013_photos_collees.sql` | photos collées, espace de stockage « photos » | oui |
+| 14 | `migrations/0014_transports_activites.sql` | un trajet peut mener à une activité, aller ou retour (L11 F4) | oui |
+| 15 | `migrations/0015_arrets_excursions.sql` | arrêts en chemin et excursions : des lieux qui en contiennent d'autres (L11 F5, F6) | oui |
+| 16 | `migrations/0016_heures_villes.sql` | heure d'arrivée et heure de départ d'une ville | oui |
+| 17 | `seed.sql` | le voyage Japon de novembre | oui, **il écrase `japon-2026`** — garde-fou en tête de fichier |
+| 18 | `seed-japon-octobre.sql` | le voyage Japon d'octobre, second compte | oui, **il écrase `japon-octobre-2026`** |
 
 ## Deux bases : dev et prod
 

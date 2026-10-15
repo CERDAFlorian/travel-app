@@ -92,6 +92,12 @@
     margin-top: 2px;
   }
 
+  // Le prix est facultatif : une invitation, pas un champ vide.
+  &__add-price-open {
+    @include mixins.button-ghost;
+    padding: 0 var(--sp-2);
+  }
+
   &__add-title,
   &__add-price {
     padding: 4px 8px;
@@ -111,8 +117,9 @@
   &__add-price { width: 74px; }
 
   &__add-submit {
-    @include mixins.action-button;
+    @include mixins.button-primary('sm');
     min-width: var(--hit-dense);
+    padding: 0;
   }
 }
 

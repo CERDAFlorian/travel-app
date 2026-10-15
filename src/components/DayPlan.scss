@@ -1,0 +1,87 @@
+@use '../theme/mixins';
+
+.dayplan {
+  display: flex;
+  flex-direction: column;
+
+  &__empty {
+    margin: 0;
+    color: var(--muted);
+    font-size: var(--fs-sm);
+    font-style: italic;
+  }
+}
+
+// Un moment de la journée. L'étiquette est en marge à gauche dès qu'il y a la
+// place : la journée se lit alors comme une colonne d'heures, et les lignes
+// restent alignées entre les moments.
+.slot {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0 var(--sp-3);
+  // Le jour du programme porte déjà sa marge intérieure : le moment n'en
+  // rajoute pas sur les côtés.
+  padding: 4px 0;
+
+  & + & { border-top: 1px dotted var(--border-soft); }
+
+  // La journée entière n'est pas un créneau : c'est un bandeau qui annonce
+  // que le jour est pris.
+  &[data-full] {
+    padding: 4px 6px;
+    border-radius: var(--radius-sm);
+    background: var(--accent-soft);
+  }
+
+  // Les items posés avant qu'on ait choisi un moment. Le pointillé dit qu'il
+  // reste un geste à faire.
+  &[data-loose] {
+    padding: 4px 6px;
+    border-top: 1px dashed var(--border-strong);
+    background: var(--surface-sunken);
+  }
+
+  &__name {
+    margin: 0;
+    // Centrée sur la première ligne : la vignette fait 31 px de haut.
+    padding-top: 5px;
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+
+    [data-full] > & { color: var(--accent-deep); }
+    // Un moment vide s'efface, mais reste lisible : c'est une place à prendre.
+    [data-empty] > & { opacity: 0.55; }
+  }
+
+  &__empty {
+    margin: 0;
+    color: var(--border-strong);
+    font-size: var(--fs-sm);
+  }
+
+  &__items {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  // L'étiquette en marge dès que LE JOUR en a la place — sa largeur, pas celle
+  // de l'écran : à côté de la carte, la colonne est étroite même sur un grand
+  // écran.
+  @container day (min-width: 460px) {
+    grid-template-columns: 96px 1fr;
+    align-items: start;
+  }
+}
+
+// Un moment hors de la présence dans la ville (heures de ville, 0016) qui
+// contient pourtant quelque chose : à déplacer avant de partir.
+.slot__outside {
+  color: var(--warn);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}

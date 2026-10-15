@@ -14,6 +14,12 @@
   // ville. `min-height` la garantit dans l'autre sens.
   --timeline-h: 53px;
 
+  // La hauteur de la bascule, collante sous la frise (mesurée elle aussi), et
+  // ce que les deux couvrent ensemble en haut de l'écran : c'est ce que tout
+  // élément qu'on rejoint ou qu'on colle doit dégager.
+  --mode-h: 0px;
+  --sticky-h: calc(var(--timeline-h) + var(--mode-h));
+
   // Rien ne doit élargir la page. `clip` et non `hidden` : `hidden` crée un
   // conteneur de défilement, ce qui casserait la frise collante à
   // l'intérieur — un élément `sticky` ne colle pas dans un ancêtre défilant.
@@ -118,6 +124,11 @@
     min-width: 0;
   }
 
+  // Carte masquée : la colonne prend toute la largeur (Florian, 15 oct. 2026).
+  &__main[data-solo] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   // Collante seulement à deux colonnes : la carte reste alors sous les yeux
   // pendant qu'on fait défiler les étapes, ce qui rend la sélection croisée
   // utile. En colonne unique elle est tout en bas, il n'y a rien à suivre — et
@@ -129,7 +140,7 @@
       position: sticky;
       // Sous la frise, qui colle desormais a toutes les largeurs et couvre la
       // pleine largeur de la page : a 12px du haut, la carte glissait dessous.
-      top: calc(var(--timeline-h) + var(--sp-3));
+      top: calc(var(--sticky-h) + var(--sp-3));
     }
     padding: clamp(11px, 1.2vw, 16px);
     border: 1.5px solid var(--border);
@@ -176,11 +187,25 @@
 // page, devant les étapes.
 .trip {
   &__mode {
-    // Le MÊME retrait horizontal que la grille du dessous : la bascule se pose
-    // exactement sur le bord gauche de la colonne qu'elle commande. `.trip`
-    // n'est pas une page centrée, un `max-width` l'aurait décalée à droite dès
-    // que l'écran dépasse 960px.
-    padding: var(--sp-6) clamp(16px, 3vw, 44px) 0;
+    // COLLANTE SOUS LA FRISE : elle quitte sa place en haut de la colonne pour
+    // ne plus quitter l'écran. Le fond opaque cache ce qui défile dessous,
+    // comme celui de la frise.
+    position: sticky;
+    top: var(--timeline-h);
+    z-index: var(--z-sticky);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+    // L'air au-dessus est une MARGE, pas un rembourrage : il ne colle pas avec
+    // la barre. Le MÊME retrait horizontal que la grille du dessous : la
+    // bascule se pose exactement sur le bord gauche de la colonne qu'elle
+    // commande.
+    margin-top: var(--sp-5);
+    padding: var(--sp-1) clamp(16px, 3vw, 44px);
+    background: var(--bg);
+    border-bottom: 1px solid var(--border-soft);
   }
 
   &__mode-group {
@@ -190,31 +215,42 @@
   }
 
   &__mode-btn {
-    display: inline-flex;
-    align-items: center;
+    @include mixins.button-ghost;
     gap: 5px;
-    min-height: var(--hit-dense);
-    padding: 2px 8px;
-    border: 0;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--muted);
-    font: inherit;
-    font-size: var(--fs-xs);
-    letter-spacing: 0.04em;
-    cursor: pointer;
-
-    &:hover { color: var(--accent); }
+    padding: 0 var(--sp-3);
 
     // La lecture courante : l'accent et un fond à peine posé suffisent à la
     // désigner. Pas de pilule pleine — elle repasserait devant le contenu.
     &[data-on] {
+      border-color: transparent;
       background: var(--accent-soft);
       color: var(--accent-deep);
       cursor: default;
     }
+  }
 
-    &:focus-visible { @include mixins.focus-ring; }
+  // Masquer la carte : un interrupteur, pas une lecture. Allumé (carte
+  // masquée), il reste cliquable — on la réaffiche du même geste.
+  &__map-toggle[data-on] {
+    cursor: pointer;
+  }
+
+  // Sur un téléphone, l'icône seule : avec son libellé, la barre passait sur
+  // deux lignes, et frise plus bascule mangeaient 126 px collés en haut d'un
+  // petit écran. Le libellé reste dans l'infobulle et pour les lecteurs
+  // d'écran.
+  &__map-toggle .trip__mode-label {
+    @media (max-width: 560px) {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+      border: 0;
+    }
   }
 
   // Sous 380px, les pictogrammes parlent seuls : deux libellés plus deux

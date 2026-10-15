@@ -1,0 +1,6 @@
+// La réserve d'un lieu est plus discrète que celle d'une ville : elle vit au
+// milieu d'une journée, pas entre deux villes.
+.cbody .reserve {
+  margin-top: 4px;
+  padding: 4px var(--sp-2) var(--sp-2);
+}

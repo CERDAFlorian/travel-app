@@ -35,39 +35,170 @@ $breakpoints: (
   }
 }
 
-// Bouton d'action : ajouter, retirer une nuit, enregistrer.
+// ---------------------------------------------------------------------------
+// LES BOUTONS (passe UI du 15 octobre 2026)
 //
-// Un seul endroit le décrit. Six composants le recopiaient, avec chacun sa
-// nuance de fond et son arrondi — « le même style » tenait à la vigilance de
-// qui touchait au dernier. Il tient maintenant à ce mixin.
-@mixin action-button {
+// Cinquante-huit boutons étaient stylés un par un, chacun dans son composant :
+// quatre arrondis, trois tailles de texte, des majuscules ici et pas là, un
+// « + prix » encadré dans un formulaire et nu sur la ligne d'à côté. Le même
+// geste avait cinq allures. Ils passent tous par les variantes ci-dessous.
+//
+//   button-primary    l'action qui conclut : enregistrer, confirmer. Une par
+//                     écran au plus. Ton 'danger' pour ce qui détruit.
+//   button-secondary  une action franche, sans être LA réponse : placer,
+//                     ajouter un vol, sceller.
+//   button-ghost      une action à portée de main qui ne doit pas peser :
+//                     + trajet, + prix, + arrêt, Jour, Refaire.
+//   button-link       renoncer : annuler, retirer l'heure.
+//   button-icon       une icône seule : supprimer, monter, descendre.
+//   button-chip       un choix parmi d'autres : le jour, le moment, un filtre.
+//
+// Deux tailles : 'md' (--hit, 36 px) là où la place existe, 'sm'
+// (--hit-dense, 28 px) sur une ligne qui aligne déjà plusieurs contrôles.
+// Toujours en pilule, jamais en majuscules — les majuscules sont aux titres
+// et aux étiquettes, pas à ce qu'on clique.
+// ---------------------------------------------------------------------------
+
+@mixin button-base($size: 'sm') {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--sp-1);
-  min-height: var(--hit-dense);
-  padding: 2px var(--sp-3);
-  border: 1px solid var(--border-strong);
-  border-radius: 7px;
-  background: var(--surface-action);
-  color: var(--accent);
+  flex: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  background: none;
+  color: inherit;
   font: inherit;
-  font-size: var(--fs-sm);
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  text-decoration: none;
+  text-transform: none;
   white-space: nowrap;
   cursor: pointer;
-  transition: background var(--dur-fast) var(--ease-out);
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+
+  @if $size == 'md' {
+    min-height: var(--hit);
+    padding: 0 var(--sp-4);
+    font-size: var(--fs-sm);
+  } @else {
+    min-height: var(--hit-dense);
+    padding: 0 var(--sp-3);
+    font-size: var(--fs-xs);
+  }
+
+  &:focus-visible { @include focus-ring; }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+}
+
+@mixin button-primary($size: 'md', $tone: 'accent') {
+  @include button-base($size);
+
+  @if $tone == 'danger' {
+    border-color: var(--danger);
+    background: var(--danger);
+    color: var(--text-invert);
+
+    &:hover:not(:disabled) { filter: brightness(0.92); }
+  } @else {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--accent-contrast);
+
+    &:hover:not(:disabled) {
+      border-color: var(--accent-hover);
+      background: var(--accent-hover);
+    }
+  }
+}
+
+@mixin button-secondary($size: 'sm') {
+  @include button-base($size);
+  border-color: var(--border-strong);
+  background: var(--surface-action);
+  color: var(--accent);
 
   &:hover:not(:disabled) {
     border-color: var(--accent);
     background: var(--accent-soft);
   }
+}
 
-  &:focus-visible {
-    @include focus-ring;
+// Une action discrète. `[data-on]` : un état acquis — « ✓ réservé ».
+@mixin button-ghost($size: 'sm') {
+  @include button-base($size);
+  color: var(--muted);
+
+  &:hover:not(:disabled) {
+    background: var(--surface-sunken);
+    color: var(--accent);
   }
 
-  &:disabled {
-    opacity: 0.4;
-    cursor: default;
+  &[data-on] {
+    border-color: var(--ok);
+    color: var(--ok);
   }
+}
+
+@mixin button-link {
+  @include button-base('sm');
+  padding: 0 var(--sp-1);
+  border: 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+
+  &:hover:not(:disabled) { color: var(--text); }
+}
+
+// Une icône seule. Ton 'danger' : la corbeille rougit au survol, pas avant —
+// on ne la souligne pas sur chaque ligne.
+@mixin button-icon($tone: 'accent', $size: 'sm') {
+  @include button-base($size);
+  padding: 0;
+  color: var(--border-strong);
+  font-size: var(--fs-sm);
+
+  @if $size == 'md' { min-width: var(--hit); } @else { min-width: var(--hit-dense); }
+
+  &:hover:not(:disabled) {
+    background: var(--surface-sunken);
+    @if $tone == 'danger' { color: var(--danger); } @else { color: var(--accent); }
+  }
+}
+
+// Un choix parmi d'autres. L'état choisi se lit sur `[data-on]` ou
+// `[aria-pressed='true']`.
+@mixin button-chip($size: 'sm') {
+  @include button-base($size);
+  border-color: var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+
+  &:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  &[data-on],
+  &[aria-pressed='true'] {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent-deep);
+  }
+}
+
+// Bouton d'action : ajouter, retirer une nuit, enregistrer. Le nom d'avant la
+// passe UI, gardé pour ses appelants : c'est le bouton secondaire.
+@mixin action-button {
+  @include button-secondary('sm');
 }

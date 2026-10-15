@@ -1,0 +1,236 @@
+@use '../theme/mixins';
+
+.planned {
+  // LE BORD DU NOM, référence de tout ce qui accompagne la ligne : la distance
+  // au précédent, les transports, les commandes dépliées. Vignette (44 px),
+  // pastille (8 px) et leurs deux espacements. Avant la passe UI, chacun avait
+  // son retrait — 30 px ici, rien là — et rien ne s'alignait.
+  --planned-indent: calc(44px + 8px + var(--sp-2) * 2);
+
+  padding: 4px 0;
+
+  // En édition, les flèches ▲▼ ouvrent la ligne : le bord du nom recule d'autant.
+  &[data-edit] { --planned-indent: calc(18px + 44px + 8px + var(--sp-2) * 3); }
+
+  & + & { border-top: 1px solid var(--border-soft); }
+
+  // Réservé : la ligne qu'on ne peut pas rater porte un filet d'accent.
+  &[data-booked] {
+    margin-left: -8px;
+    padding-left: 6px;
+    border-left: 2px solid var(--ok);
+  }
+
+  // La distance au précédent, au-dessus de la ligne : elle appartient à
+  // l'intervalle entre deux activités, pas à celle qui suit.
+  &__hop {
+    display: block;
+    padding-left: var(--planned-indent);
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    font-style: italic;
+
+    &::before {
+      content: '↳ ';
+      font-style: normal;
+    }
+  }
+
+  &__line {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-width: 0;
+  }
+
+  &__order {
+    display: inline-flex;
+    flex-direction: column;
+    flex: none;
+    width: 18px;
+  }
+
+  // Petites mais lisibles : grisées seulement quand elles ne peuvent rien.
+  &__arrow {
+    @include mixins.button-icon;
+    min-width: 18px;
+    min-height: 18px;
+    padding: 0;
+    color: var(--text);
+    font-size: 11px;
+    line-height: 1;
+
+    &:disabled { opacity: 0.25; }
+  }
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--cat-hotel);
+
+    &[data-cat='activite'] { background: var(--cat-activite); }
+    &[data-cat='restaurant'] { background: var(--cat-restaurant); }
+    &[data-cat='shopping'] { background: var(--cat-shopping); }
+    &[data-cat='lieu'] { background: var(--cat-lieu); }
+    &[data-cat='note'] { background: var(--cat-note); }
+  }
+
+  // Un texte en lecture, un bouton en construction : le nom déplie les
+  // commandes, mais doit garder l'allure d'un nom, pas d'un bouton.
+  &__name {
+    @include mixins.truncate;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    font-size: var(--fs-sm);
+    text-align: left;
+
+    button#{&} {
+      cursor: pointer;
+
+      &:hover { color: var(--accent); }
+      &:focus-visible { @include mixins.focus-ring; }
+    }
+  }
+
+  // Le « ⋯ » : la seule commande visible au repos.
+  &__more {
+    @include mixins.button-ghost;
+    margin-left: auto;
+    min-width: var(--hit-dense);
+    padding: 0;
+    font-size: var(--fs-sm);
+
+    &[aria-expanded='true'] {
+      background: var(--surface-sunken);
+      color: var(--accent);
+    }
+  }
+
+  // Les commandes dépliées, sous la ligne, alignées sur le nom.
+  &__bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 4px;
+    margin: 2px 0 4px var(--planned-indent);
+    padding: 2px;
+    border-radius: var(--radius-sm);
+    background: var(--surface-sunken);
+
+    &[hidden] { display: none; }
+  }
+
+  &__meta {
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    font-style: italic;
+    @include mixins.truncate;
+  }
+
+  // L'heure ferme, en tête de ligne : seulement quand il y en a une. Elle se
+  // règle depuis les commandes.
+  &__time {
+    flex: none;
+    color: var(--accent-deep);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  // La marque « réservé » : ce qu'on ne peut pas rater. Elle se pose et se
+  // retire depuis les commandes.
+  &__booked {
+    flex: none;
+    padding: 0 7px;
+    border: 1px solid var(--ok);
+    border-radius: var(--radius-pill);
+    color: var(--ok);
+    font-size: var(--fs-xs);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  // Commandes d'organisation : discrètes au repos, elles ne doivent pas
+  // concurrencer la lecture du programme.
+  // Les commandes dépliées : discrètes, toutes à la même enseigne.
+  &__act {
+    @include mixins.button-ghost;
+    padding: 0 var(--sp-2);
+  }
+}
+
+// Saisie d'une heure ferme, sous la ligne — comme le sélecteur de jour.
+.timefield {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: 6px;
+  padding: 6px 8px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+
+  &__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+
+    input {
+      padding: 2px 6px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text);
+      font: inherit;
+      font-size: var(--fs-sm);
+      font-variant-numeric: tabular-nums;
+      text-transform: none;
+
+      &:focus-visible { @include mixins.focus-ring; }
+    }
+  }
+
+  &__save {
+    @include mixins.button-primary('sm');
+  }
+
+  &__clear,
+  &__cancel {
+    @include mixins.button-link;
+    font-size: var(--fs-xs);
+  }
+
+  &__cancel { margin-left: auto; }
+}
+
+// Sur un écran étroit, le nom passe à la ligne plutôt que de se réduire à
+// « Asa… » : c'est lui qu'on lit. Le jour se mesure à sa largeur
+// (container: day, TripProgram.scss), pas à celle de l'écran.
+@container day (max-width: 540px) {
+  .planned__name {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+  }
+
+  // La barre de commandes prend toute la largeur : alignée sur le nom, elle
+  // n'avait plus la place et passait sur deux lignes.
+  .planned__bar { margin-left: 0; }
+}
+
+// Les transports d'une activité s'alignent sur son nom.
+.planned .itrans {
+  margin-left: var(--planned-indent);
+}

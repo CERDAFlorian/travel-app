@@ -14,8 +14,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "icons": "node scripts/build-icons.mjs",
-    "fonts": "node scripts/build-fonts.mjs",
-    "map": "node scripts/build-map.mjs 50m"
+    "fonts": "node scripts/build-fonts.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",

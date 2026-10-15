@@ -42,16 +42,17 @@ export async function fetchTrips() {
 const TRIP_SELECT = `
   id, slug, title, subtitle, start_date, end_date, theme, love_notes, share_token,
   steps (
-    id, position, name, date_start, date_end, nights, lat, lng, place_id, place_synced_at, photo_url, photo_credit, photo_license, photo_page, photo_checked_at, photo_source, images,
+    id, position, name, date_start, date_end, nights, arrival_time, departure_time,
+    lat, lng, place_id, place_synced_at,
     items (
       id, category, title, url, address, price, currency,
       booked, favorite, position, notes, lat, lng, geocoded_at, place_id, place_synced_at,
       photo_url, photo_credit, photo_license, photo_page, photo_checked_at, photo_source,
-      day_offset, day_slot, day_position, start_time
+      day_offset, day_slot, day_position, start_time, kind, parent_id
     )
   ),
   flights ( id, direction, from_code, to_code, stops, date, dep, arr, arrival_offset_days, airline, flight_no, ref, price, currency ),
-  legs ( id, from_step, to_step, mode, duration_min, note, dep, arr, price, currency ),
+  legs ( id, from_step, to_step, item_id, direction, position, mode, duration_min, note, dep, arr, price, currency ),
   experiences ( id, position, title, description, image, price, currency, url, favorite )
 `;
 

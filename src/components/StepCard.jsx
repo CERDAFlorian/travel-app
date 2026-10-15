@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { CATEGORIES } from '@/lib/categories.js';
 import { chosenHotel, hotelsOf } from '@/lib/lodging.js';
 import { unplacedOf } from '@/lib/days.js';
+import { cityOnly } from '@/lib/containers.js';
 import { formatStepDates } from '@/lib/dates.js';
 import { setStepCoordinates } from '@/lib/mutations.js';
 import PlaceSearch from './PlaceSearch.jsx';
@@ -9,8 +10,9 @@ import ConfirmDialog from './ConfirmDialog.jsx';
 import TrashIcon from './TrashIcon.jsx';
 import PhotoStrip from './PhotoStrip.jsx';
 import CategoryAccordion from './CategoryAccordion.jsx';
-import StepDays from './StepDays.jsx';
+import CityExcursions from './CityExcursions.jsx';
 import LoveNote from './LoveNote.jsx';
+import StepTimes from './StepTimes.jsx';
 import './StepCard.scss';
 
 // Une étape : rail à gauche, contenu à droite.
@@ -21,7 +23,6 @@ import './StepCard.scss';
 export default function StepCard({
   step,
   readOnly,
-  isLast,
   neighbours,
   selected,
   onSelect,
@@ -34,11 +35,10 @@ export default function StepCard({
   onChanged,
 }) {
   const [asking, setAsking] = useState(false);
+  // Les catégories vides ouvertes à la demande, depuis les raccourcis.
+  const [opened, setOpened] = useState([]);
   const [nightsAdded, setNightsAdded] = useState(0);
   const [removing, setRemoving] = useState(false);
-  // Les catégories d'abord : c'est par elles qu'on saisit, et une étape qu'on
-  // n'a pas encore remplie n'a pas de programme à montrer.
-  const [view, setView] = useState('cats');
   // Vrai au montage de l'étape qu'on vient d'ajouter : elle cherche sa
   // position toute seule.
   const [locating, setLocating] = useState(Boolean(autoLocate));
@@ -48,8 +48,12 @@ export default function StepCard({
   const situated = (other) => (other?.lat != null && other?.lng != null ? other : null);
   const aroundStep = situated(neighbours?.previous) ?? situated(neighbours?.next);
 
+  // La ville sans ses arrêts en chemin (L11, F5) : Hakushu n'est pas un lieu
+  // de Tokyo, il vit sur la route, dans la bande entre les deux cartes.
+  const city = cityOnly(step);
+
   const itemsByCategory = new Map(CATEGORIES.map(({ key }) => [key, []]));
-  for (const item of step.items) {
+  for (const item of city.items) {
     itemsByCategory.get(item.category)?.push(item);
   }
 
@@ -60,9 +64,9 @@ export default function StepCard({
   // Il n'y a jamais d'entre-deux : dès qu'un hôtel est saisi, il y en a un de
   // retenu (voir lodging.js). Ce qui s'affiche ici est donc soit un nom, soit
   // une étape où personne n'a encore cherché où dormir.
-  const lodging = chosenHotel(step);
-  const candidates = hotelsOf(step).length;
-  const toPlace = unplacedOf(step, { isLast }).length;
+  const lodging = chosenHotel(city);
+  const candidates = hotelsOf(city).length;
+  const toPlace = unplacedOf(step).length;
 
   return (
     <article
@@ -178,7 +182,23 @@ export default function StepCard({
           {/* Seulement sur la nuit ajoutee : retirer une nuit, c'est raccourcir
               le voyage, et le moment se prete moins au compliment. */}
           <LoveNote kind="nights" seed={step.id} trigger={nightsAdded} />
+
+          {/* Le reste à faire, visible depuis la ville. Le placement lui-même
+              se fait dans la vue Jour par jour du voyage : c'est là que vit
+              le programme, une seule fois, toutes villes confondues. */}
+          {toPlace > 0 && (
+            <span
+              className="step__toplace"
+              title="Items de cette ville sans jour : ils se placent dans la vue Jour par jour"
+            >
+              {toPlace} à placer
+            </span>
+          )}
         </div>
+
+        {/* L'heure d'arrivée et de départ (0016) : elles bornent le premier et
+            le dernier jour dans la ville. */}
+        <StepTimes key={`${step.arrival_time}-${step.departure_time}`} step={step} readOnly={readOnly} onChanged={onChanged} />
 
         <p className="step__lodging" data-empty={lodging ? undefined : true}>
           <span className="step__lodging-dot" data-cat="hotel" aria-hidden="true" />
@@ -240,61 +260,53 @@ export default function StepCard({
           </div>
         )}
 
-        <PhotoStrip items={step.items} />
+        <PhotoStrip items={city.items} />
 
-        {/* Deux lectures des mêmes items : les catégories sont le garde-manger,
-            les jours sont le menu. On saisit dans l'une, on organise dans
-            l'autre — d'où une bascule et non deux blocs empilés, qui auraient
-            doublé la hauteur d'une étape déjà longue. */}
-        <div className="step__tabs" role="tablist" onClick={(event) => event.stopPropagation()}>
-          <button
-            type="button"
-            role="tab"
-            className="step__tab"
-            data-on={view === 'cats' || undefined}
-            aria-selected={view === 'cats'}
-            onClick={() => setView('cats')}
-          >
-            Catégories
-          </button>
-          <button
-            type="button"
-            role="tab"
-            className="step__tab"
-            data-on={view === 'days' || undefined}
-            aria-selected={view === 'days'}
-            onClick={() => setView('days')}
-          >
-            Jour par jour
-            {/* Le reste à faire, visible sans ouvrir l'onglet. */}
-            {toPlace > 0 && <span className="step__tab-count">{toPlace}</span>}
-          </button>
-        </div>
-
-        {view === 'cats' ? (
-          <div className="step__cats">
-            {CATEGORIES.map((category) => (
-              <CategoryAccordion
-                key={category.key}
-                category={category}
-                items={itemsByCategory.get(category.key)}
-                step={step}
-                readOnly={readOnly}
-                onChanged={onChanged}
-              />
-            ))}
-          </div>
-        ) : (
-          <div onClick={(event) => event.stopPropagation()}>
-            <StepDays
-              step={step}
-              isLast={isLast}
-              neighbours={neighbours}
+        {/* La ville, c'est le garde-manger : ce qu'on aimerait y faire, rangé
+            par catégorie. Le menu — quel jour, à quel moment — se compose
+            dans la vue Jour par jour du voyage. */}
+        {/* SEULES LES CATÉGORIES REMPLIES S'AFFICHENT (passe UX du 15 octobre
+            2026). Six accordéons dont quatre à « 0 » par ville noyaient ce qui
+            compte. Les vides se résument à une ligne de raccourcis ; on en
+            ouvre une pour y ajouter quelque chose. */}
+        <div className="step__cats">
+          {CATEGORIES.filter(
+            (category) => itemsByCategory.get(category.key).length > 0 || opened.includes(category.key),
+          ).map((category) => (
+            <CategoryAccordion
+              key={category.key}
+              category={category}
+              items={itemsByCategory.get(category.key)}
+              step={city}
+              defaultOpen={opened.includes(category.key)}
               readOnly={readOnly}
               onChanged={onChanged}
             />
-          </div>
+          ))}
+        </div>
+
+        {!readOnly && (
+          <p className="step__add-cats" onClick={(event) => event.stopPropagation()}>
+            {CATEGORIES.filter(
+              (category) => itemsByCategory.get(category.key).length === 0 && !opened.includes(category.key),
+            ).map((category) => (
+              <button
+                key={category.key}
+                type="button"
+                className="step__add-cat"
+                title={`Ajouter dans ${category.label}`}
+                onClick={() => setOpened((keys) => [...keys, category.key])}
+              >
+                <span className="step__add-cat-dot" data-cat={category.key} aria-hidden="true" />+ {category.label}
+              </button>
+            ))}
+          </p>
         )}
+
+        {/* Les excursions au départ de la ville (F6) : on les saisit ici, on
+            les place dans le jour par jour. La ville entière, pas `city` :
+            elles et leur contenu en ont été retirés. */}
+        <CityExcursions step={step} readOnly={readOnly} onChanged={onChanged} />
 
         {/* Le trajet vers l'étape suivante, en pied de carte : il appartient à
             l'intervalle, pas à l'étape d'arrivée. */}
