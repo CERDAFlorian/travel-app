@@ -8,7 +8,6 @@ import StepCard from '@/components/StepCard.jsx';
 import TripMap from '@/components/TripMap.jsx';
 import TravelTimes from '@/components/TravelTimes.jsx';
 import HeroBanner from '@/components/HeroBanner.jsx';
-import Experiences from '@/components/Experiences.jsx';
 import BudgetPanel from '@/components/BudgetPanel.jsx';
 import ShareLink from '@/components/ShareLink.jsx';
 import NightsGap from '@/components/NightsGap.jsx';
@@ -34,7 +33,7 @@ import './TripView.scss';
 // voit réellement la personne à qui on a envoyé le lien.
 //
 // Ordre des blocs : en-tête, vols, grille à deux colonnes — étapes à gauche,
-// carte collante à droite —, bandeau pagode, expériences, budget, ligne
+// carte collante à droite —, bandeau pagode, budget, ligne
 // d'itinéraire en pied. Le bandeau sépare la préparation de l'inspiration.
 export default function TripView({
   trip,
@@ -350,8 +349,10 @@ export default function TripView({
         </main>
 
         <HeroBanner steps={view.steps} startDate={view.startDate} />
-        <Experiences experiences={view.experiences} />
-        <BudgetPanel trip={view} />
+        {/* Pas de budget dans la vue partagée (26 oct. 2026). Les expériences
+            à vivre ont quitté toutes les vues le même jour : la table reste,
+            plus rien ne l'affiche. */}
+        {!shared && <BudgetPanel trip={view} />}
 
         {/* Le partage tout en bas : c'est ce qu'on fait une fois l'itinéraire
             prêt, pas en le préparant. */}

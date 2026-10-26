@@ -275,6 +275,19 @@ describe('TripView', () => {
     for (const mot of MOTS) expect(html).toContain(mot);
   });
 
+  // Pas de budget dans la vue partagée (26 oct. 2026) ; chez soi, il reste.
+  it('retire le budget de la vue partagée', () => {
+    expect(render({ readOnly: true, shared: true })).not.toContain('class="budget"');
+    expect(render({ readOnly: true })).toContain('class="budget"');
+  });
+
+  // Les expériences à vivre ne s'affichent plus nulle part.
+  it('ne montre les expériences dans aucune vue', () => {
+    const withOne = { ...trip, experiences: [{ id: 'e', position: 1, title: 'Onsen à Hakone' }] };
+    expect(render({ trip: withOne, readOnly: false })).not.toContain('Onsen à Hakone');
+    expect(render({ trip: withOne, readOnly: true })).not.toContain('Onsen à Hakone');
+  });
+
   // Le mot doux des temps de trajet SERT de titre : le retirer laisserait le
   // bloc sans en-tête, donc il est remplacé et non supprimé.
   it('remplace le titre des temps de trajet au lieu de le retirer', () => {

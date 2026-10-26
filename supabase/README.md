@@ -26,8 +26,9 @@ automatiquement : ni le repo, ni la CI, ni le déploiement ne parlent à Supabas
 | 14 | `migrations/0014_transports_activites.sql` | un trajet peut mener à une activité, aller ou retour (L11 F4) | oui |
 | 15 | `migrations/0015_arrets_excursions.sql` | arrêts en chemin et excursions : des lieux qui en contiennent d'autres (L11 F5, F6) | oui |
 | 16 | `migrations/0016_heures_villes.sql` | heure d'arrivée et heure de départ d'une ville | oui |
-| 17 | `seed.sql` | le voyage Japon de novembre | oui, **il écrase `japon-2026`** — garde-fou en tête de fichier |
-| 18 | `seed-japon-octobre.sql` | le voyage Japon d'octobre, second compte | oui, **il écrase `japon-octobre-2026`** |
+| 17 | `migrations/0017_partage_sans_prix.sql` | la vue partagée ne rend plus ni prix ni expériences | oui |
+| 18 | `seed.sql` | le voyage Japon de novembre | oui, **il écrase `japon-2026`** — garde-fou en tête de fichier |
+| 19 | `seed-japon-octobre.sql` | le voyage Japon d'octobre, second compte | oui, **il écrase `japon-octobre-2026`** |
 
 ## Deux bases : dev et prod
 
@@ -137,6 +138,14 @@ les étapes mal placées (« Relier à Google » dans l'app) puis réexporter : 
 lieux d'une étape fausse sont jugés trop loin, et restent à la main.
 
 **Ne pas commiter** l'export ni le SQL produit : c'est le voyage de quelqu'un.
+
+### Sauvegarder toute la base
+
+**Sur prod**, `supabase/outils/sauvegarde-base.sql` → Run. Une ligne revient,
+colonne `sauvegarde` : toutes les tables applicatives en JSON, membres
+(avec leur adresse) et jeton de partage compris, plus la liste des photos du
+bucket Storage (pas les fichiers). Lecture seule, vérifié par
+`npm run sql:check`. À enregistrer **hors du dépôt**, avant chaque migration.
 
 ### Rapatrier un voyage de prod sur dev
 
