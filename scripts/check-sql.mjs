@@ -119,6 +119,7 @@ const files = {
   activityTransport: 'supabase/migrations/0014_transports_activites.sql',
   containers: 'supabase/migrations/0015_arrets_excursions.sql',
   cityTimes: 'supabase/migrations/0016_heures_villes.sql',
+  sharedNoPrices: 'supabase/migrations/0017_partage_sans_prix.sql',
   seed: 'supabase/seed.sql',
 };
 
@@ -332,6 +333,7 @@ if (Object.keys(clean).length === Object.keys(files).length) {
 const tools = {
   exportVoyage: 'supabase/outils/export-voyage.sql',
   importVoyage: 'supabase/outils/import-voyage.sql',
+  sauvegardeBase: 'supabase/outils/sauvegarde-base.sql',
 };
 
 const exportRaw = read(tools.exportVoyage);
@@ -345,6 +347,26 @@ if (exportRaw !== null) {
   if (write) fail(tools.exportVoyage, `« ${write[1]} » dans un fichier qui tourne sur la prod en lecture seule`);
   if (!/- 'share_token'/.test(exportRaw)) {
     fail(tools.exportVoyage, "le jeton de partage de la prod doit rester hors de l'export");
+  }
+}
+
+// La sauvegarde de toute la base tourne sur la prod : même règle.
+const backupRaw = read(tools.sauvegardeBase);
+if (backupRaw !== null) {
+  const sql = strip(backupRaw, tools.sauvegardeBase);
+  checkBalance(sql, tools.sauvegardeBase);
+  const write = /\b(insert|update|delete|drop|alter|truncate|create|grant|revoke|begin|commit)\b/i.exec(sql);
+  if (write) fail(tools.sauvegardeBase, `« ${write[1]} » dans un fichier qui tourne sur la prod en lecture seule`);
+}
+
+// La vue partagée ne rend aucun prix depuis 0017 : la dernière définition de
+// trip_by_share_token ne doit pas les réintroduire par un copier-coller.
+{
+  const last = read(files.sharedNoPrices);
+  const fn = last && /create or replace function public\.trip_by_share_token[\s\S]*?\$\$[\s\S]*?\$\$/i.exec(last);
+  if (last && !fn) fail(files.sharedNoPrices, 'fonction trip_by_share_token absente');
+  if (fn && /'(price|currency)'/.test(fn[0])) {
+    fail(files.sharedNoPrices, 'trip_by_share_token rend un prix : la vue partagée ne doit en montrer aucun');
   }
 }
 

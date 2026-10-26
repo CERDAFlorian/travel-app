@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { fetchSharedTrip } from '@/lib/api.js';
 import { hideExpired } from '@/lib/placeFreshness.js';
+import { forSharing } from '@/lib/sharedView.js';
 import { readTrip, writeTrip } from '@/lib/db.js';
 import { useCached } from './useCached.js';
 
@@ -16,6 +17,7 @@ const SHARED = {
 export function useSharedTrip(token) {
   const { data, ...rest } = useCached(`share:${token}`, SHARED);
   // Même règle que useTrip : rien de Google au-delà de 30 jours à l'écran.
-  const trip = useMemo(() => hideExpired(data, Date.now()), [data]);
+  // Et ni prix ni expériences : voir sharedView.js.
+  const trip = useMemo(() => forSharing(hideExpired(data, Date.now())), [data]);
   return { trip, ...rest };
 }

@@ -275,6 +275,16 @@ describe('TripView', () => {
     for (const mot of MOTS) expect(html).toContain(mot);
   });
 
+  // Ni budget ni expériences à vivre dans la vue partagée (26 oct. 2026) ;
+  // chez soi, ils restent.
+  it('retire le budget et les expériences de la vue partagée', () => {
+    const shared = render({ readOnly: true, shared: true });
+    expect(shared).not.toContain('class="budget"');
+    expect(shared).not.toContain('experiences__title');
+
+    expect(render({ readOnly: true })).toContain('class="budget"');
+  });
+
   // Le mot doux des temps de trajet SERT de titre : le retirer laisserait le
   // bloc sans en-tête, donc il est remplacé et non supprimé.
   it('remplace le titre des temps de trajet au lieu de le retirer', () => {

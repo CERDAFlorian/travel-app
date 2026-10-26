@@ -350,8 +350,9 @@ export default function TripView({
         </main>
 
         <HeroBanner steps={view.steps} startDate={view.startDate} />
-        <Experiences experiences={view.experiences} />
-        <BudgetPanel trip={view} />
+        {/* Ni expériences ni budget dans la vue partagée (26 oct. 2026). */}
+        {!shared && <Experiences experiences={view.experiences} />}
+        {!shared && <BudgetPanel trip={view} />}
 
         {/* Le partage tout en bas : c'est ce qu'on fait une fois l'itinéraire
             prêt, pas en le préparant. */}
