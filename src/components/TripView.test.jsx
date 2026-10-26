@@ -275,14 +275,17 @@ describe('TripView', () => {
     for (const mot of MOTS) expect(html).toContain(mot);
   });
 
-  // Ni budget ni expériences à vivre dans la vue partagée (26 oct. 2026) ;
-  // chez soi, ils restent.
-  it('retire le budget et les expériences de la vue partagée', () => {
-    const shared = render({ readOnly: true, shared: true });
-    expect(shared).not.toContain('class="budget"');
-    expect(shared).not.toContain('experiences__title');
-
+  // Pas de budget dans la vue partagée (26 oct. 2026) ; chez soi, il reste.
+  it('retire le budget de la vue partagée', () => {
+    expect(render({ readOnly: true, shared: true })).not.toContain('class="budget"');
     expect(render({ readOnly: true })).toContain('class="budget"');
+  });
+
+  // Les expériences à vivre ne s'affichent plus nulle part.
+  it('ne montre les expériences dans aucune vue', () => {
+    const withOne = { ...trip, experiences: [{ id: 'e', position: 1, title: 'Onsen à Hakone' }] };
+    expect(render({ trip: withOne, readOnly: false })).not.toContain('Onsen à Hakone');
+    expect(render({ trip: withOne, readOnly: true })).not.toContain('Onsen à Hakone');
   });
 
   // Le mot doux des temps de trajet SERT de titre : le retirer laisserait le
