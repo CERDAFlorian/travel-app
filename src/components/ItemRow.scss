@@ -167,6 +167,34 @@
     padding: 0 var(--sp-2);
   }
 
+  // Le lien d'un restaurant, sous la ligne : une adresse ne tient pas dans
+  // la ligne de l'item.
+  &__link-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin: 4px 0 6px;
+  }
+
+  &__link-input {
+    flex: 1 1 220px;
+    padding: 4px 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: 7px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    // 16 px minimum : en dessous, Safari iOS zoome au focus.
+    font-size: var(--fs-md);
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  &__link-save { @include mixins.button-primary('sm'); }
+
+  &__link-cancel { @include mixins.button-link; }
+
   &__price-read {
     font-size: clamp(12px, 1.2vw, 14px);
     font-style: italic;

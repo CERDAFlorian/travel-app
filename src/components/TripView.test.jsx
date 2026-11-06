@@ -216,6 +216,18 @@ describe('TripView', () => {
     expect(html).toContain('Villes');
   });
 
+  // Les restaurants sont déjà dans la vue partagée : leur onglet aussi.
+  it('propose l’onglet Où manger, chez soi comme en partage', () => {
+    expect(render({ readOnly: false })).toContain('Où manger');
+    expect(render({ readOnly: true, shared: true })).toContain('Où manger');
+  });
+
+  // Les notes s'écrivent pour soi : l'onglet n'existe pas dans un lien envoyé.
+  it('propose l’onglet Notes chez soi, pas dans le lien de partage', () => {
+    expect(render({ readOnly: false })).toContain('>Notes<');
+    expect(render({ readOnly: true, shared: true })).not.toContain('>Notes<');
+  });
+
   // Kyoto n'a aucun item : son bandeau photo est donc vide. Il annonçait
   // « photos de Kyoto à déposer ici », ce qui laissait croire qu'on attendait
   // des photos DE LA VILLE, à téléverser soi-même. Les deux sont faux.

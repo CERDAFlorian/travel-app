@@ -11,6 +11,7 @@ import {
   updateItem,
 } from '@/lib/mutations.js';
 import { isChosenHotel, otherHotels } from '@/lib/lodging.js';
+import { linkLabel, normalizeUrl } from '@/lib/links.js';
 import { mapsUrl } from '@/lib/places.js';
 import { canPastePhoto } from '@/lib/placePhotos.js';
 import { removeStoredPhoto } from '@/lib/userPhoto.js';
@@ -52,6 +53,9 @@ export default function ItemRow({ item, step, readOnly, autoLocate, deleteNote, 
   // plupart des lieux n'ont pas de prix, et un champ vide sur chaque ligne
   // encombrait la liste pour rien.
   const [pricing, setPricing] = useState(false);
+  // Le lien d'un restaurant — la vidéo TikTok, le post Instagram où on l'a
+  // trouvé. Un champ sur demande, comme le prix.
+  const [linking, setLinking] = useState(false);
   const titleRef = useRef(null);
 
   async function run(action) {
@@ -70,6 +74,7 @@ export default function ItemRow({ item, step, readOnly, autoLocate, deleteNote, 
   // Un hôtel ne se manipule pas comme le reste : son étoile désigne le
   // logement retenu de l'étape, pas une photo de bandeau. Voir lib/lodging.js.
   const isHotel = item.category === 'hotel';
+  const canLink = item.category === 'restaurant';
   // Le retenu ne se lit pas dans `item.favorite` : sans choix explicite, c'est
   // le premier hôtel saisi qui l'est. Son étoile doit donc être allumée alors
   // que la colonne vaut false — sinon le budget compterait une nuit dont la
@@ -145,6 +150,12 @@ export default function ItemRow({ item, step, readOnly, autoLocate, deleteNote, 
         {href && (
           <a className="item__map" href={href} target="_blank" rel="noreferrer">
             {MAP_LABEL}
+          </a>
+        )}
+
+        {item.url && (
+          <a className="item__map" href={item.url} target="_blank" rel="noreferrer">
+            {`${linkLabel(item.url)} ↗`}
           </a>
         )}
 
@@ -268,6 +279,19 @@ export default function ItemRow({ item, step, readOnly, autoLocate, deleteNote, 
                 {!located ? 'Localiser' : linked ? 'Localisé' : 'À relier'}
               </button>
 
+              {canLink && (
+                <button
+                  type="button"
+                  className="item__price-add"
+                  disabled={busy}
+                  aria-expanded={linking}
+                  title={item.url ? `Modifier le lien de ${item.title}` : `Coller un lien TikTok, Instagram, un site… pour ${item.title}`}
+                  onClick={() => setLinking((open) => !open)}
+                >
+                  {item.url ? 'lien' : '+ lien'}
+                </button>
+              )}
+
               {/* LE PRIX EST FACULTATIF. Sans prix, un simple « + prix » ; le
                   champ apparaît au clic, et disparaît si on le quitte vide. */}
               {item.price == null && !pricing ? (
@@ -335,6 +359,56 @@ export default function ItemRow({ item, step, readOnly, autoLocate, deleteNote, 
           )}
         </span>
       </div>
+
+      {linking && (
+        <form
+          className="item__link-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const raw = new FormData(event.currentTarget).get('url');
+            const url = normalizeUrl(raw);
+            if (String(raw).trim() && !url) {
+              setError('Ce lien ne ressemble pas à une adresse web.');
+              return;
+            }
+            setLinking(false);
+            if (url !== (item.url ?? null)) run(() => updateItem(item.id, { url }));
+          }}
+        >
+          <input
+            className="item__link-input"
+            name="url"
+            type="url"
+            inputMode="url"
+            defaultValue={item.url ?? ''}
+            placeholder="Lien TikTok, Instagram, site…"
+            aria-label={`Lien de ${item.title}`}
+            autoFocus
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') setLinking(false);
+            }}
+          />
+          <button className="item__link-save" type="submit" disabled={busy}>
+            Enregistrer
+          </button>
+          {item.url && (
+            <button
+              className="item__link-cancel"
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                setLinking(false);
+                run(() => updateItem(item.id, { url: null }));
+              }}
+            >
+              Retirer
+            </button>
+          )}
+          <button className="item__link-cancel" type="button" onClick={() => setLinking(false)}>
+            Annuler
+          </button>
+        </form>
+      )}
 
       {photoOpen && (
         <PhotoPaste

@@ -7,6 +7,7 @@ const trip = {
   flights: [{ id: 'f', flight_no: 'AF276', price: 900, currency: 'EUR' }],
   legs: [{ id: 'l', mode: 'train', price: 80, currency: 'JPY' }],
   experiences: [{ id: 'e', title: 'Onsen', price: 40 }],
+  notes: [{ id: 'n', body: 'Code du casier : 4521' }],
 };
 
 describe('forSharing — la vue partagée', () => {
@@ -28,6 +29,10 @@ describe('forSharing — la vue partagée', () => {
 
   it('retire les expériences à vivre', () => {
     expect(forSharing(trip).experiences).toEqual([]);
+  });
+
+  it('retire les notes', () => {
+    expect(forSharing(trip).notes).toEqual([]);
   });
 
   it('ne touche pas au voyage reçu', () => {

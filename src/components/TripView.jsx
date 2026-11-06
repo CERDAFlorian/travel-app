@@ -13,7 +13,9 @@ import ShareLink from '@/components/ShareLink.jsx';
 import NightsGap from '@/components/NightsGap.jsx';
 import AddStep from '@/components/AddStep.jsx';
 import TripProgram from '@/components/TripProgram.jsx';
-import { CitiesIcon, DaysIcon, MapIcon } from '@/components/ViewIcons.jsx';
+import TripNotes from '@/components/TripNotes.jsx';
+import TripFood from '@/components/TripFood.jsx';
+import { CitiesIcon, DaysIcon, FoodIcon, MapIcon, NotesIcon } from '@/components/ViewIcons.jsx';
 import StepLink from '@/components/StepLink.jsx';
 import LoveNote from '@/components/LoveNote.jsx';
 import { addStep, moveStep, removeStep, setStepNights } from '@/lib/mutations.js';
@@ -47,11 +49,13 @@ export default function TripView({
   onChanged,
 }) {
   const [selectedStepId, setSelectedStepId] = useState(null);
-  // Deux lectures du même voyage, DANS le même écran : par ville pour
-  // préparer, par jour pour vivre. La bascule est un état local et non une
-  // route : changer d'URL remonterait le composant, donc la carte, et on
-  // perdrait son zoom et sa position au moment précis où l'on s'en sert.
-  const [byDay, setByDay] = useState(false);
+  // Quatre lectures du même voyage, DANS le même écran : par ville pour
+  // préparer, par jour pour vivre, où manger sur place, et les notes qu'on
+  // prend en chemin. La
+  // bascule est un état local et non une route : changer d'URL remonterait le
+  // composant, donc la carte, et on perdrait son zoom et sa position au
+  // moment précis où l'on s'en sert.
+  const [mode, setMode] = useState('cities');
   // La carte peut se masquer : la colonne prend alors toute la place. Un
   // réglage de lecture, propre à cet appareil — on le garde d'une visite à
   // l'autre, sans en faire une donnée du voyage.
@@ -63,6 +67,10 @@ export default function TripView({
     });
   }, []);
   const [justAddedStep, setJustAddedStep] = useState(null);
+  // Pas de carte sur « Où manger » (Florian, 6 nov. 2026) : on y cherche une
+  // table, la liste prend toute la largeur. Le réglage de l'appareil reste
+  // intact pour les autres lectures.
+  const mapShown = showMap && mode !== 'food';
 
   // La règle des 30 jours : les lieux Google qui vont expirer sont redemandés
   // à l'ouverture, par qui peut écrire le voyage.
@@ -270,10 +278,10 @@ export default function TripView({
             <button
               type="button"
               className="trip__mode-btn"
-              data-on={!byDay || undefined}
-              aria-pressed={!byDay}
+              data-on={mode === 'cities' || undefined}
+              aria-pressed={mode === 'cities'}
               title="L'itinéraire ville par ville"
-              onClick={() => setByDay(false)}
+              onClick={() => setMode('cities')}
             >
               <CitiesIcon />
               <span className="trip__mode-label">Villes</span>
@@ -282,34 +290,67 @@ export default function TripView({
             <button
               type="button"
               className="trip__mode-btn"
-              data-on={byDay || undefined}
-              aria-pressed={byDay}
+              data-on={mode === 'days' || undefined}
+              aria-pressed={mode === 'days'}
               title="Le programme jour par jour"
-              onClick={() => setByDay(true)}
+              onClick={() => setMode('days')}
             >
               <DaysIcon />
               <span className="trip__mode-label">Jour par jour</span>
             </button>
+
+            <button
+              type="button"
+              className="trip__mode-btn"
+              data-on={mode === 'food' || undefined}
+              aria-pressed={mode === 'food'}
+              title="Les restaurants, par ville ou autour de moi"
+              onClick={() => setMode('food')}
+            >
+              <FoodIcon />
+              <span className="trip__mode-label">Où manger</span>
+            </button>
+
+            {/* Pas de notes dans la vue partagée : elles s'écrivent pour soi. */}
+            {!shared && (
+              <button
+                type="button"
+                className="trip__mode-btn"
+                data-on={mode === 'notes' || undefined}
+                aria-pressed={mode === 'notes'}
+                title="Les notes du voyage"
+                onClick={() => setMode('notes')}
+              >
+                <NotesIcon />
+                <span className="trip__mode-label">Notes</span>
+              </button>
+            )}
           </div>
 
           {/* Masquer la carte : la colonne prend toute la place. À droite,
               loin de la bascule — c'est un autre réglage. */}
-          <button
-            type="button"
-            className="trip__mode-btn trip__map-toggle"
-            data-on={!showMap || undefined}
-            aria-pressed={!showMap}
-            title={showMap ? 'Masquer la carte : la colonne prend toute la place' : 'Afficher la carte du voyage'}
-            onClick={toggleMap}
-          >
-            <MapIcon />
-            <span className="trip__mode-label">{showMap ? 'Masquer la carte' : 'Afficher la carte'}</span>
-          </button>
+          {mode !== 'food' && (
+            <button
+              type="button"
+              className="trip__mode-btn trip__map-toggle"
+              data-on={!showMap || undefined}
+              aria-pressed={!showMap}
+              title={showMap ? 'Masquer la carte : la colonne prend toute la place' : 'Afficher la carte du voyage'}
+              onClick={toggleMap}
+            >
+              <MapIcon />
+              <span className="trip__mode-label">{showMap ? 'Masquer la carte' : 'Afficher la carte'}</span>
+            </button>
+          )}
         </div>
 
-        <main className="trip__main" data-solo={!showMap || undefined}>
+        <main className="trip__main" data-solo={!mapShown || undefined}>
           <section className="trip__steps">
-            {byDay ? (
+            {mode === 'notes' && !shared ? (
+              <TripNotes trip={view} readOnly={readOnly} onChanged={onChanged} />
+            ) : mode === 'food' ? (
+              <TripFood trip={view} />
+            ) : mode === 'days' ? (
               <TripProgram
                 trip={view}
                 readOnly={readOnly}
@@ -335,7 +376,7 @@ export default function TripView({
             )}
           </section>
 
-          {showMap && (
+          {mapShown && (
             <aside className="trip__aside">
               <div className="trip__map-card">
                 <div className="trip__map-head">

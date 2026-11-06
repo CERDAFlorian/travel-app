@@ -45,7 +45,10 @@ select jsonb_build_object(
                             where f.trip_id = t.id), '[]'::jsonb),
   'experiences', coalesce((select jsonb_agg(to_jsonb(e) order by e."position")
                              from public.experiences e
-                            where e.trip_id = t.id), '[]'::jsonb)
+                            where e.trip_id = t.id), '[]'::jsonb),
+  'notes',       coalesce((select jsonb_agg(to_jsonb(n) order by n.created_at)
+                             from public.trip_notes n
+                            where n.trip_id = t.id), '[]'::jsonb)
 ) as voyage
 from public.trips t
 where t.slug = 'japon-2026';
