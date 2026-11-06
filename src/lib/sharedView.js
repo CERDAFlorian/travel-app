@@ -1,7 +1,7 @@
 // Ce que la vue partagée ne montre pas (Florian, 26 octobre 2026) : aucun
-// prix, aucun budget, aucune « expérience à vivre ». Un lien de partage
-// circule — chez des amis, chez un assistant IA — et ce qu'on a payé ne
-// regarde que les voyageurs.
+// prix, aucun budget, aucune « expérience à vivre », aucune note. Un lien de
+// partage circule — chez des amis, chez un assistant IA — et ce qu'on a payé
+// ne regarde que les voyageurs.
 //
 // Retiré ici, dans la donnée, plutôt que masqué composant par composant :
 // chaque écran n'affiche un prix que s'il existe, et un prix ajouté demain
@@ -25,5 +25,7 @@ export function forSharing(trip) {
     flights: (trip.flights ?? []).map(stripPrice),
     legs: (trip.legs ?? []).map(stripPrice),
     experiences: [],
+    // Les notes s'écrivent pour soi, comme le budget.
+    notes: [],
   };
 }

@@ -1,4 +1,4 @@
-// Les deux lectures du voyage, en pictogrammes.
+// Les lectures du voyage, en pictogrammes.
 //
 // Même parti que ChevronIcon et TrashIcon : un tracé et pas un glyphe. Les
 // emojis 🗓 et 🏙 se colorent tout seuls selon la plateforme et changent de
@@ -50,6 +50,28 @@ export function MapIcon() {
     <svg {...base}>
       <path d="M2 4.2l3.8-1.6 4.4 1.6 3.8-1.6v9.2l-3.8 1.6-4.4-1.6L2 13.4z" />
       <path d="M5.8 2.6v9.2M10.2 4.2v9.2" />
+    </svg>
+  );
+}
+
+// Les notes : une feuille aux lignes d'écriture.
+export function NotesIcon() {
+  return (
+    <svg {...base}>
+      <path d="M3.4 2.2h6.4l2.8 2.8v8.8H3.4z" />
+      <path d="M9.8 2.2V5h2.8" />
+      <path d="M5.6 7.6h4.8M5.6 9.8h4.8M5.6 12h3" />
+    </svg>
+  );
+}
+
+// Où manger : un bol et des baguettes.
+export function FoodIcon() {
+  return (
+    <svg {...base}>
+      <path d="M2.4 8.4h11.2a5.6 5.6 0 0 1-11.2 0z" />
+      <path d="M6 13.6h4" />
+      <path d="M8.6 6.4l4.8-4.2M10.6 6.4l3.4-3" />
     </svg>
   );
 }

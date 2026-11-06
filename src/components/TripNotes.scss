@@ -1,0 +1,80 @@
+@use '../theme/mixins';
+
+// Les notes du voyage : des cartes simples qui s'empilent, puis le formulaire.
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1.2vw, 15px);
+
+  &__empty {
+    margin: 0;
+    color: var(--muted);
+    font-size: var(--fs-sm);
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__note {
+    padding: clamp(11px, 1.2vw, 16px);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+  }
+
+  // Les retours à la ligne de la saisie se gardent : une liste tapée à la
+  // main doit se relire comme une liste.
+  &__body {
+    margin: 0;
+    color: var(--text);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  &__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+    margin-top: var(--sp-1);
+    color: var(--muted);
+    font-size: var(--fs-xs);
+  }
+
+  &__delete {
+    @include mixins.button-icon('danger');
+    color: var(--muted);
+  }
+
+  &__form {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--sp-2);
+  }
+
+  &__input {
+    box-sizing: border-box;
+    width: 100%;
+    padding: var(--sp-2) var(--sp-3);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    // 16 px minimum : en dessous, Safari iOS zoome au focus.
+    font-size: var(--fs-md);
+    resize: vertical;
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  &__submit { @include mixins.button-primary('sm'); }
+}

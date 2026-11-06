@@ -53,7 +53,8 @@ const TRIP_SELECT = `
   ),
   flights ( id, direction, from_code, to_code, stops, date, dep, arr, arrival_offset_days, airline, flight_no, ref, price, currency ),
   legs ( id, from_step, to_step, item_id, direction, position, mode, duration_min, note, dep, arr, price, currency ),
-  experiences ( id, position, title, description, image, price, currency, url, favorite )
+  experiences ( id, position, title, description, image, price, currency, url, favorite ),
+  trip_notes ( id, body, created_at )
 `;
 
 // Une seule mise en forme pour les deux sources : la requête PostgREST du
@@ -90,6 +91,9 @@ function normalizeTrip(data) {
     ),
     legs: data.legs ?? [],
     experiences: [...(data.experiences ?? [])].sort(byPosition),
+    // Dans l'ordre où on les a écrites. Absentes de la vue partagée (la
+    // fonction de partage ne les rend pas) et d'un cache antérieur à 0018.
+    notes: [...(data.trip_notes ?? [])].sort((a, b) => a.created_at.localeCompare(b.created_at)),
   };
 }
 

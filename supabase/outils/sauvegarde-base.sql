@@ -43,6 +43,8 @@ select jsonb_build_object(
                               from public.flights f), '[]'::jsonb),
   'experiences',  coalesce((select jsonb_agg(to_jsonb(e) order by e.trip_id, e."position")
                               from public.experiences e), '[]'::jsonb),
+  'notes',        coalesce((select jsonb_agg(to_jsonb(n) order by n.trip_id, n.created_at)
+                              from public.trip_notes n), '[]'::jsonb),
   'photos',       coalesce((select jsonb_agg(jsonb_build_object('bucket', o.bucket_id, 'name', o.name,
                                                                 'size', o.metadata->'size')
                                              order by o.name)

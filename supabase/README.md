@@ -27,8 +27,9 @@ automatiquement : ni le repo, ni la CI, ni le déploiement ne parlent à Supabas
 | 15 | `migrations/0015_arrets_excursions.sql` | arrêts en chemin et excursions : des lieux qui en contiennent d'autres (L11 F5, F6) | oui |
 | 16 | `migrations/0016_heures_villes.sql` | heure d'arrivée et heure de départ d'une ville | oui |
 | 17 | `migrations/0017_partage_sans_prix.sql` | la vue partagée ne rend plus ni prix ni expériences | oui |
-| 18 | `seed.sql` | le voyage Japon de novembre | oui, **il écrase `japon-2026`** — garde-fou en tête de fichier |
-| 19 | `seed-japon-octobre.sql` | le voyage Japon d'octobre, second compte | oui, **il écrase `japon-octobre-2026`** |
+| 18 | `migrations/0018_notes.sql` | les notes du voyage (onglet Notes) | oui |
+| 19 | `seed.sql` | le voyage Japon de novembre | oui, **il écrase `japon-2026`** — garde-fou en tête de fichier |
+| 20 | `seed-japon-octobre.sql` | le voyage Japon d'octobre, second compte | oui, **il écrase `japon-octobre-2026`** |
 
 ## Deux bases : dev et prod
 

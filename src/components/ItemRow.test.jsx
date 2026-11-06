@@ -37,3 +37,19 @@ describe('ItemRow — le prix facultatif', () => {
     expect(render({ item: item(), readOnly: true })).not.toContain('+ prix');
   });
 });
+
+// Le lien d'un restaurant : la vidéo TikTok, le post Instagram où on l'a trouvé.
+describe('ItemRow — le lien d’un restaurant', () => {
+  const resto = (overrides = {}) => item({ id: 'kichi', category: 'restaurant', title: 'Kichi Kichi', ...overrides });
+
+  it('propose « + lien » à un restaurant, pas aux autres lieux', () => {
+    expect(render({ item: resto() })).toContain('+ lien');
+    expect(render({ item: item() })).not.toContain('+ lien');
+  });
+
+  it('affiche le lien enregistré sous le nom du réseau', () => {
+    const html = render({ item: resto({ url: 'https://www.instagram.com/reel/abc/' }), readOnly: true });
+    expect(html).toContain('Instagram ↗');
+    expect(html).toContain('href="https://www.instagram.com/reel/abc/"');
+  });
+});

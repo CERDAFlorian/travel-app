@@ -51,10 +51,12 @@ export async function addItem({ stepId, category, title, price, position, curren
   return data.id;
 }
 
-export async function updateItem(id, { title, price, notes }) {
+export async function updateItem(id, { title, price, notes, url }) {
   const patch = {};
   if (title !== undefined) patch.title = title.trim();
   if (price !== undefined) patch.price = price;
+  // Déjà nettoyée par normalizeUrl (links.js) : null retire le lien.
+  if (url !== undefined) patch.url = url;
   // Une note vidée redevient NULL : une chaîne vide en base se comporte
   // différemment d'une absence à la lecture, et on ne veut pas les deux.
   if (notes !== undefined) patch.notes = notes?.trim() || null;
@@ -787,4 +789,20 @@ export async function saveLeg({
 export async function deleteLeg(id) {
   const { error } = await supabase.from('legs').delete().eq('id', id);
   if (error) fail(error, 'Suppression du trajet');
+}
+
+// --- Les notes du voyage ------------------------------------------------------
+//
+// Un bloc-notes libre, à côté des villes et des jours (0018_notes.sql). Les
+// notes s'empilent dans l'ordre où on les écrit : `created_at` suffit, il n'y
+// a pas de rang à tenir.
+
+export async function addNote(tripId, body) {
+  const { error } = await supabase.from('trip_notes').insert({ trip_id: tripId, body: body.trim() });
+  if (error) fail(error, 'Ajout de la note');
+}
+
+export async function deleteNote(id) {
+  const { error } = await supabase.from('trip_notes').delete().eq('id', id);
+  if (error) fail(error, 'Suppression de la note');
 }

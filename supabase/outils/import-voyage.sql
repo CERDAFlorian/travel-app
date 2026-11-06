@@ -108,6 +108,11 @@ select r.* from voyage_importe v, jsonb_populate_recordset(null::public.flights,
 insert into public.experiences
 select r.* from voyage_importe v, jsonb_populate_recordset(null::public.experiences, v.doc->'experiences') r;
 
+-- Absentes d'un export antérieur à 0018 : la liste vide n'insère rien.
+insert into public.trip_notes
+select r.* from voyage_importe v,
+       jsonb_populate_recordset(null::public.trip_notes, coalesce(v.doc->'notes', '[]'::jsonb)) r;
+
 insert into public.trip_members (trip_id, user_id, role)
 select distinct (v.doc->'trip'->>'id')::uuid, u.id, 'owner'
   from voyage_importe v
@@ -146,6 +151,11 @@ begin
   if n <> jsonb_array_length(d->'experiences') then
     raise exception 'expériences : % en base, % dans l''export', n, jsonb_array_length(d->'experiences');
   end if;
+
+  select count(*) into n from public.trip_notes where trip_id = tid;
+  if n <> jsonb_array_length(coalesce(d->'notes', '[]'::jsonb)) then
+    raise exception 'notes : % en base, % dans l''export', n, jsonb_array_length(coalesce(d->'notes', '[]'::jsonb));
+  end if;
 end $$;
 
 commit;
@@ -159,6 +169,7 @@ select t.slug,
        (select count(*) from public.legs l where l.trip_id = t.id)        as liaisons,
        (select count(*) from public.flights f where f.trip_id = t.id)     as vols,
        (select count(*) from public.experiences e where e.trip_id = t.id) as experiences,
+       (select count(*) from public.trip_notes n where n.trip_id = t.id)  as notes,
        (select string_agg(u.email, ', ' order by u.email)
           from public.trip_members m join auth.users u on u.id = m.user_id
          where m.trip_id = t.id)                                          as membres

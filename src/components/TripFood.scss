@@ -1,0 +1,125 @@
+@use '../theme/mixins';
+
+// Où manger : une barre avec « Autour de moi », puis les villes repliables.
+.food {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1.2vw, 15px);
+
+  &__empty,
+  &__status {
+    margin: 0;
+    color: var(--muted);
+    font-size: var(--fs-sm);
+  }
+
+  &__bar {
+    display: flex;
+  }
+
+  &__around { @include mixins.button-secondary('md'); }
+
+  &__city {
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+  }
+
+  &__city-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--sp-2);
+    padding: clamp(11px, 1.2vw, 16px);
+    cursor: pointer;
+
+    &:focus-visible { @include mixins.focus-ring; }
+  }
+
+  &__city-name {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(17px, 1.8vw, 22px);
+    color: var(--accent);
+  }
+
+  &__city-meta {
+    color: var(--muted);
+    font-size: var(--fs-xs);
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  // Dans une ville, les lignes se séparent d'un filet ; « Autour de moi » les
+  // rend seules, sans la carte de la ville autour.
+  &__city &__list {
+    padding: 0 clamp(11px, 1.2vw, 16px) var(--sp-2);
+  }
+
+  &__item {
+    padding: var(--sp-2) 0;
+    border-top: 1px solid var(--border-soft);
+  }
+
+  &__head {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  &__star {
+    color: var(--cat-restaurant);
+  }
+
+  &__name {
+    flex: 1;
+    min-width: 0;
+    color: var(--text);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  &__distance {
+    flex: none;
+    color: var(--accent);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+  }
+
+  &__days {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px var(--sp-3);
+    margin: 2px 0 0;
+    color: var(--muted);
+    font-size: var(--fs-xs);
+  }
+
+  &__on {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  &__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-1) var(--sp-3);
+    margin-top: var(--sp-1);
+    font-size: var(--fs-sm);
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+
+      &:hover { text-decoration: underline; }
+      &:focus-visible { @include mixins.focus-ring; }
+    }
+  }
+}

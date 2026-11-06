@@ -120,6 +120,7 @@ const files = {
   containers: 'supabase/migrations/0015_arrets_excursions.sql',
   cityTimes: 'supabase/migrations/0016_heures_villes.sql',
   sharedNoPrices: 'supabase/migrations/0017_partage_sans_prix.sql',
+  notes: 'supabase/migrations/0018_notes.sql',
   seed: 'supabase/seed.sql',
 };
 
